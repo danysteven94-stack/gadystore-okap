@@ -43,7 +43,7 @@ export async function GET(
     />
   );
 
-  return new NextResponse(buffer, {
+  return new NextResponse(new Uint8Array(buffer), {
     headers: {
       "Content-Type": "application/pdf",
       "Content-Disposition": `inline; filename="fakti-${sale.id.slice(0, 8)}.pdf"`,
