@@ -20,20 +20,34 @@ export default function LoginPage() {
     }
 
     setLoading(true);
-    const res = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-    setLoading(false);
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
 
-    if (!res.ok) {
-      const data = await res.json();
-      setError(data.error || "Koneksyon echwe.");
-      return;
+      let data: { error?: string; ok?: boolean } = {};
+      try {
+        data = await res.json();
+      } catch {
+        setLoading(false);
+        setError(`Erè sèvè (kòd ${res.status}). Verifye konfigirasyon Upstash/JWT_SECRET sou Vercel.`);
+        return;
+      }
+
+      setLoading(false);
+
+      if (!res.ok) {
+        setError(data.error || `Koneksyon echwe (kòd ${res.status}).`);
+        return;
+      }
+
+      router.push("/dashboard");
+    } catch {
+      setLoading(false);
+      setError("Erè rezo — verifye koneksyon entènèt ou epi eseye ankò.");
     }
-
-    router.push("/dashboard");
   }
 
   return (
