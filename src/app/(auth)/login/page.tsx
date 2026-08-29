@@ -27,7 +27,7 @@ export default function LoginPage() {
         body: JSON.stringify({ email, password }),
       });
 
-      let data: { error?: string; ok?: boolean } = {};
+      let data: { error?: string; detail?: string; ok?: boolean } = {};
       try {
         data = await res.json();
       } catch {
@@ -39,7 +39,9 @@ export default function LoginPage() {
       setLoading(false);
 
       if (!res.ok) {
-        setError(data.error || `Koneksyon echwe (kòd ${res.status}).`);
+        setError(
+          data.detail ? `${data.error} — ${data.detail}` : data.error || `Koneksyon echwe (kòd ${res.status}).`
+        );
         return;
       }
 
