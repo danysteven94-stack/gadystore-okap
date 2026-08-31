@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, ShoppingCart, Package, Users, Moon, Sun } from "lucide-react";
+import { LayoutDashboard, ShoppingCart, Package, Users, Building2, Moon, Sun } from "lucide-react";
 import { useTheme } from "@/components/providers/theme-provider";
 import { useLanguage } from "@/lib/i18n/language-provider";
 import { LANGUAGES } from "@/lib/i18n/dictionary";
 
 const ITEMS = [
   { href: "/dashboard", icon: LayoutDashboard, key: "nav_dashboard" as const },
+  { href: "/businesses", icon: Building2, key: "nav_businesses" as const },
   { href: "/pos", icon: ShoppingCart, key: "nav_pos" as const },
   { href: "/products", icon: Package, key: "nav_products" as const },
   { href: "/contacts", icon: Users, key: "nav_contacts" as const },

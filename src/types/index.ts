@@ -3,6 +3,7 @@ export interface Business {
   id: string;
   name: string;
   icon: string; // nom d'icône lucide-react, ex: "utensils", "store", "hammer"
+  tags?: string[]; // catégories affichées sur la carte (ex: "Menus", "Commandes")
   logoUrl?: string;
   address?: string;
   phone?: string;

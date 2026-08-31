@@ -2,10 +2,9 @@
 
 Application SaaS pour gérer plusieurs entreprises (ventes, achats, stocks, clients, fournisseurs, factures PDF, rapports) depuis un seul compte.
 
-**Entreprises gérées :** Gwo & Detay (gros/détail), Enpòtasyon Pwodwi (import),
-Manje/Patisri/Gato, Pwodwi Elektwonik, Pwodwi Streaming — configurables via
-`/api/businesses`, les 5 sont pré-remplies comme données de démonstration dans
-le tableau de bord.
+**Entreprises gérées :** créées par l'utilisateur admin directement depuis
+l'application (bouton "+" sur le tableau de bord) — aucune entreprise n'est
+pré-remplie, tout est connecté à Upstash en temps réel.
 
 ## Stack
 
@@ -83,7 +82,8 @@ Voir les commentaires dans `src/lib/upstash.ts` pour la convention de clés
 - [x] Structure du projet et configuration Tailwind (palette forêt/or)
 - [x] Page de connexion + API `/api/auth/login`
 - [x] Middleware RBAC protégeant `/dashboard`
-- [x] Tableau de bord avec sélecteur multi-entreprises et KPIs (données de démo)
+- [x] Tableau de bord multi-entreprises **connecté en temps réel** à l'API/Upstash
+      (plus de données factices) — sélecteur, KPIs, stock faible, ventes récentes
 - [x] API `/api/businesses` (liste + création)
 - [x] API `/api/products` (liste + création, calcul automatique du stock faible)
 - [x] API `/api/sales` (POS : création de vente, sortie de stock automatique)
@@ -115,17 +115,24 @@ Voir les commentaires dans `src/lib/upstash.ts` pour la convention de clés
 - [x] Vue d'ensemble "Tout Antrepriz" — chiffre d'affaires combiné, profit
       total et répartition par entreprise (`BusinessBreakdown`)
 - [x] Script `npm run seed:admin` pour créer le premier utilisateur
-- [x] Page `/products` — gestion complète des produits & du stock : recherche,
+- [x] Page `/products` — **connectée en temps réel** à `/api/products` (plus
+      de données factices) : recherche,
       filtre par catégorie, ajout/modification/suppression, barre de stock
       colorée (anfòm / fèb / rupti), valeur totale du stock
 - [x] API `/api/products/[id]` (PATCH / DELETE) pour modifier ou supprimer
       un produit individuel
-- [x] Page `/contacts` — gestion complète des clients ET fournisseurs (bascule
+- [x] Page `/contacts` — **connectée en temps réel** à `/api/customers` et
+      `/api/suppliers` (bascule
       Kliyan/Founisè), historique de factures/achats par contact, ajout/
       modification/suppression
 - [x] API `/api/customers`, `/api/suppliers` (+ `[id]` pour modifier/supprimer)
-- [x] API `/api/purchases` — achats auprès des fournisseurs, entrée de stock
-      automatique après validation, notification `new_purchase`
+- [x] **Sidebar desktop pwofesyonèl** (`Sidebar`) — navigasyon konplè, lojo,
+      switch tèm/lang, dekonèkte — parèt otomatikman sou gwo ekran (`lg:`),
+      nav mobile an ba a rete pou telefòn
+- [x] Page `/businesses` — jesyon konplè antrepriz yo ak kat pwofesyonèl
+      (icon, tags/kategori, monnen, taks), modifye/efase yon antrepriz
+- [x] API `/api/businesses/[id]` (PATCH/DELETE)
+- [x] Chan `tags` sou Business — kategori ki parèt sou kat antrepriz la
 - [x] **Mode sombre** — `ThemeProvider` (persisté + détection préférence
       système), bascule dans la nav du bas, palette `dark-bg/surface/border`
 - [x] **Multi-langues (Kreyòl / Français / English)** — `LanguageProvider` +

@@ -8,6 +8,7 @@ export const LANGUAGES: { code: Lang; label: string }[] = [
 
 export const dictionary = {
   nav_dashboard: { ht: "Tablo Debò", fr: "Tableau de bord", en: "Dashboard" },
+  nav_businesses: { ht: "Antrepriz", fr: "Entreprises", en: "Businesses" },
   nav_pos: { ht: "Kès", fr: "Caisse", en: "POS" },
   nav_products: { ht: "Pwodwi", fr: "Produits", en: "Products" },
   nav_contacts: { ht: "Kontak", fr: "Contacts", en: "Contacts" },
