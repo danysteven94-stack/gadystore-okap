@@ -5,7 +5,7 @@ export async function middleware(req: NextRequest) {
   const token = req.cookies.get("session")?.value;
   const session = token ? await verifySession(token) : null;
 
-  const isProtected = ["/dashboard", "/pos", "/products", "/contacts"].some(
+  const isProtected = ["/dashboard", "/pos", "/products", "/contacts", "/businesses", "/returns"].some(
     (path) => req.nextUrl.pathname.startsWith(path)
   );
   const isLogin = req.nextUrl.pathname.startsWith("/login");
@@ -22,5 +22,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/pos/:path*", "/products/:path*", "/contacts/:path*", "/login"],
+  matcher: ["/dashboard/:path*", "/pos/:path*", "/products/:path*", "/contacts/:path*", "/businesses/:path*", "/returns/:path*", "/login"],
 };

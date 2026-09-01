@@ -6,25 +6,25 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        ink: "#12332E",
-        paper: "#FAF9F6",
+        ink: "#211F3D",
+        paper: "#F7F6FB",
         gold: {
-          DEFAULT: "#C08829",
-          light: "#E9C98B",
-          dark: "#8A5F17",
+          DEFAULT: "#F2A93B",
+          light: "#FBD9A0",
+          dark: "#B9761E",
         },
         forest: {
-          DEFAULT: "#12332E",
-          light: "#1D5148",
-          muted: "#6B7B76",
+          DEFAULT: "#4F3CC9",
+          light: "#6D5AE0",
+          muted: "#8A85B0",
         },
-        brick: "#A8432B",
-        // Mode fonse — fon prèske nwa ak yon tint vèt fore, sifas kat yo yon ti
+        brick: "#E14F64",
+        // Mode fonse — fon prèske nwa ak yon tint vyolèt, sifas kat yo yon ti
         // jan pi klè pou kenbe yerachi vizyèl la san yo pa vin gri plat.
         dark: {
-          bg: "#0E1917",
-          surface: "#152623",
-          border: "#22403A",
+          bg: "#131120",
+          surface: "#1D1A33",
+          border: "#332F52",
         },
       },
       fontFamily: {

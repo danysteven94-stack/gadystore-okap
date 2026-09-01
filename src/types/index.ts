@@ -78,6 +78,12 @@ export interface DashboardStats {
   todaySales: number;
   todayExpenses: number;
   todayProfit: number;
+  monthRevenue: number;
+  monthSales: number;
+  monthExpenses: number;
+  monthProfit: number;
+  outOfStockCount: number;
+  stockValue: number;
   lowStock: Pick<Product, "id" | "name" | "stock" | "minStock">[];
   recentSales: Pick<Sale, "id" | "total" | "createdAt">[];
 }

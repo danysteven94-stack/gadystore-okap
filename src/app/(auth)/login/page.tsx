@@ -58,7 +58,7 @@ export default function LoginPage() {
         onSubmit={handleSubmit}
         className="w-full max-w-sm bg-white dark:bg-dark-surface border border-ink/10 dark:border-dark-border rounded-card p-8"
       >
-        <h1 className="font-display text-2xl mb-1">Gady's</h1>
+        <h1 className="font-display text-2xl mb-1">Platfòm Antrepriz</h1>
         <p className="text-sm text-ink/60 dark:text-paper/60 mb-6">
           Konekte pou jere antrepriz ou yo.
         </p>

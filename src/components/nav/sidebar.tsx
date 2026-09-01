@@ -8,6 +8,7 @@ import {
   Package,
   Users,
   ShoppingCart,
+  Undo2,
   LogOut,
   Moon,
   Sun,
@@ -22,6 +23,7 @@ const NAV = [
   { href: "/products", icon: Package, label: "Pwodwi & Stok" },
   { href: "/contacts", icon: Users, label: "Kliyan & Founisè" },
   { href: "/pos", icon: ShoppingCart, label: "Vant (POS)" },
+  { href: "/returns", icon: Undo2, label: "Retou Machandiz" },
 ];
 
 export function Sidebar() {
@@ -32,11 +34,11 @@ export function Sidebar() {
   return (
     <aside className="hidden lg:flex lg:flex-col w-64 shrink-0 h-screen sticky top-0 bg-ink dark:bg-dark-surface text-paper border-r border-white/5">
       <div className="flex items-center gap-3 px-5 py-5 border-b border-white/10">
-        <div className="w-10 h-10 rounded-xl bg-gold flex items-center justify-center font-display text-lg text-ink shrink-0">
-          G
+        <div className="w-10 h-10 rounded-xl bg-gold flex items-center justify-center text-ink shrink-0">
+          <Building2 size={19} strokeWidth={2.2} />
         </div>
         <div className="min-w-0">
-          <p className="font-display text-base leading-tight truncate">Gady&apos;s</p>
+          <p className="font-display text-base leading-tight truncate">Platfòm Antrepriz</p>
           <p className="text-[10px] uppercase tracking-wide text-paper/50 truncate">
             Gestion Komèsyal
           </p>

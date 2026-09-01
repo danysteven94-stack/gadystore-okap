@@ -74,7 +74,7 @@ export function BusinessForm({ initial, onSave, onDelete, onClose, saving }: Pro
               className={inputClass}
               value={values.name}
               onChange={(e) => update("name", e.target.value)}
-              placeholder="Ekz: Gady's Boutik"
+              placeholder="Ekz: Boutik ou"
               required
               autoFocus
             />

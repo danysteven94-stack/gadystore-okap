@@ -7,13 +7,13 @@ export function StockBar({ stock, minStock }: Props) {
   const ratio = minStock > 0 ? stock / (minStock * 2) : stock > 0 ? 1 : 0;
   const pct = Math.max(4, Math.min(100, Math.round(ratio * 100)));
 
-  let color = "#3F7D5C"; // vert — anfòm
+  let color = "#3FA66A"; // vert — anfòm
   let label = "Anfòm";
   if (stock <= 0) {
-    color = "#A8432B"; // wouj — rupti
+    color = "#E14F64"; // wouj — rupti
     label = "Rupti";
   } else if (stock <= minStock) {
-    color = "#C08829"; // dorè — fèb
+    color = "#F2A93B"; // dorè — fèb
     label = "Fèb";
   }
 

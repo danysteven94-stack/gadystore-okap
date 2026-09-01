@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { AlertTriangle, Trophy, Plus, Loader2 } from "lucide-react";
+import { AlertTriangle, Trophy, Plus, Loader2, ShoppingCart, Package, Undo2 } from "lucide-react";
 import { BusinessSwitcher } from "@/components/dashboard/business-switcher";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { BusinessBreakdown } from "@/components/dashboard/business-breakdown";
@@ -246,12 +246,66 @@ export default function DashboardPage() {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-3 mb-6">
-            <StatCard label="Chif afè jodi a" value={fmt(stats.todayRevenue)} />
-            <StatCard label="Vant" value={String(stats.todaySales)} />
-            <StatCard label="Depans" value={fmt(stats.todayExpenses)} />
-            <StatCard label="Pwofi net" value={fmt(stats.todayProfit)} accent />
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
+            <StatCard label="Revni jodi a" value={fmt(stats.todayRevenue)} />
+            <StatCard label="Revni mwa a" value={fmt(stats.monthRevenue)} />
+            <StatCard label="Vant (mwa)" value={String(stats.monthSales)} />
+            <StatCard label="Depans (mwa)" value={fmt(stats.monthExpenses)} />
+            <StatCard label="Pwofi net (mwa)" value={fmt(stats.monthProfit)} accent />
+            <StatCard label="Pwodwi an rupti" value={String(stats.outOfStockCount)} />
+            <StatCard label="Stok fèb" value={String(stats.lowStock.length)} />
+            <StatCard label="Valè stok" value={fmt(stats.stockValue)} />
           </div>
+
+          <section className="mb-8">
+            <p className="text-[11px] uppercase tracking-wide text-ink/40 dark:text-paper/40 mb-2">
+              Aksè rapid
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <a
+                href="/pos"
+                className="flex items-center gap-3 rounded-card border border-ink/10 dark:border-dark-border bg-white dark:bg-dark-surface p-4 hover:border-forest/40 transition-colors"
+              >
+                <span className="w-10 h-10 rounded-xl bg-brick/10 text-brick flex items-center justify-center shrink-0">
+                  <ShoppingCart size={18} />
+                </span>
+                <span>
+                  <span className="block text-sm font-medium">Ouvri kès la</span>
+                  <span className="block text-xs text-ink/50 dark:text-paper/50">
+                    Nouvo vant an kèk segonn
+                  </span>
+                </span>
+              </a>
+              <a
+                href="/products"
+                className="flex items-center gap-3 rounded-card border border-ink/10 dark:border-dark-border bg-white dark:bg-dark-surface p-4 hover:border-forest/40 transition-colors"
+              >
+                <span className="w-10 h-10 rounded-xl bg-forest/10 text-forest flex items-center justify-center shrink-0">
+                  <Package size={18} />
+                </span>
+                <span>
+                  <span className="block text-sm font-medium">Jere pwodwi</span>
+                  <span className="block text-xs text-ink/50 dark:text-paper/50">
+                    Ajoute, modifye, swiv stok
+                  </span>
+                </span>
+              </a>
+              <a
+                href="/returns"
+                className="flex items-center gap-3 rounded-card border border-ink/10 dark:border-dark-border bg-white dark:bg-dark-surface p-4 hover:border-forest/40 transition-colors"
+              >
+                <span className="w-10 h-10 rounded-xl bg-gold/15 text-gold-dark flex items-center justify-center shrink-0">
+                  <Undo2 size={18} />
+                </span>
+                <span>
+                  <span className="block text-sm font-medium">Retou machandiz</span>
+                  <span className="block text-xs text-ink/50 dark:text-paper/50">
+                    Antre yon pwodwi ki retounen
+                  </span>
+                </span>
+              </a>
+            </div>
+          </section>
 
           <section className="mb-8">
             <div className="flex items-center justify-between mb-2">

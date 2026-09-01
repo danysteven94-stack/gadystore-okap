@@ -18,7 +18,7 @@ const mono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Gady's — Gestion multi-entreprises",
+  title: "Platfòm Antrepriz — Gestion multi-entreprises",
   description: "Ventes, stocks, factures et rapports en temps réel.",
 };
 

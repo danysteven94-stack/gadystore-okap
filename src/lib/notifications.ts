@@ -6,6 +6,7 @@ export type NotificationType =
   | "new_customer"
   | "new_sale"
   | "new_purchase"
+  | "product_return"
   | "large_expense";
 
 export interface AppNotification {
