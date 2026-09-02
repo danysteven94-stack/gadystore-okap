@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { Search, Plus, Users, Phone, Loader2 } from "lucide-react";
 import { BusinessSwitcher } from "@/components/dashboard/business-switcher";
 import { ContactForm, type ContactFormValues } from "@/components/contacts/contact-form";
@@ -8,10 +9,13 @@ import type { Business, Customer, Supplier } from "@/types";
 
 type Contact = Customer | Supplier;
 
-export default function ContactsPage() {
+function ContactsPageInner() {
+  const searchParams = useSearchParams();
+  const initialKind = searchParams.get("kind") === "supplier" ? "supplier" : "customer";
+
   const [businesses, setBusinesses] = useState<Business[] | null>(null);
   const [businessId, setBusinessId] = useState<string | null>(null);
-  const [kind, setKind] = useState<"customer" | "supplier">("customer");
+  const [kind, setKind] = useState<"customer" | "supplier">(initialKind);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loadingContacts, setLoadingContacts] = useState(false);
   const [query, setQuery] = useState("");
@@ -222,5 +226,13 @@ export default function ContactsPage() {
         />
       )}
     </main>
+  );
+}
+
+export default function ContactsPage() {
+  return (
+    <Suspense fallback={null}>
+      <ContactsPageInner />
+    </Suspense>
   );
 }

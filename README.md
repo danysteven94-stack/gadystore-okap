@@ -133,6 +133,17 @@ Voir les commentaires dans `src/lib/upstash.ts` pour la convention de clés
       (icon, tags/kategori, monnen, taks), modifye/efase yon antrepriz
 - [x] API `/api/businesses/[id]` (PATCH/DELETE)
 - [x] Chan `tags` sou Business — kategori ki parèt sou kat antrepriz la
+- [x] **Sidebar konplè (11 seksyon)** ak **nav mobil ki defile** ak menm lis la:
+      Tablo Debò, Antrepriz, Pwodwi, Stok, Kliyan, Founisè, Vant, Retou
+      Machandiz, Depans, Rapò, Sovgad
+- [x] Page `/stock` — rapò stok detaye (anfòm / fèb / rupti) ak valè total
+- [x] Page `/expenses` — anrejistre ak gade depans pa kategori
+- [x] Page `/reports` — rapò finansye + pi bon pwodwi + mòd peman, ak
+      espòte Excel
+- [x] Page `/backup` — kreye sovgad manyèl, gade istorik, restore
+- [x] **Sistèm Retou Machandiz** (`/returns` + `/api/returns`) — remèt stok
+      la otomatikman
+- [x] **Nouvo idantite vizyèl** — "Platfòm Antrepriz", palèt vyolèt/anbrè/rose
 - [x] **Mode sombre** — `ThemeProvider` (persisté + détection préférence
       système), bascule dans la nav du bas, palette `dark-bg/surface/border`
 - [x] **Multi-langues (Kreyòl / Français / English)** — `LanguageProvider` +

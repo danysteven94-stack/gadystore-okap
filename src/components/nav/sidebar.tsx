@@ -6,9 +6,14 @@ import {
   LayoutDashboard,
   Building2,
   Package,
+  Boxes,
   Users,
+  Truck,
   ShoppingCart,
   Undo2,
+  Receipt,
+  BarChart3,
+  DatabaseBackup,
   LogOut,
   Moon,
   Sun,
@@ -20,10 +25,15 @@ import { LANGUAGES } from "@/lib/i18n/dictionary";
 const NAV = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Tablo Debò" },
   { href: "/businesses", icon: Building2, label: "Antrepriz" },
-  { href: "/products", icon: Package, label: "Pwodwi & Stok" },
-  { href: "/contacts", icon: Users, label: "Kliyan & Founisè" },
+  { href: "/products", icon: Package, label: "Pwodwi" },
+  { href: "/stock", icon: Boxes, label: "Stok" },
+  { href: "/contacts?kind=customer", icon: Users, label: "Kliyan" },
+  { href: "/contacts?kind=supplier", icon: Truck, label: "Founisè" },
   { href: "/pos", icon: ShoppingCart, label: "Vant (POS)" },
   { href: "/returns", icon: Undo2, label: "Retou Machandiz" },
+  { href: "/expenses", icon: Receipt, label: "Depans" },
+  { href: "/reports", icon: BarChart3, label: "Rapò" },
+  { href: "/backup", icon: DatabaseBackup, label: "Sovgad" },
 ];
 
 export function Sidebar() {
