@@ -16,6 +16,7 @@ const returnSchema = z.object({
 });
 
 export interface ReturnRecord {
+  [key: string]: unknown;
   id: string;
   businessId: string;
   productId: string;
