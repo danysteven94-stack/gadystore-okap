@@ -69,7 +69,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Antre yon imèl valid ak yon mo de pas (6+ karaktè)." }, { status: 400 });
   }
 
-  const { email, password, role } = parsed.data;
+  const { password, role } = parsed.data;
+  const email = parsed.data.email.trim().toLowerCase();
 
   const existing = await redis.hgetall<Record<string, unknown>>(`user:${email}`);
   if (existing && existing.id) {

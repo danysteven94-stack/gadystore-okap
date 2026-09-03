@@ -13,11 +13,12 @@ import bcrypt from "bcryptjs";
 config({ path: ".env.local" });
 
 async function main() {
-  const [, , email, password] = process.argv;
-  if (!email || !password) {
+  const [, , rawEmail, password] = process.argv;
+  if (!rawEmail || !password) {
     console.error("Itilizasyon: npx tsx scripts/seed-admin.ts <imèl> <modpas>");
     process.exit(1);
   }
+  const email = rawEmail.trim().toLowerCase();
 
   const redis = Redis.fromEnv();
   const passwordHash = await bcrypt.hash(password, 10);

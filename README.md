@@ -151,6 +151,12 @@ Voir les commentaires dans `src/lib/upstash.ts` pour la convention de clés
 - [x] **Dekonèkte ki fonksyone vre** — `/api/auth/logout` efase cookie
       sesyon an; bouton "Dekonekte" nan sidebar/nav mobil itilize l kounye a
       olye yon senp lyen ki pa t fè anyen
+- [x] **Imèl nòmalize** (miniskil, san espas) nan login/kreyasyon kont — evite
+      erè "modpas oswa imèl pa kòrèk" akoz yon diferans majiskil/miniskil
+- [x] **Kont "prensipal" (super-admin)** — `danystevenj@gmail.com` (chanjab
+      via varyab anviwònman `SUPER_ADMIN_EMAIL`) se sèl kont ki ka efase lòt
+      administratè, via `/api/users/[email]` (DELETE) ak bouton nan paj
+      `/users`. Pa gen okenn lòt kont, menm yon lòt administratè, ki ka fè sa
 - [x] **Mode sombre** — `ThemeProvider` (persisté + détection préférence
       système), bascule dans la nav du bas, palette `dark-bg/surface/border`
 - [x] **Multi-langues (Kreyòl / Français / English)** — `LanguageProvider` +

@@ -20,7 +20,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { email, password } = parsed.data;
+    const email = parsed.data.email.trim().toLowerCase();
+    const { password } = parsed.data;
     const user = await redis.hgetall<Record<string, string>>(`user:${email}`);
 
     if (!user || !user.passwordHash) {
