@@ -47,6 +47,10 @@ export async function POST(req: NextRequest) {
         : JSON.parse(user.businessIds || "[]"),
     };
 
+    // Backfill: si kont sa a te kreye anvan seksyon "Itilizatè" a, ajoute l
+    // nan endèks la kounye a pou l parèt nan lis la.
+    await redis.sadd("users:all", email);
+
     const token = await signSession(session);
     const res = NextResponse.json({ ok: true });
     res.cookies.set("session", token, {

@@ -14,13 +14,14 @@ import {
   Receipt,
   BarChart3,
   DatabaseBackup,
-  LogOut,
+  UserCog,
   Moon,
   Sun,
 } from "lucide-react";
 import { useTheme } from "@/components/providers/theme-provider";
 import { useLanguage } from "@/lib/i18n/language-provider";
 import { LANGUAGES } from "@/lib/i18n/dictionary";
+import { LogoutButton } from "@/components/nav/logout-button";
 
 const NAV = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Tablo Debò" },
@@ -34,6 +35,7 @@ const NAV = [
   { href: "/expenses", icon: Receipt, label: "Depans" },
   { href: "/reports", icon: BarChart3, label: "Rapò" },
   { href: "/backup", icon: DatabaseBackup, label: "Sovgad" },
+  { href: "/users", icon: UserCog, label: "Itilizatè" },
 ];
 
 export function Sidebar() {
@@ -96,13 +98,7 @@ export function Sidebar() {
             ))}
           </select>
         </div>
-        <Link
-          href="/login"
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-paper/60 hover:bg-white/5 hover:text-paper"
-        >
-          <LogOut size={17} strokeWidth={1.75} />
-          Dekonekte
-        </Link>
+        <LogoutButton className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-paper/60 hover:bg-white/5 hover:text-paper w-full text-left" />
       </div>
     </aside>
   );

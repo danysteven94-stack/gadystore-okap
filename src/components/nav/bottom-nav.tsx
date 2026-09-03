@@ -14,6 +14,7 @@ import {
   Receipt,
   BarChart3,
   DatabaseBackup,
+  UserCog,
   Moon,
   Sun,
 } from "lucide-react";
@@ -33,6 +34,7 @@ const ITEMS = [
   { href: "/expenses", icon: Receipt, label: "Depans" },
   { href: "/reports", icon: BarChart3, label: "Rapò" },
   { href: "/backup", icon: DatabaseBackup, label: "Sovgad" },
+  { href: "/users", icon: UserCog, label: "Itilizatè" },
 ];
 
 export function BottomNav() {

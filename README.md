@@ -144,6 +144,13 @@ Voir les commentaires dans `src/lib/upstash.ts` pour la convention de clés
 - [x] **Sistèm Retou Machandiz** (`/returns` + `/api/returns`) — remèt stok
       la otomatikman
 - [x] **Nouvo idantite vizyèl** — "Platfòm Antrepriz", palèt vyolèt/anbrè/rose
+- [x] **Plizyè kont itilizatè, done separe** — API `/api/users` (GET/POST,
+      admin sèlman) + page `/users` pou kreye nouvo kont (Administratè,
+      Jesyonè, oswa Kesye). Chak kont `admin` kòmanse ak pwòp `businessIds`
+      vid — antrepriz li kreye yo pa janm melanje ak lòt kont
+- [x] **Dekonèkte ki fonksyone vre** — `/api/auth/logout` efase cookie
+      sesyon an; bouton "Dekonekte" nan sidebar/nav mobil itilize l kounye a
+      olye yon senp lyen ki pa t fè anyen
 - [x] **Mode sombre** — `ThemeProvider` (persisté + détection préférence
       système), bascule dans la nav du bas, palette `dark-bg/surface/border`
 - [x] **Multi-langues (Kreyòl / Français / English)** — `LanguageProvider` +

@@ -28,15 +28,16 @@ async function main() {
     passwordHash,
     role: "admin",
     businessIds: JSON.stringify([]), // ajoute ID yo apre ou kreye antrepriz yo
+    createdAt: new Date().toISOString(),
   };
 
   await redis.hset(`user:${email}`, user);
+  await redis.sadd("users:all", email);
 
   console.log(`Admin kreye: ${email} (id: ${user.id})`);
   console.log(
-    "Lè ou kreye yon antrepriz via /api/businesses, ajoute ID li nan " +
-      "\"businessIds\" itilizatè a (hset user:<email> businessIds '[\"<id>\"]') " +
-      "pou li ka parèt lè ou konekte."
+    "Ou ka kreye plis itilizatè dirèkteman nan app la kounye a — konekte, " +
+      "epi ale nan seksyon \"Itilizatè\" nan sidebar la."
   );
 }
 
