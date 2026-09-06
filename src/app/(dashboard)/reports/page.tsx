@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { BarChart3, Loader2, Download, Trophy } from "lucide-react";
 import { BusinessSwitcher } from "@/components/dashboard/business-switcher";
+import { useLanguage } from "@/lib/i18n/language-provider";
 import type { Business } from "@/types";
 
 interface FinancialRow {
@@ -30,6 +31,7 @@ function isoDaysAgo(days: number) {
 }
 
 export default function ReportsPage() {
+  const { t } = useLanguage();
   const [businesses, setBusinesses] = useState<Business[] | null>(null);
   const [businessId, setBusinessId] = useState<string | null>(null);
   const [from, setFrom] = useState(isoDaysAgo(6));
@@ -83,7 +85,7 @@ export default function ReportsPage() {
       <main className="max-w-3xl mx-auto px-4 py-16 text-center">
         <BarChart3 size={28} className="mx-auto mb-3 text-ink/30" />
         <p className="text-sm text-ink/60 dark:text-paper/60">
-          Kreye yon antrepriz anvan pou wè rapò.
+          {t("reports_need_business")}
         </p>
       </main>
     );
@@ -91,7 +93,7 @@ export default function ReportsPage() {
 
   return (
     <main className="max-w-3xl mx-auto px-4 lg:px-8 py-8 pb-24">
-      <h1 className="font-display text-xl lg:text-2xl mb-4">Rapò</h1>
+      <h1 className="font-display text-xl lg:text-2xl mb-4">{t("reports_title")}</h1>
 
       <BusinessSwitcher
         businesses={businesses.map((b) => ({ id: b.id, name: b.name, icon: b.icon }))}
@@ -102,7 +104,7 @@ export default function ReportsPage() {
 
       <div className="flex items-end gap-3 my-5">
         <label className="block flex-1">
-          <span className="block text-xs font-medium text-ink/70 dark:text-paper/70 mb-1">Depi</span>
+          <span className="block text-xs font-medium text-ink/70 dark:text-paper/70 mb-1">{t("reports_from")}</span>
           <input
             type="date"
             value={from}
@@ -111,7 +113,7 @@ export default function ReportsPage() {
           />
         </label>
         <label className="block flex-1">
-          <span className="block text-xs font-medium text-ink/70 dark:text-paper/70 mb-1">Jiska</span>
+          <span className="block text-xs font-medium text-ink/70 dark:text-paper/70 mb-1">{t("reports_to")}</span>
           <input
             type="date"
             value={to}
@@ -124,7 +126,7 @@ export default function ReportsPage() {
             href={`/api/reports/financial?businessId=${businessId}&from=${from}&to=${to}&format=excel`}
             className="flex items-center gap-1.5 bg-ink text-paper rounded-full px-4 py-2.5 text-xs font-medium shrink-0"
           >
-            <Download size={14} /> Excel
+            <Download size={14} /> {t("reports_export_excel")}
           </a>
         )}
       </div>
@@ -137,19 +139,19 @@ export default function ReportsPage() {
         <>
           <div className="grid grid-cols-3 gap-3 mb-6">
             <div className="rounded-card border border-ink/10 dark:border-dark-border bg-white dark:bg-dark-surface p-3">
-              <p className="text-xs text-ink/50 dark:text-paper/50 mb-1">Revni</p>
+              <p className="text-xs text-ink/50 dark:text-paper/50 mb-1">{t("reports_revenue")}</p>
               <p className="stat-figure text-base font-medium">
                 {fmt(financial?.totals.revenue ?? 0)}
               </p>
             </div>
             <div className="rounded-card border border-ink/10 dark:border-dark-border bg-white dark:bg-dark-surface p-3">
-              <p className="text-xs text-ink/50 dark:text-paper/50 mb-1">Depans</p>
+              <p className="text-xs text-ink/50 dark:text-paper/50 mb-1">{t("reports_expenses")}</p>
               <p className="stat-figure text-base font-medium">
                 {fmt(financial?.totals.expenses ?? 0)}
               </p>
             </div>
             <div className="rounded-card border border-ink/10 dark:border-dark-border bg-forest/10 dark:bg-forest/20 p-3">
-              <p className="text-xs text-forest mb-1">Pwofi</p>
+              <p className="text-xs text-forest mb-1">{t("reports_profit")}</p>
               <p className="stat-figure text-base font-medium text-forest">
                 {fmt(financial?.totals.profit ?? 0)}
               </p>
@@ -157,12 +159,12 @@ export default function ReportsPage() {
           </div>
 
           <h2 className="font-display text-base mb-2 flex items-center gap-2">
-            <Trophy size={16} className="text-gold-dark" /> Pi bon pwodwi
+            <Trophy size={16} className="text-gold-dark" /> {t("reports_top_products")}
           </h2>
           <div className="rounded-card border border-ink/10 dark:border-dark-border bg-white dark:bg-dark-surface overflow-hidden mb-6">
             {!sales || sales.topProducts.length === 0 ? (
               <p className="text-sm text-center text-ink/40 dark:text-paper/40 py-8">
-                Pa gen vant nan peryòd sa a.
+                {t("reports_no_sales_period")}
               </p>
             ) : (
               sales.topProducts.slice(0, 8).map((p, i) => (
@@ -177,18 +179,18 @@ export default function ReportsPage() {
                   </span>
                   <span className="text-right">
                     <span className="stat-figure block font-medium">{fmt(p.revenue)}</span>
-                    <span className="block text-xs text-ink/40 dark:text-paper/40">{p.qty} vandi</span>
+                    <span className="block text-xs text-ink/40 dark:text-paper/40">{p.qty} {t("reports_sold")}</span>
                   </span>
                 </div>
               ))
             )}
           </div>
 
-          <h2 className="font-display text-base mb-2">Repartisyon pa mòd peman</h2>
+          <h2 className="font-display text-base mb-2">{t("reports_by_payment")}</h2>
           <div className="rounded-card border border-ink/10 dark:border-dark-border bg-white dark:bg-dark-surface overflow-hidden">
             {!sales || Object.keys(sales.byPaymentMethod).length === 0 ? (
               <p className="text-sm text-center text-ink/40 dark:text-paper/40 py-8">
-                Pa gen done.
+                {t("reports_no_data")}
               </p>
             ) : (
               Object.entries(sales.byPaymentMethod).map(([method, amount], i) => (

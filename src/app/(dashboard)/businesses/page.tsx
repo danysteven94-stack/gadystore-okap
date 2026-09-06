@@ -11,6 +11,7 @@ import {
   Store,
 } from "lucide-react";
 import { BusinessForm, type BusinessFormValues } from "@/components/business/business-form";
+import { useLanguage } from "@/lib/i18n/language-provider";
 import type { Business } from "@/types";
 
 const ICONS: Record<string, React.ElementType> = {
@@ -23,6 +24,7 @@ const ICONS: Record<string, React.ElementType> = {
 };
 
 export default function BusinessesPage() {
+  const { t } = useLanguage();
   const [businesses, setBusinesses] = useState<Business[] | null>(null);
   const [formTarget, setFormTarget] = useState<"new" | Business | null>(null);
   const [saving, setSaving] = useState(false);
@@ -92,16 +94,16 @@ export default function BusinessesPage() {
     <main className="max-w-5xl mx-auto px-4 lg:px-8 py-8">
       <div className="flex items-start justify-between mb-2">
         <div>
-          <h1 className="font-display text-2xl mb-1">Antrepriz</h1>
+          <h1 className="font-display text-2xl mb-1">{t("businesses_title")}</h1>
           <p className="text-sm text-ink/60 dark:text-paper/60">
-            Tout antrepriz ou yo, jere apati yon sèl kont.
+            {t("businesses_subtitle")}
           </p>
         </div>
         <button
           onClick={() => setFormTarget("new")}
           className="inline-flex items-center gap-2 bg-forest text-paper rounded-full px-4 py-2.5 text-sm font-medium shrink-0"
         >
-          <Plus size={16} /> Nouvo antrepriz
+          <Plus size={16} /> {t("businesses_add")}
         </button>
       </div>
 
@@ -114,7 +116,7 @@ export default function BusinessesPage() {
       ) : businesses.length === 0 ? (
         <div className="text-center py-16 text-ink/40 dark:text-paper/40">
           <Building2 size={28} className="mx-auto mb-2" />
-          <p className="text-sm">Ou poko gen antrepriz. Kreye premye a.</p>
+          <p className="text-sm">{t("businesses_empty")}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">

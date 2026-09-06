@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { X, Trash2 } from "lucide-react";
+import { useLanguage } from "@/lib/i18n/language-provider";
 
 export interface ProductFormValues {
   id?: string;
@@ -50,6 +51,7 @@ const inputClass =
   "w-full border border-ink/15 dark:border-dark-border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-forest/30";
 
 export function ProductForm({ initial, onSave, onDelete, onClose }: Props) {
+  const { t } = useLanguage();
   const [values, setValues] = useState<ProductFormValues>(initial ?? EMPTY);
   const isEditing = !!initial?.id;
 
@@ -71,15 +73,15 @@ export function ProductForm({ initial, onSave, onDelete, onClose }: Props) {
       <div className="w-full sm:max-w-sm bg-paper dark:bg-dark-bg rounded-t-2xl sm:rounded-card max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between px-5 py-4 border-b border-ink/10 dark:border-dark-border sticky top-0 bg-paper dark:bg-dark-bg">
           <h2 className="font-display text-lg">
-            {isEditing ? "Modifye pwodwi" : "Ajoute pwodwi"}
+            {isEditing ? t("products_edit") : t("products_add")}
           </h2>
-          <button onClick={onClose} aria-label="Fèmen">
+          <button onClick={onClose} aria-label={t("common_close")}>
             <X size={20} />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="px-5 py-4">
-          <Field label="Non pwodwi">
+          <Field label={t("product_form_name")}>
             <input
               className={inputClass}
               value={values.name}
@@ -89,7 +91,7 @@ export function ProductForm({ initial, onSave, onDelete, onClose }: Props) {
             />
           </Field>
 
-          <Field label="Kategori">
+          <Field label={t("product_form_category")}>
             <input
               className={inputClass}
               value={values.category}
@@ -100,7 +102,7 @@ export function ProductForm({ initial, onSave, onDelete, onClose }: Props) {
           </Field>
 
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Pri Achte (G)">
+            <Field label={t("product_form_buy_price")}>
               <input
                 type="number"
                 min={0}
@@ -109,7 +111,7 @@ export function ProductForm({ initial, onSave, onDelete, onClose }: Props) {
                 onChange={(e) => update("buyPrice", Number(e.target.value))}
               />
             </Field>
-            <Field label="Pri Vann (G)">
+            <Field label={t("product_form_sell_price")}>
               <input
                 type="number"
                 min={0}
@@ -121,7 +123,7 @@ export function ProductForm({ initial, onSave, onDelete, onClose }: Props) {
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Stok aktyèl">
+            <Field label={t("product_form_stock")}>
               <input
                 type="number"
                 min={0}
@@ -130,7 +132,7 @@ export function ProductForm({ initial, onSave, onDelete, onClose }: Props) {
                 onChange={(e) => update("stock", Number(e.target.value))}
               />
             </Field>
-            <Field label="Stok minimòm">
+            <Field label={t("product_form_min_stock")}>
               <input
                 type="number"
                 min={0}
@@ -141,7 +143,7 @@ export function ProductForm({ initial, onSave, onDelete, onClose }: Props) {
             </Field>
           </div>
 
-          <Field label="Kòd-baf (opsyonèl)">
+          <Field label={t("product_form_barcode")}>
             <input
               className={inputClass}
               value={values.barcode}
@@ -155,7 +157,7 @@ export function ProductForm({ initial, onSave, onDelete, onClose }: Props) {
               <button
                 type="button"
                 onClick={onDelete}
-                aria-label="Efase pwodwi"
+                aria-label={t("common_delete")}
                 className="w-11 h-11 shrink-0 rounded-full border border-brick/30 text-brick flex items-center justify-center"
               >
                 <Trash2 size={16} />
@@ -165,7 +167,7 @@ export function ProductForm({ initial, onSave, onDelete, onClose }: Props) {
               type="submit"
               className="flex-1 bg-ink text-paper rounded-full py-2.5 text-sm font-medium"
             >
-              {isEditing ? "Anrejistre chanjman" : "Ajoute pwodwi"}
+              {isEditing ? t("common_save") : t("products_add")}
             </button>
           </div>
         </form>

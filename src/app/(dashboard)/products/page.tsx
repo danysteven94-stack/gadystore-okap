@@ -5,6 +5,7 @@ import { Search, Plus, Package, Loader2 } from "lucide-react";
 import { BusinessSwitcher } from "@/components/dashboard/business-switcher";
 import { StockBar } from "@/components/products/stock-bar";
 import { ProductForm, type ProductFormValues } from "@/components/products/product-form";
+import { useLanguage } from "@/lib/i18n/language-provider";
 import type { Business, Product } from "@/types";
 
 function fmt(n: number) {
@@ -12,6 +13,7 @@ function fmt(n: number) {
 }
 
 export default function ProductsPage() {
+  const { t } = useLanguage();
   const [businesses, setBusinesses] = useState<Business[] | null>(null);
   const [businessId, setBusinessId] = useState<string | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
@@ -115,7 +117,7 @@ export default function ProductsPage() {
       <main className="max-w-3xl mx-auto px-4 py-16 text-center">
         <Package size={28} className="mx-auto mb-3 text-ink/30" />
         <p className="text-sm text-ink/60 dark:text-paper/60">
-          Ale nan Tablo Debò a pou kreye premye antrepriz ou anvan w ajoute pwodwi.
+          {t("products_need_business")}
         </p>
       </main>
     );
@@ -123,7 +125,7 @@ export default function ProductsPage() {
 
   return (
     <main className="max-w-3xl mx-auto px-4 py-6 pb-24">
-      <h1 className="font-display text-xl mb-4">Pwodwi & Stok</h1>
+      <h1 className="font-display text-xl mb-4">{t("products_title")}</h1>
 
       <BusinessSwitcher
         businesses={businesses.map((b) => ({ id: b.id, name: b.name, icon: b.icon }))}
@@ -137,15 +139,15 @@ export default function ProductsPage() {
 
       <div className="grid grid-cols-3 gap-2 my-4">
         <div className="rounded-card border border-ink/10 dark:border-dark-border bg-white dark:bg-dark-surface p-3">
-          <p className="text-xs text-ink/50 dark:text-paper/50 mb-1">Pwodwi</p>
+          <p className="text-xs text-ink/50 dark:text-paper/50 mb-1">{t("products_count")}</p>
           <p className="stat-figure text-lg font-medium">{products.length}</p>
         </div>
         <div className="rounded-card border border-ink/10 dark:border-dark-border bg-white dark:bg-dark-surface p-3">
-          <p className="text-xs text-ink/50 dark:text-paper/50 mb-1">Stok fèb</p>
+          <p className="text-xs text-ink/50 dark:text-paper/50 mb-1">{t("products_low_stock")}</p>
           <p className="stat-figure text-lg font-medium text-brick">{lowCount}</p>
         </div>
         <div className="rounded-card border border-ink/10 dark:border-dark-border bg-white dark:bg-dark-surface p-3">
-          <p className="text-xs text-ink/50 dark:text-paper/50 mb-1">Valè stok</p>
+          <p className="text-xs text-ink/50 dark:text-paper/50 mb-1">{t("products_stock_value")}</p>
           <p className="stat-figure text-lg font-medium">{fmt(stockValue)}</p>
         </div>
       </div>
@@ -156,14 +158,14 @@ export default function ProductsPage() {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Chèche yon pwodwi..."
+            placeholder={t("products_search")}
             className="w-full border border-ink/15 dark:border-dark-border bg-white dark:bg-dark-surface rounded-full pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-forest/30"
           />
         </div>
         <button
           onClick={() => setFormTarget("new")}
           className="w-10 h-10 rounded-full bg-ink text-paper flex items-center justify-center shrink-0"
-          aria-label="Ajoute yon pwodwi"
+          aria-label={t("products_add")}
         >
           <Plus size={18} />
         </button>
@@ -177,7 +179,7 @@ export default function ProductsPage() {
               !categoryFilter ? "bg-ink text-paper border-ink" : "border-ink/15 dark:border-dark-border text-ink/70 dark:text-paper/70"
             }`}
           >
-            Tout
+            {t("products_all_categories")}
           </button>
           {categories.map((cat) => (
             <button
@@ -205,7 +207,7 @@ export default function ProductsPage() {
         <div className="text-center py-16 text-ink/40 dark:text-paper/40">
           <Package size={28} className="mx-auto mb-2" />
           <p className="text-sm">
-            {products.length === 0 ? "Ou poko gen pwodwi. Ajoute premye a." : "Pa gen pwodwi ki koresponn."}
+            {products.length === 0 ? t("products_empty_none") : t("products_empty_filter")}
           </p>
         </div>
       ) : (

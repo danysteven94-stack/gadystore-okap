@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { UserCog, Plus, Loader2, ShieldCheck, Trash2 } from "lucide-react";
+import { useLanguage } from "@/lib/i18n/language-provider";
 
 interface UserSummary {
   id: string;
@@ -11,18 +12,18 @@ interface UserSummary {
   businessCount: number;
 }
 
-const ROLE_LABELS: Record<UserSummary["role"], string> = {
-  admin: "Administratè",
-  gestionnaire: "Jesyonè",
-  caissier: "Kesye",
-};
-
 const SUPER_ADMIN_EMAIL = "danystevenj@gmail.com";
 
 const inputClass =
   "w-full border border-ink/15 dark:border-dark-border bg-white dark:bg-dark-surface rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-forest/30";
 
 export default function UsersPage() {
+  const { t } = useLanguage();
+  const ROLE_LABELS: Record<UserSummary["role"], string> = {
+    admin: t("users_role_label_admin"),
+    gestionnaire: t("users_role_label_manager"),
+    caissier: t("users_role_label_cashier"),
+  };
   const [users, setUsers] = useState<UserSummary[] | null>(null);
   const [currentEmail, setCurrentEmail] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -123,7 +124,7 @@ export default function UsersPage() {
       <main className="max-w-3xl mx-auto px-4 py-16 text-center">
         <ShieldCheck size={28} className="mx-auto mb-3 text-ink/30" />
         <p className="text-sm text-ink/60 dark:text-paper/60">
-          Sèl Administratè prensipal la ka jere itilizatè yo.
+          {t("users_forbidden")}
         </p>
       </main>
     );
@@ -133,16 +134,16 @@ export default function UsersPage() {
     <main className="max-w-3xl mx-auto px-4 lg:px-8 py-8 pb-24">
       <div className="flex items-start justify-between mb-4">
         <div>
-          <h1 className="font-display text-xl lg:text-2xl mb-1">Itilizatè</h1>
+          <h1 className="font-display text-xl lg:text-2xl mb-1">{t("users_title")}</h1>
           <p className="text-sm text-ink/60 dark:text-paper/60">
-            Chak kont gen pwòp antrepriz ak done pa yo — separe konplètman.
+            {t("users_subtitle")}
           </p>
         </div>
         <button
           onClick={() => setShowForm((v) => !v)}
           className="inline-flex items-center gap-2 bg-forest text-paper rounded-full px-4 py-2.5 text-sm font-medium shrink-0"
         >
-          <Plus size={16} /> Nouvo kont
+          <Plus size={16} /> {t("users_new")}
         </button>
       </div>
 
@@ -154,7 +155,7 @@ export default function UsersPage() {
           className="rounded-card border border-ink/10 dark:border-dark-border bg-white dark:bg-dark-surface p-5 mb-6 space-y-4"
         >
           <label className="block">
-            <span className="block text-xs font-medium text-ink/70 dark:text-paper/70 mb-1">Imèl</span>
+            <span className="block text-xs font-medium text-ink/70 dark:text-paper/70 mb-1">{t("users_email")}</span>
             <input
               type="email"
               value={email}
@@ -165,7 +166,7 @@ export default function UsersPage() {
           </label>
           <label className="block">
             <span className="block text-xs font-medium text-ink/70 dark:text-paper/70 mb-1">
-              Mo de pas (6+ karaktè)
+              {t("users_password")}
             </span>
             <input
               type="password"
@@ -177,15 +178,15 @@ export default function UsersPage() {
             />
           </label>
           <label className="block">
-            <span className="block text-xs font-medium text-ink/70 dark:text-paper/70 mb-1">Wòl</span>
+            <span className="block text-xs font-medium text-ink/70 dark:text-paper/70 mb-1">{t("users_role")}</span>
             <select
               value={role}
               onChange={(e) => setRole(e.target.value as UserSummary["role"])}
               className={inputClass}
             >
-              <option value="gestionnaire">Jesyonè — vant, stok, faktè</option>
-              <option value="caissier">Kesye — vant, enprime faktè</option>
-              <option value="admin">Administratè — aksè total (pwòp antrepriz)</option>
+              <option value="gestionnaire">{t("users_role_manager")}</option>
+              <option value="caissier">{t("users_role_cashier")}</option>
+              <option value="admin">{t("users_role_admin")}</option>
             </select>
           </label>
           <button
@@ -193,7 +194,7 @@ export default function UsersPage() {
             disabled={saving}
             className="w-full bg-ink text-paper rounded-full py-2.5 text-sm font-medium disabled:opacity-50"
           >
-            {saving ? "Ap kreye..." : "Kreye kont lan"}
+            {saving ? t("users_creating") : t("users_create")}
           </button>
         </form>
       )}
@@ -201,7 +202,7 @@ export default function UsersPage() {
       {users.length === 0 ? (
         <div className="text-center py-16 text-ink/40 dark:text-paper/40">
           <UserCog size={28} className="mx-auto mb-2" />
-          <p className="text-sm">Pa gen lòt itilizatè.</p>
+          <p className="text-sm">{t("users_empty")}</p>
         </div>
       ) : (
         <div className="rounded-card border border-ink/10 dark:border-dark-border bg-white dark:bg-dark-surface overflow-hidden">
@@ -218,11 +219,11 @@ export default function UsersPage() {
                   {u.email}
                   {isSuper && (
                     <span className="ml-2 text-[10px] uppercase tracking-wide text-gold-dark">
-                      Prensipal
+                      {t("users_principal")}
                     </span>
                   )}
                   <span className="block text-xs text-ink/40 dark:text-paper/40">
-                    {ROLE_LABELS[u.role]} · {u.businessCount} antrepriz
+                    {ROLE_LABELS[u.role]} · {u.businessCount} {t("users_businesses_count")}
                   </span>
                 </span>
                 {isSuperAdmin && !isSuper && (

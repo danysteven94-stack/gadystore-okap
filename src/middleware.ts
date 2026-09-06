@@ -17,6 +17,8 @@ export async function middleware(req: NextRequest) {
     "/reports",
     "/backup",
     "/users",
+    "/orders",
+    "/subscriptions",
   ].some(
     (path) => req.nextUrl.pathname.startsWith(path)
   );
@@ -46,6 +48,8 @@ export const config = {
     "/reports/:path*",
     "/backup/:path*",
     "/users/:path*",
+    "/orders/:path*",
+    "/subscriptions/:path*",
     "/login",
   ],
 };

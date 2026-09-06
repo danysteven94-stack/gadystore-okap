@@ -5,11 +5,13 @@ import { useSearchParams } from "next/navigation";
 import { Search, Plus, Users, Phone, Loader2 } from "lucide-react";
 import { BusinessSwitcher } from "@/components/dashboard/business-switcher";
 import { ContactForm, type ContactFormValues } from "@/components/contacts/contact-form";
+import { useLanguage } from "@/lib/i18n/language-provider";
 import type { Business, Customer, Supplier } from "@/types";
 
 type Contact = Customer | Supplier;
 
 function ContactsPageInner() {
+  const { t } = useLanguage();
   const searchParams = useSearchParams();
   const initialKind = searchParams.get("kind") === "supplier" ? "supplier" : "customer";
 
@@ -115,7 +117,7 @@ function ContactsPageInner() {
       <main className="max-w-3xl mx-auto px-4 py-16 text-center">
         <Users size={28} className="mx-auto mb-3 text-ink/30" />
         <p className="text-sm text-ink/60 dark:text-paper/60">
-          Ale nan Tablo Debò a pou kreye premye antrepriz ou anvan.
+          {t("products_need_business")}
         </p>
       </main>
     );
@@ -123,7 +125,7 @@ function ContactsPageInner() {
 
   return (
     <main className="max-w-3xl mx-auto px-4 py-6 pb-24">
-      <h1 className="font-display text-xl mb-4">Kliyan & Founisè</h1>
+      <h1 className="font-display text-xl mb-4">{t("contacts_title")}</h1>
 
       <div className="flex gap-2 mb-4">
         <button
@@ -132,7 +134,7 @@ function ContactsPageInner() {
             kind === "customer" ? "bg-ink text-paper border-ink" : "border-ink/15 dark:border-dark-border text-ink/70 dark:text-paper/70"
           }`}
         >
-          Kliyan
+          {t("contacts_customers")}
         </button>
         <button
           onClick={() => setKind("supplier")}
@@ -140,7 +142,7 @@ function ContactsPageInner() {
             kind === "supplier" ? "bg-ink text-paper border-ink" : "border-ink/15 dark:border-dark-border text-ink/70 dark:text-paper/70"
           }`}
         >
-          Founisè
+          {t("contacts_suppliers")}
         </button>
       </div>
 
@@ -157,14 +159,14 @@ function ContactsPageInner() {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder={kind === "customer" ? "Chèche yon kliyan..." : "Chèche yon founisè..."}
+            placeholder={kind === "customer" ? t("contacts_search_customer") : t("contacts_search_supplier")}
             className="w-full border border-ink/15 dark:border-dark-border bg-white dark:bg-dark-surface rounded-full pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-forest/30"
           />
         </div>
         <button
           onClick={() => setFormTarget("new")}
           className="w-10 h-10 rounded-full bg-ink text-paper flex items-center justify-center shrink-0"
-          aria-label={kind === "customer" ? "Ajoute yon kliyan" : "Ajoute yon founisè"}
+          aria-label={kind === "customer" ? t("contacts_add_customer") : t("contacts_add_supplier")}
         >
           <Plus size={18} />
         </button>
@@ -182,8 +184,8 @@ function ContactsPageInner() {
           <p className="text-sm">
             {contacts.length === 0
               ? kind === "customer"
-                ? "Ou poko gen kliyan. Ajoute premye a."
-                : "Ou poko gen founisè. Ajoute premye a."
+                ? t("contacts_empty_customer")
+                : t("contacts_empty_supplier")
               : "Pa gen rezilta ki koresponn."}
           </p>
         </div>

@@ -1,25 +1,25 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Search, ScanLine } from "lucide-react";
+import { useEffect, useMemo, useState, useCallback } from "react";
+import { Search, ScanLine, Loader2, ShoppingCart } from "lucide-react";
+import { BusinessSwitcher } from "@/components/dashboard/business-switcher";
 import { Cart, type CartItem } from "@/components/pos/cart";
 import { BarcodeScanner } from "@/components/pos/barcode-scanner";
-
-// Catalogue de démonstration — à remplacer par un fetch de /api/products?businessId=
-const CATALOG = [
-  { productId: "p1", name: "Griyo konplè", unitPrice: 850, stock: 12, barcode: "0001" },
-  { productId: "p2", name: "Bwason", unitPrice: 350, stock: 40, barcode: "0002" },
-  { productId: "p3", name: "Pat", unitPrice: 600, stock: 8, barcode: "0003" },
-  { productId: "p4", name: "Diri kole", unitPrice: 500, stock: 20, barcode: "0004" },
-];
-
-const TAX_RATE = 10; // pousantaj — configirab pa antrepriz
+import { useLanguage } from "@/lib/i18n/language-provider";
+import type { Business, Product } from "@/types";
 
 function fmt(n: number) {
   return `${n.toLocaleString("fr-FR")} G`;
 }
 
 export default function POSPage() {
+  const { t } = useLanguage();
+  const [businesses, setBusinesses] = useState<Business[] | null>(null);
+  const [businessId, setBusinessId] = useState<string | null>(null);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loadingProducts, setLoadingProducts] = useState(false);
+  const [taxRate, setTaxRate] = useState(0);
+
   const [query, setQuery] = useState("");
   const [cart, setCart] = useState<CartItem[]>([]);
   const [showScanner, setShowScanner] = useState(false);
@@ -28,29 +28,57 @@ export default function POSPage() {
   >("cash");
   const [status, setStatus] = useState<string | null>(null);
 
+  useEffect(() => {
+    fetch("/api/businesses")
+      .then((res) => res.json())
+      .then((data) => {
+        setBusinesses(data.businesses ?? []);
+        if (data.businesses?.length) {
+          setBusinessId(data.businesses[0].id);
+          setTaxRate(data.businesses[0].taxRate ?? 0);
+        }
+      })
+      .catch(() => setBusinesses([]));
+  }, []);
+
+  const loadProducts = useCallback(async () => {
+    if (!businessId) return;
+    setLoadingProducts(true);
+    try {
+      const res = await fetch(`/api/products?businessId=${businessId}`);
+      const data = await res.json();
+      setProducts((data.products ?? []).filter(Boolean));
+    } catch {
+      setProducts([]);
+    }
+    setLoadingProducts(false);
+  }, [businessId]);
+
+  useEffect(() => {
+    loadProducts();
+    setCart([]);
+  }, [loadProducts]);
+
   const results = useMemo(
-    () =>
-      CATALOG.filter((p) =>
-        p.name.toLowerCase().includes(query.toLowerCase())
-      ),
-    [query]
+    () => products.filter((p) => p.name.toLowerCase().includes(query.toLowerCase())),
+    [products, query]
   );
 
-  function addToCart(product: (typeof CATALOG)[number]) {
+  function addToCart(product: Product) {
     setCart((prev) => {
-      const existing = prev.find((i) => i.productId === product.productId);
+      const existing = prev.find((i) => i.productId === product.id);
       if (existing) {
         if (existing.qty >= product.stock) return prev;
         return prev.map((i) =>
-          i.productId === product.productId ? { ...i, qty: i.qty + 1 } : i
+          i.productId === product.id ? { ...i, qty: i.qty + 1 } : i
         );
       }
       return [
         ...prev,
         {
-          productId: product.productId,
+          productId: product.id,
           name: product.name,
-          unitPrice: product.unitPrice,
+          unitPrice: product.sellPrice,
           qty: 1,
           stock: product.stock,
         },
@@ -59,7 +87,7 @@ export default function POSPage() {
   }
 
   function handleScan(barcode: string) {
-    const product = CATALOG.find((p) => p.barcode === barcode);
+    const product = products.find((p) => p.barcode === barcode);
     setShowScanner(false);
     if (product) {
       addToCart(product);
@@ -72,20 +100,14 @@ export default function POSPage() {
   function increase(productId: string) {
     setCart((prev) =>
       prev.map((i) =>
-        i.productId === productId && i.qty < i.stock
-          ? { ...i, qty: i.qty + 1 }
-          : i
+        i.productId === productId && i.qty < i.stock ? { ...i, qty: i.qty + 1 } : i
       )
     );
   }
 
   function decrease(productId: string) {
     setCart((prev) =>
-      prev
-        .map((i) =>
-          i.productId === productId ? { ...i, qty: i.qty - 1 } : i
-        )
-        .filter((i) => i.qty > 0)
+      prev.map((i) => (i.productId === productId ? { ...i, qty: i.qty - 1 } : i)).filter((i) => i.qty > 0)
     );
   }
 
@@ -94,19 +116,19 @@ export default function POSPage() {
   }
 
   const subtotal = cart.reduce((sum, i) => sum + i.qty * i.unitPrice, 0);
-  const tax = (subtotal * TAX_RATE) / 100;
+  const tax = (subtotal * taxRate) / 100;
   const total = subtotal + tax;
 
   async function checkout() {
-    if (cart.length === 0) return;
-    setStatus("Ap anrejistre vant lan...");
+    if (cart.length === 0 || !businessId) return;
+    setStatus(t("pos_processing"));
 
     try {
       const res = await fetch("/api/sales", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          businessId: "demo-business-id",
+          businessId,
           items: cart.map((i) => ({
             productId: i.productId,
             name: i.name,
@@ -114,7 +136,7 @@ export default function POSPage() {
             unitPrice: i.unitPrice,
           })),
           discount: 0,
-          taxRate: TAX_RATE,
+          taxRate,
           paymentMethod,
         }),
       });
@@ -126,17 +148,48 @@ export default function POSPage() {
       }
 
       setCart([]);
-      setStatus("Vant anrejistre ak siksè! Fakti a disponib.");
+      setStatus(t("pos_success"));
+      await loadProducts();
     } catch {
       setStatus("Erè rezo — eseye ankò.");
     }
   }
 
-  return (
-    <main className="max-w-3xl mx-auto px-4 py-6">
-      <h1 className="font-display text-xl mb-4">Kès (POS)</h1>
+  if (businesses === null) {
+    return (
+      <main className="max-w-3xl mx-auto px-4 py-16 flex flex-col items-center text-ink/40 dark:text-paper/40">
+        <Loader2 size={24} className="animate-spin mb-2" />
+        <p className="text-sm">Ap chaje...</p>
+      </main>
+    );
+  }
 
-      <div className="flex gap-2 mb-4">
+  if (businesses.length === 0) {
+    return (
+      <main className="max-w-3xl mx-auto px-4 py-16 text-center">
+        <ShoppingCart size={28} className="mx-auto mb-3 text-ink/30" />
+        <p className="text-sm text-ink/60 dark:text-paper/60">
+          {t("products_need_business")}
+        </p>
+      </main>
+    );
+  }
+
+  return (
+    <main className="max-w-3xl mx-auto px-4 py-6 pb-24">
+      <h1 className="font-display text-xl mb-4">{t("pos_title")}</h1>
+
+      <BusinessSwitcher
+        businesses={businesses.map((b) => ({ id: b.id, name: b.name, icon: b.icon }))}
+        activeId={businessId ?? ""}
+        onSelect={(id) => {
+          setBusinessId(id);
+          setTaxRate(businesses.find((b) => b.id === id)?.taxRate ?? 0);
+        }}
+        showOverviewTab={false}
+      />
+
+      <div className="flex gap-2 my-4">
         <div className="flex-1 relative">
           <Search
             size={16}
@@ -145,47 +198,53 @@ export default function POSPage() {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Chèche yon pwodwi..."
+            placeholder={t("pos_search")}
             className="w-full border border-ink/15 dark:border-dark-border rounded-full pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-forest/30"
           />
         </div>
         <button
           onClick={() => setShowScanner(true)}
-          aria-label="Eskane kòd-baf"
+          aria-label={t("pos_scan")}
           className="w-10 h-10 rounded-full bg-ink text-paper flex items-center justify-center shrink-0"
         >
           <ScanLine size={18} />
         </button>
       </div>
 
-      <div className="grid grid-cols-2 gap-2 mb-6">
-        {results.map((p) => (
-          <button
-            key={p.productId}
-            onClick={() => addToCart(p)}
-            disabled={p.stock === 0}
-            className="text-left rounded-card border border-ink/10 dark:border-dark-border bg-white dark:bg-dark-surface p-3 disabled:opacity-40"
-          >
-            <p className="text-sm font-medium">{p.name}</p>
-            <p className="text-xs text-ink/50 dark:text-paper/50">{fmt(p.unitPrice)}</p>
-          </button>
-        ))}
-      </div>
+      {loadingProducts ? (
+        <div className="flex justify-center py-10 text-ink/40 dark:text-paper/40">
+          <Loader2 size={20} className="animate-spin" />
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-2 mb-6">
+          {results.map((p) => (
+            <button
+              key={p.id}
+              onClick={() => addToCart(p)}
+              disabled={p.stock === 0}
+              className="text-left rounded-card border border-ink/10 dark:border-dark-border bg-white dark:bg-dark-surface p-3 disabled:opacity-40"
+            >
+              <p className="text-sm font-medium">{p.name}</p>
+              <p className="text-xs text-ink/50 dark:text-paper/50">{fmt(p.sellPrice)}</p>
+            </button>
+          ))}
+        </div>
+      )}
 
-      <h2 className="font-display text-base mb-2">Panye</h2>
+      <h2 className="font-display text-base mb-2">{t("pos_cart")}</h2>
       <Cart items={cart} onIncrease={increase} onDecrease={decrease} onRemove={remove} />
 
       <div className="mt-4 space-y-1 text-sm">
         <div className="flex justify-between">
-          <span className="text-ink/60 dark:text-paper/60">Sou-total</span>
+          <span className="text-ink/60 dark:text-paper/60">{t("pos_subtotal")}</span>
           <span className="stat-figure">{fmt(subtotal)}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-ink/60 dark:text-paper/60">Taks ({TAX_RATE}%)</span>
+          <span className="text-ink/60 dark:text-paper/60">{t("pos_tax")} ({taxRate}%)</span>
           <span className="stat-figure">{fmt(tax)}</span>
         </div>
         <div className="flex justify-between text-base font-medium pt-1 border-t border-ink/10 dark:border-dark-border">
-          <span>Total</span>
+          <span>{t("pos_total")}</span>
           <span className="stat-figure">{fmt(total)}</span>
         </div>
       </div>
@@ -201,7 +260,14 @@ export default function POSPage() {
                 : "border-ink/15 dark:border-dark-border text-ink/70 dark:text-paper/70"
             }`}
           >
-            {{ cash: "Cash", card: "Kat", mobile_money: "Mobile Money", mixed: "Miks" }[method]}
+            {
+              {
+                cash: t("pos_cash"),
+                card: t("pos_card"),
+                mobile_money: t("pos_mobile_money"),
+                mixed: t("pos_mixed"),
+              }[method]
+            }
           </button>
         ))}
       </div>
@@ -211,7 +277,7 @@ export default function POSPage() {
         disabled={cart.length === 0}
         className="w-full bg-forest text-paper rounded-full py-3 text-sm font-medium mt-4 disabled:opacity-40"
       >
-        Konfime vant — {fmt(total)}
+        {t("pos_confirm")} — {fmt(total)}
       </button>
 
       {status && <p className="text-sm text-center text-ink/60 dark:text-paper/60 mt-3">{status}</p>}

@@ -3,9 +3,11 @@
 import { useEffect, useState, useCallback } from "react";
 import { DatabaseBackup, Loader2, RotateCcw, ShieldCheck } from "lucide-react";
 import { BusinessSwitcher } from "@/components/dashboard/business-switcher";
+import { useLanguage } from "@/lib/i18n/language-provider";
 import type { Business } from "@/types";
 
 export default function BackupPage() {
+  const { t } = useLanguage();
   const [businesses, setBusinesses] = useState<Business[] | null>(null);
   const [businessId, setBusinessId] = useState<string | null>(null);
   const [backups, setBackups] = useState<string[]>([]);
@@ -51,10 +53,10 @@ export default function BackupPage() {
         body: JSON.stringify({ businessId }),
       });
       if (!res.ok) throw new Error();
-      setStatus("Sovgad kreye ak siksè.");
+      setStatus(t("backup_success"));
       await load();
     } catch {
-      setStatus("Pa ka kreye sovgad la.");
+      setStatus(t("backup_error"));
     }
     setWorking(false);
   }
@@ -71,9 +73,9 @@ export default function BackupPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setStatus(data.error || "Pa ka restore sovgad la.");
+        setStatus(data.error || t("backup_error"));
       } else {
-        setStatus("Restorasyon fèt ak siksè.");
+        setStatus(t("backup_restore_success"));
       }
     } catch {
       setStatus("Erè rezo — eseye ankò.");
@@ -95,7 +97,7 @@ export default function BackupPage() {
       <main className="max-w-3xl mx-auto px-4 py-16 text-center">
         <DatabaseBackup size={28} className="mx-auto mb-3 text-ink/30" />
         <p className="text-sm text-ink/60 dark:text-paper/60">
-          Kreye yon antrepriz anvan pou jere sovgad.
+          {t("backup_need_business")}
         </p>
       </main>
     );
@@ -103,7 +105,7 @@ export default function BackupPage() {
 
   return (
     <main className="max-w-3xl mx-auto px-4 lg:px-8 py-8 pb-24">
-      <h1 className="font-display text-xl lg:text-2xl mb-4">Sovgad</h1>
+      <h1 className="font-display text-xl lg:text-2xl mb-4">{t("backup_title")}</h1>
 
       <BusinessSwitcher
         businesses={businesses.map((b) => ({ id: b.id, name: b.name, icon: b.icon }))}
@@ -115,26 +117,26 @@ export default function BackupPage() {
       <div className="rounded-card border border-ink/10 dark:border-dark-border bg-white dark:bg-dark-surface p-5 my-5 text-center">
         <ShieldCheck size={28} className="mx-auto mb-2 text-forest" />
         <p className="text-sm text-ink/60 dark:text-paper/60 mb-4">
-          Yon sovgad otomatik fèt chak jou. Ou ka tou kreye yonn manyèlman kounye a.
+          {t("backup_description")}
         </p>
         <button
           onClick={handleBackupNow}
           disabled={working}
           className="inline-flex items-center gap-2 bg-forest text-paper rounded-full px-5 py-2.5 text-sm font-medium disabled:opacity-50"
         >
-          {working ? "Ap travay..." : "Fè sovgad kounye a"}
+          {working ? t("backup_working") : t("backup_now")}
         </button>
         {status && <p className="text-xs text-ink/50 dark:text-paper/50 mt-3">{status}</p>}
       </div>
 
-      <h2 className="font-display text-base mb-2">Istorik sovgad</h2>
+      <h2 className="font-display text-base mb-2">{t("backup_history")}</h2>
       {loading ? (
         <div className="flex justify-center py-10 text-ink/40 dark:text-paper/40">
           <Loader2 size={20} className="animate-spin" />
         </div>
       ) : backups.length === 0 ? (
         <p className="text-sm text-center text-ink/40 dark:text-paper/40 py-10">
-          Poko gen sovgad pou antrepriz sa a.
+          {t("backup_empty")}
         </p>
       ) : (
         <div className="rounded-card border border-ink/10 dark:border-dark-border bg-white dark:bg-dark-surface overflow-hidden">
@@ -151,7 +153,7 @@ export default function BackupPage() {
                 disabled={working}
                 className="flex items-center gap-1 text-xs font-medium text-forest disabled:opacity-50"
               >
-                <RotateCcw size={13} /> Restore
+                <RotateCcw size={13} /> {t("backup_restore")}
               </button>
             </div>
           ))}

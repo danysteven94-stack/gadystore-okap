@@ -2,9 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
+import { useLanguage } from "@/lib/i18n/language-provider";
 
 export function LogoutButton({ className }: { className?: string }) {
   const router = useRouter();
+  const { t } = useLanguage();
 
   async function handleLogout() {
     try {
@@ -19,7 +21,7 @@ export function LogoutButton({ className }: { className?: string }) {
   return (
     <button onClick={handleLogout} className={className}>
       <LogOut size={17} strokeWidth={1.75} />
-      Dekonekte
+      {t("nav_logout")}
     </button>
   );
 }

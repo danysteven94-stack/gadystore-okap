@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { X, Warehouse, Ship, Cake, Smartphone, MonitorPlay, Store, Trash2 } from "lucide-react";
+import { useLanguage } from "@/lib/i18n/language-provider";
 
 export interface BusinessFormValues {
   id?: string;
@@ -35,6 +36,7 @@ const inputClass =
 const EMPTY: BusinessFormValues = { name: "", icon: "store", currency: "HTG", taxRate: 0, tags: [] };
 
 export function BusinessForm({ initial, onSave, onDelete, onClose, saving }: Props) {
+  const { t } = useLanguage();
   const [values, setValues] = useState<BusinessFormValues>(initial ?? EMPTY);
   const [tagsInput, setTagsInput] = useState((initial?.tags ?? []).join(", "));
   const isEditing = !!initial?.id;
@@ -58,9 +60,9 @@ export function BusinessForm({ initial, onSave, onDelete, onClose, saving }: Pro
       <div className="w-full sm:max-w-sm bg-paper dark:bg-dark-bg rounded-t-2xl sm:rounded-card max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between px-5 py-4 border-b border-ink/10 dark:border-dark-border sticky top-0 bg-paper dark:bg-dark-bg">
           <h2 className="font-display text-lg">
-            {isEditing ? "Modifye antrepriz" : "Ajoute yon antrepriz"}
+            {isEditing ? t("business_form_edit_title") : t("business_form_create_title")}
           </h2>
-          <button onClick={onClose} aria-label="Fèmen">
+          <button onClick={onClose} aria-label={t("common_close")}>
             <X size={20} />
           </button>
         </div>
@@ -68,7 +70,7 @@ export function BusinessForm({ initial, onSave, onDelete, onClose, saving }: Pro
         <form onSubmit={handleSubmit} className="px-5 py-4">
           <label className="block mb-3">
             <span className="block text-xs font-medium text-ink/70 dark:text-paper/70 mb-1">
-              Non antrepriz
+              {t("business_form_name")}
             </span>
             <input
               className={inputClass}
@@ -81,7 +83,7 @@ export function BusinessForm({ initial, onSave, onDelete, onClose, saving }: Pro
           </label>
 
           <span className="block text-xs font-medium text-ink/70 dark:text-paper/70 mb-2">
-            Kalite biznis
+            {t("business_form_type")}
           </span>
           <div className="grid grid-cols-3 gap-2 mb-4">
             {ICON_OPTIONS.map(({ key, label, Icon }) => (
@@ -103,7 +105,7 @@ export function BusinessForm({ initial, onSave, onDelete, onClose, saving }: Pro
 
           <label className="block mb-4">
             <span className="block text-xs font-medium text-ink/70 dark:text-paper/70 mb-1">
-              Tags (separe ak vigil ,)
+              {t("business_form_tags")}
             </span>
             <input
               className={inputClass}
@@ -116,7 +118,7 @@ export function BusinessForm({ initial, onSave, onDelete, onClose, saving }: Pro
           <div className="grid grid-cols-2 gap-3 mb-4">
             <label className="block">
               <span className="block text-xs font-medium text-ink/70 dark:text-paper/70 mb-1">
-                Monnen
+                {t("business_form_currency")}
               </span>
               <select
                 className={inputClass}
@@ -129,7 +131,7 @@ export function BusinessForm({ initial, onSave, onDelete, onClose, saving }: Pro
             </label>
             <label className="block">
               <span className="block text-xs font-medium text-ink/70 dark:text-paper/70 mb-1">
-                Taks (%)
+                {t("business_form_tax")}
               </span>
               <input
                 type="number"
@@ -146,7 +148,7 @@ export function BusinessForm({ initial, onSave, onDelete, onClose, saving }: Pro
               <button
                 type="button"
                 onClick={onDelete}
-                aria-label="Efase antrepriz"
+                aria-label={t("common_delete")}
                 className="w-11 h-11 shrink-0 rounded-full border border-brick/30 text-brick flex items-center justify-center"
               >
                 <Trash2 size={16} />
@@ -157,7 +159,7 @@ export function BusinessForm({ initial, onSave, onDelete, onClose, saving }: Pro
               disabled={saving}
               className="flex-1 bg-ink text-paper rounded-full py-2.5 text-sm font-medium disabled:opacity-50"
             >
-              {saving ? "Ap anrejistre..." : isEditing ? "Anrejistre chanjman" : "Kreye antrepriz la"}
+              {saving ? "Ap anrejistre..." : isEditing ? t("common_save") : t("business_form_create_button")}
             </button>
           </div>
         </form>

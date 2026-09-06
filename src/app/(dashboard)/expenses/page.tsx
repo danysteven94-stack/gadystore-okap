@@ -3,22 +3,23 @@
 import { useEffect, useState, useCallback } from "react";
 import { Plus, Loader2, Receipt } from "lucide-react";
 import { BusinessSwitcher } from "@/components/dashboard/business-switcher";
+import { useLanguage } from "@/lib/i18n/language-provider";
 import type { Business, Expense } from "@/types";
-
-const CATEGORIES: { key: Expense["category"]; label: string }[] = [
-  { key: "salaires", label: "Salè" },
-  { key: "transport", label: "Transpò" },
-  { key: "loyer", label: "Lwaye" },
-  { key: "electricite", label: "Elektrisite" },
-  { key: "internet", label: "Entènèt" },
-  { key: "divers", label: "Divès" },
-];
 
 function fmt(n: number) {
   return `${n.toLocaleString("fr-FR")} G`;
 }
 
 export default function ExpensesPage() {
+  const { t } = useLanguage();
+  const CATEGORIES: { key: Expense["category"]; label: string }[] = [
+    { key: "salaires", label: t("expenses_cat_salaires") },
+    { key: "transport", label: t("expenses_cat_transport") },
+    { key: "loyer", label: t("expenses_cat_loyer") },
+    { key: "electricite", label: t("expenses_cat_electricite") },
+    { key: "internet", label: t("expenses_cat_internet") },
+    { key: "divers", label: t("expenses_cat_divers") },
+  ];
   const [businesses, setBusinesses] = useState<Business[] | null>(null);
   const [businessId, setBusinessId] = useState<string | null>(null);
   const [expenses, setExpenses] = useState<Expense[]>([]);
@@ -100,7 +101,7 @@ export default function ExpensesPage() {
       <main className="max-w-3xl mx-auto px-4 py-16 text-center">
         <Receipt size={28} className="mx-auto mb-3 text-ink/30" />
         <p className="text-sm text-ink/60 dark:text-paper/60">
-          Kreye yon antrepriz anvan pou anrejistre depans.
+          {t("expenses_need_business")}
         </p>
       </main>
     );
@@ -109,12 +110,12 @@ export default function ExpensesPage() {
   return (
     <main className="max-w-3xl mx-auto px-4 lg:px-8 py-8 pb-24">
       <div className="flex items-start justify-between mb-4">
-        <h1 className="font-display text-xl lg:text-2xl">Depans</h1>
+        <h1 className="font-display text-xl lg:text-2xl">{t("expenses_title")}</h1>
         <button
           onClick={() => setShowForm((v) => !v)}
           className="inline-flex items-center gap-2 bg-brick text-paper rounded-full px-4 py-2.5 text-sm font-medium"
         >
-          <Plus size={16} /> Ajoute depans
+          <Plus size={16} /> {t("expenses_add")}
         </button>
       </div>
 
@@ -126,7 +127,7 @@ export default function ExpensesPage() {
       />
 
       <div className="rounded-card p-5 my-5 bg-ink dark:bg-dark-surface text-paper">
-        <p className="text-xs uppercase tracking-wide text-paper/50 mb-1">Total depans jodi a</p>
+        <p className="text-xs uppercase tracking-wide text-paper/50 mb-1">{t("expenses_total_today")}</p>
         <p className="font-display text-2xl">{fmt(total)}</p>
       </div>
 
@@ -137,7 +138,7 @@ export default function ExpensesPage() {
         >
           <label className="block">
             <span className="block text-xs font-medium text-ink/70 dark:text-paper/70 mb-1">
-              Kategori
+              {t("expenses_category")}
             </span>
             <select
               value={category}
@@ -153,7 +154,7 @@ export default function ExpensesPage() {
           </label>
           <label className="block">
             <span className="block text-xs font-medium text-ink/70 dark:text-paper/70 mb-1">
-              Montan (G)
+              {t("expenses_amount")}
             </span>
             <input
               type="number"
@@ -166,7 +167,7 @@ export default function ExpensesPage() {
           </label>
           <label className="block">
             <span className="block text-xs font-medium text-ink/70 dark:text-paper/70 mb-1">
-              Nòt (opsyonèl)
+              {t("expenses_note")}
             </span>
             <input
               value={note}
@@ -179,7 +180,7 @@ export default function ExpensesPage() {
             disabled={saving}
             className="w-full bg-ink text-paper rounded-full py-2.5 text-sm font-medium disabled:opacity-50"
           >
-            {saving ? "Ap anrejistre..." : "Anrejistre depans lan"}
+            {saving ? t("expenses_saving") : t("expenses_submit")}
           </button>
           {error && <p className="text-sm text-brick text-center">{error}</p>}
         </form>
@@ -191,7 +192,7 @@ export default function ExpensesPage() {
         </div>
       ) : expenses.length === 0 ? (
         <p className="text-sm text-center text-ink/40 dark:text-paper/40 py-10">
-          Poko gen depans jodi a.
+          {t("expenses_empty")}
         </p>
       ) : (
         <div className="rounded-card border border-ink/10 dark:border-dark-border bg-white dark:bg-dark-surface overflow-hidden">

@@ -6,6 +6,7 @@ import { BusinessSwitcher } from "@/components/dashboard/business-switcher";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { BusinessBreakdown } from "@/components/dashboard/business-breakdown";
 import { BusinessForm, type BusinessFormValues } from "@/components/business/business-form";
+import { useLanguage } from "@/lib/i18n/language-provider";
 import type { Business, DashboardStats } from "@/types";
 
 function fmt(n: number) {
@@ -13,6 +14,7 @@ function fmt(n: number) {
 }
 
 export default function DashboardPage() {
+  const { t } = useLanguage();
   const [businesses, setBusinesses] = useState<Business[] | null>(null);
   const [activeId, setActiveId] = useState("all");
   const [statsByBusiness, setStatsByBusiness] = useState<Record<string, DashboardStats>>({});
@@ -112,7 +114,7 @@ export default function DashboardPage() {
     return (
       <main className="max-w-3xl mx-auto px-4 py-16 flex flex-col items-center text-ink/40 dark:text-paper/40">
         <Loader2 size={24} className="animate-spin mb-2" />
-        <p className="text-sm">Ap chaje antrepriz ou yo...</p>
+        <p className="text-sm">{t("dashboard_loading")}</p>
       </main>
     );
   }
@@ -121,15 +123,15 @@ export default function DashboardPage() {
   if (businesses.length === 0) {
     return (
       <main className="max-w-3xl mx-auto px-4 py-16 text-center">
-        <p className="font-display text-xl mb-2">Byenveni!</p>
+        <p className="font-display text-xl mb-2">{t("dashboard_welcome")}</p>
         <p className="text-sm text-ink/60 dark:text-paper/60 mb-6">
-          Ou poko gen okenn antrepriz. Kreye premye a pou kòmanse jere ventyoup, stok ak faktè ou.
+          {t("dashboard_no_business")}
         </p>
         <button
           onClick={() => setShowForm(true)}
           className="inline-flex items-center gap-2 bg-ink text-paper rounded-full px-5 py-2.5 text-sm font-medium"
         >
-          <Plus size={16} /> Ajoute premye antrepriz
+          <Plus size={16} /> {t("dashboard_add_first_business")}
         </button>
         {error && <p className="text-sm text-brick mt-4">{error}</p>}
         {showForm && (
@@ -165,7 +167,7 @@ export default function DashboardPage() {
           />
           <button
             onClick={() => setShowForm(true)}
-            aria-label="Ajoute yon antrepriz"
+            aria-label={t("dashboard_add_first_business")}
             className="w-9 h-9 shrink-0 rounded-full border border-ink/15 dark:border-dark-border flex items-center justify-center ml-2"
           >
             <Plus size={16} />
@@ -174,23 +176,23 @@ export default function DashboardPage() {
 
         <div className="mt-6 mb-6 rounded-card p-5 bg-gradient-to-br from-forest to-forest-light text-paper">
           <p className="text-xs uppercase tracking-wide text-gold-light mb-2">
-            Tout Antrepriz — Jodi a
+            {t("dashboard_consolidated")}
           </p>
           <p className="font-display text-2xl mb-3">
             {loadingStats ? "..." : fmt(empireRevenue)}
           </p>
           <p className="text-sm">
-            Pwofi net:{" "}
+            {t("dashboard_profit")}:{" "}
             <span className="stat-figure font-medium">
               {loadingStats ? "..." : fmt(empireProfit)}
             </span>{" "}
             <span className="opacity-60">
-              · {businesses.length} antrepriz aktif
+              · {businesses.length} {t("dashboard_active_businesses")}
             </span>
           </p>
         </div>
 
-        <h2 className="font-display text-base mb-2">Repartisyon pa antrepriz</h2>
+        <h2 className="font-display text-base mb-2">{t("dashboard_breakdown")}</h2>
         <BusinessBreakdown
           businesses={businesses.map((b) => ({
             id: b.id,
@@ -228,7 +230,7 @@ export default function DashboardPage() {
         />
         <button
           onClick={() => setShowForm(true)}
-          aria-label="Ajoute yon antrepriz"
+          aria-label={t("dashboard_add_first_business")}
           className="w-9 h-9 shrink-0 rounded-full border border-ink/15 dark:border-dark-border flex items-center justify-center ml-2"
         >
           <Plus size={16} />
@@ -238,11 +240,10 @@ export default function DashboardPage() {
       <div className="flex items-baseline justify-between mt-6 mb-4">
         <h1 className="font-display text-xl">{activeBusiness.name}</h1>
         <p className="text-xs text-ink/50 dark:text-paper/50">
-          {new Date().toLocaleDateString("fr-FR", {
-            weekday: "long",
-            day: "numeric",
-            month: "long",
-          })}
+          {new Date().toLocaleDateString(
+            "fr-FR",
+            { weekday: "long", day: "numeric", month: "long" }
+          )}
         </p>
       </div>
 
@@ -253,19 +254,19 @@ export default function DashboardPage() {
       ) : (
         <>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
-            <StatCard label="Revni jodi a" value={fmt(stats.todayRevenue)} />
-            <StatCard label="Revni mwa a" value={fmt(stats.monthRevenue)} />
-            <StatCard label="Vant (mwa)" value={String(stats.monthSales)} />
-            <StatCard label="Depans (mwa)" value={fmt(stats.monthExpenses)} />
-            <StatCard label="Pwofi net (mwa)" value={fmt(stats.monthProfit)} accent />
-            <StatCard label="Pwodwi an rupti" value={String(stats.outOfStockCount)} />
-            <StatCard label="Stok fèb" value={String(stats.lowStock.length)} />
-            <StatCard label="Valè stok" value={fmt(stats.stockValue)} />
+            <StatCard label={t("dashboard_today_revenue")} value={fmt(stats.todayRevenue)} />
+            <StatCard label={t("dashboard_month_revenue")} value={fmt(stats.monthRevenue)} />
+            <StatCard label={t("dashboard_month_sales")} value={String(stats.monthSales)} />
+            <StatCard label={t("dashboard_month_expenses")} value={fmt(stats.monthExpenses)} />
+            <StatCard label={t("dashboard_month_profit")} value={fmt(stats.monthProfit)} accent />
+            <StatCard label={t("dashboard_out_of_stock")} value={String(stats.outOfStockCount)} />
+            <StatCard label={t("dashboard_low_stock_count")} value={String(stats.lowStock.length)} />
+            <StatCard label={t("dashboard_stock_value")} value={fmt(stats.stockValue)} />
           </div>
 
           <section className="mb-8">
             <p className="text-[11px] uppercase tracking-wide text-ink/40 dark:text-paper/40 mb-2">
-              Aksè rapid
+              {t("dashboard_quick_access")}
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <a
@@ -276,9 +277,9 @@ export default function DashboardPage() {
                   <ShoppingCart size={18} />
                 </span>
                 <span>
-                  <span className="block text-sm font-medium">Ouvri kès la</span>
+                  <span className="block text-sm font-medium">{t("dashboard_open_pos")}</span>
                   <span className="block text-xs text-ink/50 dark:text-paper/50">
-                    Nouvo vant an kèk segonn
+                    {t("dashboard_open_pos_sub")}
                   </span>
                 </span>
               </a>
@@ -290,9 +291,9 @@ export default function DashboardPage() {
                   <Package size={18} />
                 </span>
                 <span>
-                  <span className="block text-sm font-medium">Jere pwodwi</span>
+                  <span className="block text-sm font-medium">{t("dashboard_manage_products")}</span>
                   <span className="block text-xs text-ink/50 dark:text-paper/50">
-                    Ajoute, modifye, swiv stok
+                    {t("dashboard_manage_products_sub")}
                   </span>
                 </span>
               </a>
@@ -304,9 +305,9 @@ export default function DashboardPage() {
                   <Undo2 size={18} />
                 </span>
                 <span>
-                  <span className="block text-sm font-medium">Retou machandiz</span>
+                  <span className="block text-sm font-medium">{t("dashboard_returns_shortcut")}</span>
                   <span className="block text-xs text-ink/50 dark:text-paper/50">
-                    Antre yon pwodwi ki retounen
+                    {t("dashboard_returns_shortcut_sub")}
                   </span>
                 </span>
               </a>
@@ -315,15 +316,15 @@ export default function DashboardPage() {
 
           <section className="mb-8">
             <div className="flex items-center justify-between mb-2">
-              <h2 className="font-display text-base">Stok fèb</h2>
+              <h2 className="font-display text-base">{t("dashboard_low_stock")}</h2>
               {stats.lowStock.length > 0 && (
-                <span className="text-xs text-brick">{stats.lowStock.length} atik</span>
+                <span className="text-xs text-brick">{stats.lowStock.length}</span>
               )}
             </div>
             <div className="rounded-card border border-ink/10 dark:border-dark-border overflow-hidden bg-white dark:bg-dark-surface">
               {stats.lowStock.length === 0 ? (
                 <p className="text-sm text-ink/40 dark:text-paper/40 text-center py-6">
-                  Tout stok anfòm — oswa ou poko ajoute pwodwi.
+                  {t("dashboard_all_ok")}
                 </p>
               ) : (
                 stats.lowStock.map((item, i) => (
@@ -348,12 +349,12 @@ export default function DashboardPage() {
 
           <section>
             <h2 className="font-display text-base mb-2 flex items-center gap-2">
-              <Trophy size={16} className="text-gold-dark" /> Dènye vant
+              <Trophy size={16} className="text-gold-dark" /> {t("dashboard_recent_sales")}
             </h2>
             <div className="rounded-card border border-ink/10 dark:border-dark-border overflow-hidden bg-white dark:bg-dark-surface">
               {stats.recentSales.length === 0 ? (
                 <p className="text-sm text-ink/40 dark:text-paper/40 text-center py-6">
-                  Poko gen vant jodi a.
+                  {t("dashboard_no_sales_today")}
                 </p>
               ) : (
                 stats.recentSales.map((sale, i) => (
@@ -369,10 +370,10 @@ export default function DashboardPage() {
                     <span className="text-right">
                       <span className="stat-figure block font-medium">{fmt(sale.total)}</span>
                       <span className="block text-xs text-ink/40 dark:text-paper/40">
-                        {new Date(sale.createdAt).toLocaleTimeString("fr-FR", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
+                        {new Date(sale.createdAt).toLocaleTimeString(
+                          "fr-FR",
+                          { hour: "2-digit", minute: "2-digit" }
+                        )}
                       </span>
                     </span>
                   </div>

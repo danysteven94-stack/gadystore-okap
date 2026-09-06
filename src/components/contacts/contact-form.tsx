@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { X, Trash2 } from "lucide-react";
+import { useLanguage } from "@/lib/i18n/language-provider";
 
 export interface ContactFormValues {
   id?: string;
@@ -34,16 +35,17 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 export function ContactForm({ kind, initial, onSave, onDelete, onClose }: Props) {
+  const { t } = useLanguage();
   const [values, setValues] = useState<ContactFormValues>(initial ?? EMPTY);
   const isEditing = !!initial?.id;
   const title =
     kind === "customer"
       ? isEditing
-        ? "Modifye kliyan"
-        : "Ajoute kliyan"
+        ? t("contact_form_edit_customer")
+        : t("contact_form_add_customer")
       : isEditing
-      ? "Modifye founisè"
-      : "Ajoute founisè";
+      ? t("contact_form_edit_supplier")
+      : t("contact_form_add_supplier");
 
   function update<K extends keyof ContactFormValues>(key: K, value: ContactFormValues[K]) {
     setValues((v) => ({ ...v, [key]: value }));
@@ -60,22 +62,22 @@ export function ContactForm({ kind, initial, onSave, onDelete, onClose }: Props)
       <div className="w-full sm:max-w-sm bg-paper dark:bg-dark-bg rounded-t-2xl sm:rounded-card max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between px-5 py-4 border-b border-ink/10 dark:border-dark-border sticky top-0 bg-paper dark:bg-dark-bg">
           <h2 className="font-display text-lg">{title}</h2>
-          <button onClick={onClose} aria-label="Fèmen">
+          <button onClick={onClose} aria-label={t("common_close")}>
             <X size={20} />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="px-5 py-4">
-          <Field label="Non">
+          <Field label={t("contact_form_name")}>
             <input
               className={inputClass}
               value={values.name}
               onChange={(e) => update("name", e.target.value)}
-              placeholder={kind === "customer" ? "Non kliyan an" : "Non founisè a"}
+              placeholder={kind === "customer" ? t("contact_form_name_customer") : t("contact_form_name_supplier")}
               required
             />
           </Field>
-          <Field label="Telefòn">
+          <Field label={t("contact_form_phone")}>
             <input
               className={inputClass}
               value={values.phone}
@@ -83,7 +85,7 @@ export function ContactForm({ kind, initial, onSave, onDelete, onClose }: Props)
               placeholder="Ekz: 3712-3456"
             />
           </Field>
-          <Field label="Imèl (opsyonèl)">
+          <Field label={t("contact_form_email")}>
             <input
               type="email"
               className={inputClass}
@@ -91,7 +93,7 @@ export function ContactForm({ kind, initial, onSave, onDelete, onClose }: Props)
               onChange={(e) => update("email", e.target.value)}
             />
           </Field>
-          <Field label="Adrès (opsyonèl)">
+          <Field label={t("contact_form_address")}>
             <input
               className={inputClass}
               value={values.address}
@@ -104,7 +106,7 @@ export function ContactForm({ kind, initial, onSave, onDelete, onClose }: Props)
               <button
                 type="button"
                 onClick={onDelete}
-                aria-label="Efase"
+                aria-label={t("common_delete")}
                 className="w-11 h-11 shrink-0 rounded-full border border-brick/30 text-brick flex items-center justify-center"
               >
                 <Trash2 size={16} />
@@ -114,7 +116,7 @@ export function ContactForm({ kind, initial, onSave, onDelete, onClose }: Props)
               type="submit"
               className="flex-1 bg-ink text-paper rounded-full py-2.5 text-sm font-medium"
             >
-              {isEditing ? "Anrejistre chanjman" : "Ajoute"}
+              {isEditing ? t("common_save") : t("common_add")}
             </button>
           </div>
         </form>

@@ -3,16 +3,23 @@
 import { useEffect, useState, useCallback } from "react";
 import { Undo2, Loader2, PackageCheck } from "lucide-react";
 import { BusinessSwitcher } from "@/components/dashboard/business-switcher";
+import { useLanguage } from "@/lib/i18n/language-provider";
 import type { Business, Product } from "@/types";
 import type { ReturnRecord } from "@/app/api/returns/route";
-
-const REASONS = ["Pwodwi domaje", "Move pwodwi", "Kliyan chanje lide", "Erè kòmand", "Lòt"];
 
 function fmt(n: number) {
   return `${n.toLocaleString("fr-FR")} G`;
 }
 
 export default function ReturnsPage() {
+  const { t } = useLanguage();
+  const REASONS = [
+    t("returns_reason_damaged"),
+    t("returns_reason_wrong"),
+    t("returns_reason_changed_mind"),
+    t("returns_reason_order_error"),
+    t("returns_reason_other"),
+  ];
   const [businesses, setBusinesses] = useState<Business[] | null>(null);
   const [businessId, setBusinessId] = useState<string | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
@@ -71,7 +78,7 @@ export default function ReturnsPage() {
         setSaving(false);
         return;
       }
-      setStatus("Retou anrejistre — stok mete ajou.");
+      setStatus(t("returns_success"));
       setQty(1);
       setRefundAmount(0);
       await loadData();
@@ -95,7 +102,7 @@ export default function ReturnsPage() {
       <main className="max-w-3xl mx-auto px-4 py-16 text-center">
         <Undo2 size={28} className="mx-auto mb-3 text-ink/30" />
         <p className="text-sm text-ink/60 dark:text-paper/60">
-          Kreye yon antrepriz anvan pou ka anrejistre retou.
+          {t("returns_need_business")}
         </p>
       </main>
     );
@@ -103,9 +110,9 @@ export default function ReturnsPage() {
 
   return (
     <main className="max-w-3xl mx-auto px-4 lg:px-8 py-8 pb-24">
-      <h1 className="font-display text-xl lg:text-2xl mb-1">Retou Machandiz</h1>
+      <h1 className="font-display text-xl lg:text-2xl mb-1">{t("returns_title")}</h1>
       <p className="text-sm text-ink/60 dark:text-paper/60 mb-4">
-        Antre yon pwodwi kliyan retounen — stok la mete ajou otomatikman.
+        {t("returns_subtitle")}
       </p>
 
       <BusinessSwitcher
@@ -121,14 +128,14 @@ export default function ReturnsPage() {
       >
         <label className="block">
           <span className="block text-xs font-medium text-ink/70 dark:text-paper/70 mb-1">
-            Pwodwi
+            {t("returns_product")}
           </span>
           <select
             value={productId}
             onChange={(e) => setProductId(e.target.value)}
             className="w-full border border-ink/15 dark:border-dark-border bg-white dark:bg-dark-surface rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-forest/30"
           >
-            {products.length === 0 && <option value="">Pa gen pwodwi</option>}
+            {products.length === 0 && <option value="">{t("returns_no_products")}</option>}
             {products.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.name} (stok: {p.stock})
@@ -140,7 +147,7 @@ export default function ReturnsPage() {
         <div className="grid grid-cols-2 gap-3">
           <label className="block">
             <span className="block text-xs font-medium text-ink/70 dark:text-paper/70 mb-1">
-              Kantite
+              {t("returns_qty")}
             </span>
             <input
               type="number"
@@ -152,7 +159,7 @@ export default function ReturnsPage() {
           </label>
           <label className="block">
             <span className="block text-xs font-medium text-ink/70 dark:text-paper/70 mb-1">
-              Rembousman (G)
+              {t("returns_refund")}
             </span>
             <input
               type="number"
@@ -166,7 +173,7 @@ export default function ReturnsPage() {
 
         <label className="block">
           <span className="block text-xs font-medium text-ink/70 dark:text-paper/70 mb-1">
-            Rezon
+            {t("returns_reason")}
           </span>
           <select
             value={reason}
@@ -186,13 +193,13 @@ export default function ReturnsPage() {
           disabled={saving || !productId}
           className="w-full bg-brick text-paper rounded-full py-2.5 text-sm font-medium disabled:opacity-50"
         >
-          {saving ? "Ap anrejistre..." : "Konfime retou a"}
+          {saving ? t("returns_saving") : t("returns_confirm")}
         </button>
 
         {status && <p className="text-sm text-center text-ink/60 dark:text-paper/60">{status}</p>}
       </form>
 
-      <h2 className="font-display text-base mb-2">Dènye retou</h2>
+      <h2 className="font-display text-base mb-2">{t("returns_recent")}</h2>
       {loading ? (
         <div className="flex justify-center py-10 text-ink/40 dark:text-paper/40">
           <Loader2 size={20} className="animate-spin" />
@@ -200,7 +207,7 @@ export default function ReturnsPage() {
       ) : returns.length === 0 ? (
         <div className="text-center py-10 text-ink/40 dark:text-paper/40">
           <PackageCheck size={24} className="mx-auto mb-2" />
-          <p className="text-sm">Poko gen retou.</p>
+          <p className="text-sm">{t("returns_empty")}</p>
         </div>
       ) : (
         <div className="rounded-card border border-ink/10 dark:border-dark-border bg-white dark:bg-dark-surface overflow-hidden">

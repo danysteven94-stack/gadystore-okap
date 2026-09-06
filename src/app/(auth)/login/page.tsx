@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useLanguage } from "@/lib/i18n/language-provider";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { t } = useLanguage();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -15,7 +17,7 @@ export default function LoginPage() {
     setError("");
 
     if (!email || password.length < 6) {
-      setError("Antre yon imèl valid ak yon mo de pas (6 karaktè minimòm).");
+      setError(t("login_error_generic"));
       return;
     }
 
@@ -58,13 +60,13 @@ export default function LoginPage() {
         onSubmit={handleSubmit}
         className="w-full max-w-sm bg-white dark:bg-dark-surface border border-ink/10 dark:border-dark-border rounded-card p-8"
       >
-        <h1 className="font-display text-2xl mb-1">Platfòm Antrepriz</h1>
+        <h1 className="font-display text-2xl mb-1">{t("nav_brand_name")}</h1>
         <p className="text-sm text-ink/60 dark:text-paper/60 mb-6">
-          Konekte pou jere antrepriz ou yo.
+          {t("login_title")}
         </p>
 
         <label className="block text-xs font-medium text-ink/70 dark:text-paper/70 mb-1">
-          Imèl
+          {t("login_email")}
         </label>
         <input
           type="email"
@@ -75,7 +77,7 @@ export default function LoginPage() {
         />
 
         <label className="block text-xs font-medium text-ink/70 dark:text-paper/70 mb-1">
-          Mo de pas
+          {t("login_password")}
         </label>
         <input
           type="password"
@@ -96,7 +98,7 @@ export default function LoginPage() {
           disabled={loading}
           className="w-full bg-ink text-paper rounded py-2.5 text-sm font-medium mt-2 disabled:opacity-60"
         >
-          {loading ? "Ap konekte..." : "Konekte"}
+          {loading ? t("login_loading") : t("login_button")}
         </button>
       </form>
     </main>

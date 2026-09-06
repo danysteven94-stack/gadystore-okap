@@ -144,6 +144,11 @@ Voir les commentaires dans `src/lib/upstash.ts` pour la convention de clés
 - [x] **Sistèm Retou Machandiz** (`/returns` + `/api/returns`) — remèt stok
       la otomatikman
 - [x] **Nouvo idantite vizyèl** — "Platfòm Antrepriz", palèt vyolèt/anbrè/rose
+- [x] **Kòmand** (`/orders` + `/api/orders`) — kreye kòmand ak depo, swiv **dè**
+      (solde ki rete), ajoute peman siplemantè jiskaske li peye nèt
+- [x] **Abònman** (`/subscriptions` + `/api/subscriptions`) — pou pwodwi
+      streaming (Netflix, IPTV, elt.), swiv **peman chak mwa**, "Make peye"
+      avanse pwochen dat peman an yon mwa, anile yon abònman
 - [x] **Plizyè kont itilizatè, done separe** — API `/api/users` (GET/POST,
       admin sèlman) + page `/users` pou kreye nouvo kont (Administratè,
       Jesyonè, oswa Kesye). Chak kont `admin` kòmanse ak pwòp `businessIds`

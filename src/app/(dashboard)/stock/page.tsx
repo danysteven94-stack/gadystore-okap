@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { Boxes, Loader2, CheckCircle2, AlertTriangle, XCircle } from "lucide-react";
 import { BusinessSwitcher } from "@/components/dashboard/business-switcher";
+import { useLanguage } from "@/lib/i18n/language-provider";
 import type { Business, Product } from "@/types";
 
 interface StockReport {
@@ -17,17 +18,18 @@ function fmt(n: number) {
   return `${n.toLocaleString("fr-FR")} G`;
 }
 
-const TABS = [
-  { key: "low", label: "Stok Fèb", icon: AlertTriangle, color: "text-gold-dark" },
-  { key: "outOfStock", label: "Rupti", icon: XCircle, color: "text-brick" },
-  { key: "available", label: "Anfòm", icon: CheckCircle2, color: "text-emerald-600" },
-] as const;
-
 export default function StockPage() {
+  const { t } = useLanguage();
+  const TABS = [
+    { key: "low" as const, label: t("stock_low"), icon: AlertTriangle, color: "text-gold-dark" },
+    { key: "outOfStock" as const, label: t("stock_out"), icon: XCircle, color: "text-brick" },
+    { key: "available" as const, label: t("stock_available"), icon: CheckCircle2, color: "text-emerald-600" },
+  ];
+
   const [businesses, setBusinesses] = useState<Business[] | null>(null);
   const [businessId, setBusinessId] = useState<string | null>(null);
   const [report, setReport] = useState<StockReport | null>(null);
-  const [tab, setTab] = useState<(typeof TABS)[number]["key"]>("low");
+  const [tab, setTab] = useState<"low" | "outOfStock" | "available">("low");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -71,7 +73,7 @@ export default function StockPage() {
       <main className="max-w-3xl mx-auto px-4 py-16 text-center">
         <Boxes size={28} className="mx-auto mb-3 text-ink/30" />
         <p className="text-sm text-ink/60 dark:text-paper/60">
-          Kreye yon antrepriz anvan pou wè rapò stok.
+          {t("stock_need_business")}
         </p>
       </main>
     );
@@ -81,7 +83,7 @@ export default function StockPage() {
 
   return (
     <main className="max-w-3xl mx-auto px-4 lg:px-8 py-8 pb-24">
-      <h1 className="font-display text-xl lg:text-2xl mb-4">Rapò Stok</h1>
+      <h1 className="font-display text-xl lg:text-2xl mb-4">{t("stock_title")}</h1>
 
       <BusinessSwitcher
         businesses={businesses.map((b) => ({ id: b.id, name: b.name, icon: b.icon }))}
@@ -98,19 +100,19 @@ export default function StockPage() {
         <>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 my-5">
             <div className="rounded-card border border-ink/10 dark:border-dark-border bg-white dark:bg-dark-surface p-3">
-              <p className="text-xs text-ink/50 dark:text-paper/50 mb-1">Total pwodwi</p>
+              <p className="text-xs text-ink/50 dark:text-paper/50 mb-1">{t("stock_total_products")}</p>
               <p className="stat-figure text-lg font-medium">{report.summary.totalProducts}</p>
             </div>
             <div className="rounded-card border border-ink/10 dark:border-dark-border bg-white dark:bg-dark-surface p-3">
-              <p className="text-xs text-ink/50 dark:text-paper/50 mb-1">Stok fèb</p>
+              <p className="text-xs text-ink/50 dark:text-paper/50 mb-1">{t("stock_low")}</p>
               <p className="stat-figure text-lg font-medium text-gold-dark">{report.summary.lowCount}</p>
             </div>
             <div className="rounded-card border border-ink/10 dark:border-dark-border bg-white dark:bg-dark-surface p-3">
-              <p className="text-xs text-ink/50 dark:text-paper/50 mb-1">Rupti</p>
+              <p className="text-xs text-ink/50 dark:text-paper/50 mb-1">{t("stock_out")}</p>
               <p className="stat-figure text-lg font-medium text-brick">{report.summary.outOfStockCount}</p>
             </div>
             <div className="rounded-card border border-ink/10 dark:border-dark-border bg-white dark:bg-dark-surface p-3">
-              <p className="text-xs text-ink/50 dark:text-paper/50 mb-1">Valè total</p>
+              <p className="text-xs text-ink/50 dark:text-paper/50 mb-1">{t("stock_total_value")}</p>
               <p className="stat-figure text-lg font-medium">{fmt(report.totalStockValue)}</p>
             </div>
           </div>
@@ -134,7 +136,7 @@ export default function StockPage() {
 
           {list.length === 0 ? (
             <p className="text-sm text-center text-ink/40 dark:text-paper/40 py-10">
-              Pa gen pwodwi nan kategori sa a.
+              {t("stock_empty_category")}
             </p>
           ) : (
             <div className="rounded-card border border-ink/10 dark:border-dark-border bg-white dark:bg-dark-surface overflow-hidden">
