@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X, Warehouse, Ship, Cake, Smartphone, MonitorPlay, Store, Trash2 } from "lucide-react";
+import { X, Trash2 } from "lucide-react";
 import { useLanguage } from "@/lib/i18n/language-provider";
 
 export interface BusinessFormValues {
@@ -20,15 +20,6 @@ interface Props {
   onClose: () => void;
   saving?: boolean;
 }
-
-const ICON_OPTIONS: { key: string; label: string; Icon: React.ElementType }[] = [
-  { key: "warehouse", label: "Gwo & Detay", Icon: Warehouse },
-  { key: "ship", label: "Enpòtasyon", Icon: Ship },
-  { key: "cake", label: "Manje/Patisri", Icon: Cake },
-  { key: "smartphone", label: "Elektwonik", Icon: Smartphone },
-  { key: "streaming", label: "Streaming", Icon: MonitorPlay },
-  { key: "store", label: "Lòt", Icon: Store },
-];
 
 const inputClass =
   "w-full border border-ink/15 dark:border-dark-border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-forest/30 bg-white dark:bg-dark-surface";
@@ -81,27 +72,6 @@ export function BusinessForm({ initial, onSave, onDelete, onClose, saving }: Pro
               autoFocus
             />
           </label>
-
-          <span className="block text-xs font-medium text-ink/70 dark:text-paper/70 mb-2">
-            {t("business_form_type")}
-          </span>
-          <div className="grid grid-cols-3 gap-2 mb-4">
-            {ICON_OPTIONS.map(({ key, label, Icon }) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => update("icon", key)}
-                className={`flex flex-col items-center gap-1 rounded-card border p-3 text-[11px] ${
-                  values.icon === key
-                    ? "border-forest bg-forest/5 dark:bg-forest/20"
-                    : "border-ink/10 dark:border-dark-border"
-                }`}
-              >
-                <Icon size={18} />
-                {label}
-              </button>
-            ))}
-          </div>
 
           <label className="block mb-4">
             <span className="block text-xs font-medium text-ink/70 dark:text-paper/70 mb-1">

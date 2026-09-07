@@ -246,6 +246,7 @@ export const dictionary = {
   subscriptions_status_expired: { ht: "Ekspire", fr: "Expiré", en: "Expired" },
   subscriptions_status_cancelled: { ht: "Anile", fr: "Annulé", en: "Cancelled" },
   subscriptions_cancel: { ht: "Anile", fr: "Annuler", en: "Cancel" },
+  choose_business_prompt: { ht: "Chwazi yon antrepriz anwo a pou kontinye.", fr: "Choisissez une entreprise ci-dessus pour continuer.", en: "Choose a business above to continue." },
 
   returns_title: { ht: "Retou Machandiz", fr: "Retours marchandise", en: "Merchandise Returns" },
   returns_subtitle: { ht: "Antre yon pwodwi kliyan retounen — stok la mete ajou otomatikman.", fr: "Enregistrez un produit retourné par un client — le stock est mis à jour automatiquement.", en: "Log a product returned by a customer — stock updates automatically." },

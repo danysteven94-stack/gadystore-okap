@@ -33,10 +33,6 @@ export default function POSPage() {
       .then((res) => res.json())
       .then((data) => {
         setBusinesses(data.businesses ?? []);
-        if (data.businesses?.length) {
-          setBusinessId(data.businesses[0].id);
-          setTaxRate(data.businesses[0].taxRate ?? 0);
-        }
       })
       .catch(() => setBusinesses([]));
   }, []);
@@ -170,6 +166,22 @@ export default function POSPage() {
         <ShoppingCart size={28} className="mx-auto mb-3 text-ink/30" />
         <p className="text-sm text-ink/60 dark:text-paper/60">
           {t("products_need_business")}
+        </p>
+      </main>
+    );
+  }
+
+  if (!businessId) {
+    return (
+      <main className="max-w-3xl mx-auto px-4 lg:px-8 py-8">
+        <BusinessSwitcher
+          businesses={businesses.map((b) => ({ id: b.id, name: b.name, icon: b.icon }))}
+          activeId=""
+          onSelect={setBusinessId}
+          showOverviewTab={false}
+        />
+        <p className="text-sm text-center text-ink/40 dark:text-paper/40 py-10">
+          {t("choose_business_prompt")}
         </p>
       </main>
     );
