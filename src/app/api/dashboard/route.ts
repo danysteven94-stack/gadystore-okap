@@ -4,6 +4,7 @@ import { verifySession } from "@/lib/auth";
 import type { Expense, Product, Sale } from "@/types";
 
 interface ReturnRecordLite {
+  [key: string]: unknown;
   refundAmount: number;
   createdAt: string;
 }
