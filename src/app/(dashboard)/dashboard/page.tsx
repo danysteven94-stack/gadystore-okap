@@ -64,6 +64,8 @@ export default function DashboardPage() {
                 monthSales: 0,
                 monthExpenses: 0,
                 monthProfit: 0,
+                monthReturns: 0,
+                yearRevenue: 0,
                 outOfStockCount: 0,
                 stockValue: 0,
                 lowStock: [],
@@ -145,14 +147,18 @@ export default function DashboardPage() {
     );
   }
 
-  const empireRevenue = Object.values(statsByBusiness).reduce(
-    (s, b) => s + (b?.todayRevenue ?? 0),
-    0
-  );
-  const empireProfit = Object.values(statsByBusiness).reduce(
-    (s, b) => s + (b?.todayProfit ?? 0),
-    0
-  );
+  const empireStats = {
+    todayRevenue: Object.values(statsByBusiness).reduce((s, b) => s + (b?.todayRevenue ?? 0), 0),
+    monthRevenue: Object.values(statsByBusiness).reduce((s, b) => s + (b?.monthRevenue ?? 0), 0),
+    yearRevenue: Object.values(statsByBusiness).reduce((s, b) => s + (b?.yearRevenue ?? 0), 0),
+    monthSales: Object.values(statsByBusiness).reduce((s, b) => s + (b?.monthSales ?? 0), 0),
+    monthReturns: Object.values(statsByBusiness).reduce((s, b) => s + (b?.monthReturns ?? 0), 0),
+    monthExpenses: Object.values(statsByBusiness).reduce((s, b) => s + (b?.monthExpenses ?? 0), 0),
+    monthProfit: Object.values(statsByBusiness).reduce((s, b) => s + (b?.monthProfit ?? 0), 0),
+    outOfStockCount: Object.values(statsByBusiness).reduce((s, b) => s + (b?.outOfStockCount ?? 0), 0),
+    lowStockCount: Object.values(statsByBusiness).reduce((s, b) => s + (b?.lowStock.length ?? 0), 0),
+    stockValue: Object.values(statsByBusiness).reduce((s, b) => s + (b?.stockValue ?? 0), 0),
+  };
 
   const switcherBusinesses = businesses.map((b) => ({ id: b.id, name: b.name, icon: b.icon }));
 
@@ -178,19 +184,32 @@ export default function DashboardPage() {
           <p className="text-xs uppercase tracking-wide text-gold-light mb-2">
             {t("dashboard_consolidated")}
           </p>
-          <p className="font-display text-2xl mb-3">
-            {loadingStats ? "..." : fmt(empireRevenue)}
+          <p className="font-display text-2xl mb-1">
+            {loadingStats ? "..." : fmt(empireStats.todayRevenue)}
           </p>
-          <p className="text-sm">
-            {t("dashboard_profit")}:{" "}
-            <span className="stat-figure font-medium">
-              {loadingStats ? "..." : fmt(empireProfit)}
-            </span>{" "}
-            <span className="opacity-60">
-              · {businesses.length} {t("dashboard_active_businesses")}
-            </span>
+          <p className="text-sm opacity-70">
+            · {businesses.length} {t("dashboard_active_businesses")}
           </p>
         </div>
+
+        {loadingStats ? (
+          <div className="flex justify-center py-10 text-ink/40 dark:text-paper/40">
+            <Loader2 size={20} className="animate-spin" />
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
+            <StatCard label={t("dashboard_today_revenue")} value={fmt(empireStats.todayRevenue)} />
+            <StatCard label={t("dashboard_month_revenue")} value={fmt(empireStats.monthRevenue)} />
+            <StatCard label={t("dashboard_year_revenue")} value={fmt(empireStats.yearRevenue)} />
+            <StatCard label={t("dashboard_month_sales")} value={String(empireStats.monthSales)} />
+            <StatCard label={t("dashboard_month_returns")} value={fmt(empireStats.monthReturns)} />
+            <StatCard label={t("dashboard_month_expenses")} value={fmt(empireStats.monthExpenses)} />
+            <StatCard label={t("dashboard_month_profit")} value={fmt(empireStats.monthProfit)} accent />
+            <StatCard label={t("dashboard_out_of_stock")} value={String(empireStats.outOfStockCount)} />
+            <StatCard label={t("dashboard_low_stock_count")} value={String(empireStats.lowStockCount)} />
+            <StatCard label={t("dashboard_stock_value")} value={fmt(empireStats.stockValue)} />
+          </div>
+        )}
 
         <h2 className="font-display text-base mb-2">{t("dashboard_breakdown")}</h2>
         <BusinessBreakdown
@@ -256,7 +275,9 @@ export default function DashboardPage() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
             <StatCard label={t("dashboard_today_revenue")} value={fmt(stats.todayRevenue)} />
             <StatCard label={t("dashboard_month_revenue")} value={fmt(stats.monthRevenue)} />
+            <StatCard label={t("dashboard_year_revenue")} value={fmt(stats.yearRevenue)} />
             <StatCard label={t("dashboard_month_sales")} value={String(stats.monthSales)} />
+            <StatCard label={t("dashboard_month_returns")} value={fmt(stats.monthReturns)} />
             <StatCard label={t("dashboard_month_expenses")} value={fmt(stats.monthExpenses)} />
             <StatCard label={t("dashboard_month_profit")} value={fmt(stats.monthProfit)} accent />
             <StatCard label={t("dashboard_out_of_stock")} value={String(stats.outOfStockCount)} />

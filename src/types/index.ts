@@ -82,6 +82,8 @@ export interface DashboardStats {
   monthSales: number;
   monthExpenses: number;
   monthProfit: number;
+  monthReturns: number;
+  yearRevenue: number;
   outOfStockCount: number;
   stockValue: number;
   lowStock: Pick<Product, "id" | "name" | "stock" | "minStock">[];

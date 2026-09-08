@@ -61,6 +61,9 @@ export const dictionary = {
   dashboard_active_businesses: { ht: "antrepriz aktif", fr: "entreprises actives", en: "active businesses" },
   dashboard_combined_revenue: { ht: "chif afè konbine", fr: "chiffre d'affaires combiné", en: "combined revenue" },
   dashboard_consolidated: { ht: "Tout Antrepriz — Jodi a", fr: "Toutes les entreprises — Aujourd'hui", en: "All Businesses — Today" },
+  dashboard_year_revenue: { ht: "Revni ane a", fr: "Revenu de l'année", en: "Revenue this year" },
+  dashboard_month_returns: { ht: "Retou (mwa)", fr: "Retours (mois)", en: "Returns (month)" },
+  dashboard_net_returns: { ht: "Net apre retou", fr: "Net des retours", en: "Net of returns" },
 
   login_title: { ht: "Konekte pou jere antrepriz ou yo.", fr: "Connectez-vous pour gérer vos entreprises.", en: "Log in to manage your businesses." },
   login_email: { ht: "Imèl", fr: "E-mail", en: "Email" },

@@ -138,8 +138,14 @@ export default function POSPage() {
       });
 
       if (!res.ok) {
-        const data = await res.json();
-        setStatus(data.error ?? "Vant lan echwe.");
+        let data: { error?: string; detail?: string } = {};
+        try {
+          data = await res.json();
+        } catch {
+          setStatus(`Erè sèvè (kòd ${res.status}).`);
+          return;
+        }
+        setStatus(data.detail ? `${data.error} — ${data.detail}` : data.error ?? "Vant lan echwe.");
         return;
       }
 

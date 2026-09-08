@@ -3,12 +3,19 @@ import { redis } from "@/lib/upstash";
 import { verifySession } from "@/lib/auth";
 import type { Expense, Product, Sale } from "@/types";
 
-function monthDates(): string[] {
+interface ReturnRecordLite {
+  refundAmount: number;
+  createdAt: string;
+}
+
+function daysFromJan1ToToday(): string[] {
   const now = new Date();
+  const start = new Date(now.getFullYear(), 0, 1);
   const dates: string[] = [];
-  for (let d = 1; d <= now.getDate(); d++) {
-    const date = new Date(now.getFullYear(), now.getMonth(), d);
-    dates.push(date.toISOString().slice(0, 10));
+  const cur = new Date(start);
+  while (cur <= now) {
+    dates.push(cur.toISOString().slice(0, 10));
+    cur.setDate(cur.getDate() + 1);
   }
   return dates;
 }
@@ -24,46 +31,62 @@ export async function GET(req: NextRequest) {
   }
 
   const today = new Date().toISOString().slice(0, 10);
-  const daysThisMonth = monthDates();
+  const currentMonth = today.slice(0, 7); // YYYY-MM
+  const allDates = daysFromJan1ToToday();
 
-  // Kolekte vant ak depans pou chak jou nan mwa a (jodi a enkli)
-  let monthRevenue = 0;
-  let monthSalesCount = 0;
-  let monthExpenses = 0;
-  let todayRevenue = 0;
-  let todaySalesCount = 0;
-  let todayExpenses = 0;
-  let recentSales: { id: string; total: number; createdAt: string }[] = [];
+  // Chaje tout jou an paralèl (pi rapid pase yonn apre lòt) pou n ka kalkile
+  // total jodi a, mwa a, AK ane a nan menm pasaj la.
+  const dayResults = await Promise.all(
+    allDates.map(async (date) => {
+      const saleIds = await redis.lrange(`business:${businessId}:sales:${date}`, 0, -1);
+      const sales = saleIds.length
+        ? await Promise.all(saleIds.map((id) => redis.hgetall<Sale>(`sale:${id}`)))
+        : [];
+      const validSales = sales.filter((s): s is Sale => !!s);
 
-  for (const date of daysThisMonth) {
-    const saleIds = await redis.lrange(`business:${businessId}:sales:${date}`, 0, -1);
-    const sales = saleIds.length
-      ? await Promise.all(saleIds.map((id) => redis.hgetall<Sale>(`sale:${id}`)))
-      : [];
-    const validSales = sales.filter((s): s is Sale => !!s);
-    const dayRevenue = validSales.reduce((sum, s) => sum + s.total, 0);
-    monthRevenue += dayRevenue;
-    monthSalesCount += validSales.length;
+      const expenseIds = await redis.lrange(`business:${businessId}:expenses:${date}`, 0, -1);
+      const expenses = expenseIds.length
+        ? await Promise.all(expenseIds.map((id) => redis.hgetall<Expense>(`expense:${id}`)))
+        : [];
+      const validExpenses = expenses.filter((e): e is Expense => !!e);
 
-    const expenseIds = await redis.lrange(`business:${businessId}:expenses:${date}`, 0, -1);
-    const expenses = expenseIds.length
-      ? await Promise.all(expenseIds.map((id) => redis.hgetall<Expense>(`expense:${id}`)))
-      : [];
-    const dayExpenses = expenses
-      .filter((e): e is Expense => !!e)
-      .reduce((sum, e) => sum + e.amount, 0);
-    monthExpenses += dayExpenses;
+      return {
+        date,
+        revenue: validSales.reduce((sum, s) => sum + s.total, 0),
+        salesCount: validSales.length,
+        expenses: validExpenses.reduce((sum, e) => sum + e.amount, 0),
+        sales: validSales,
+      };
+    })
+  );
 
-    if (date === today) {
-      todayRevenue = dayRevenue;
-      todaySalesCount = validSales.length;
-      todayExpenses = dayExpenses;
-      recentSales = validSales
-        .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
-        .slice(0, 5)
-        .map((s) => ({ id: s.id, total: s.total, createdAt: s.createdAt }));
-    }
-  }
+  const yearRevenue = dayResults.reduce((sum, d) => sum + d.revenue, 0);
+
+  const monthDays = dayResults.filter((d) => d.date.startsWith(currentMonth));
+  const monthRevenueGross = monthDays.reduce((sum, d) => sum + d.revenue, 0);
+  const monthSalesCount = monthDays.reduce((sum, d) => sum + d.salesCount, 0);
+  const monthExpenses = monthDays.reduce((sum, d) => sum + d.expenses, 0);
+
+  const todayEntry = dayResults.find((d) => d.date === today);
+  const todayRevenue = todayEntry?.revenue ?? 0;
+  const todaySalesCount = todayEntry?.salesCount ?? 0;
+  const todayExpenses = todayEntry?.expenses ?? 0;
+  const recentSales = (todayEntry?.sales ?? [])
+    .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
+    .slice(0, 5)
+    .map((s) => ({ id: s.id, total: s.total, createdAt: s.createdAt }));
+
+  // Retou (dènye 200 antre yo) — filtre pou mwa aktyèl la
+  const returnIds = await redis.lrange(`business:${businessId}:returns`, 0, 199);
+  const returns = returnIds.length
+    ? await Promise.all(returnIds.map((id) => redis.hgetall<ReturnRecordLite>(`return:${id}`)))
+    : [];
+  const monthReturns = returns
+    .filter((r): r is ReturnRecordLite => !!r && r.createdAt?.startsWith(currentMonth))
+    .reduce((sum, r) => sum + (r.refundAmount ?? 0), 0);
+
+  const monthRevenue = monthRevenueGross - monthReturns; // net de retou, tankou "Net des retours"
+  const monthProfit = monthRevenue - monthExpenses;
 
   const productIds = await redis.smembers(`business:${businessId}:products`);
   const products = productIds.length
@@ -86,7 +109,9 @@ export async function GET(req: NextRequest) {
     monthRevenue,
     monthSales: monthSalesCount,
     monthExpenses,
-    monthProfit: monthRevenue - monthExpenses,
+    monthProfit,
+    monthReturns,
+    yearRevenue,
     outOfStockCount,
     stockValue,
     lowStock,
