@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { randomUUID } from "crypto";
-import { redis } from "@/lib/upstash";
+import { redis, hsetClean } from "@/lib/upstash";
 import { verifySession } from "@/lib/auth";
 import { pushNotification } from "@/lib/notifications";
 import type { Customer } from "@/types";
@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
 
   const customer: Customer = { id: randomUUID(), ...parsed.data };
 
-  await redis.hset(`customer:${customer.id}`, customer as unknown as Record<string, unknown>);
+  await hsetClean(`customer:${customer.id}`, customer as unknown as Record<string, unknown>);
   await redis.sadd(`business:${customer.businessId}:customers`, customer.id);
   await pushNotification(customer.businessId, "new_customer", `Nouvo kliyan: ${customer.name}.`);
 

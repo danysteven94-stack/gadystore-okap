@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { randomUUID } from "crypto";
-import { redis } from "@/lib/upstash";
+import { redis, hsetClean } from "@/lib/upstash";
 import { verifySession } from "@/lib/auth";
 import { pushNotification } from "@/lib/notifications";
 
@@ -88,7 +88,7 @@ export async function POST(req: NextRequest) {
     createdAt: new Date().toISOString(),
   };
 
-  await redis.hset(`order:${order.id}`, order as unknown as Record<string, unknown>);
+  await hsetClean(`order:${order.id}`, order as unknown as Record<string, unknown>);
   await redis.lpush(`business:${businessId}:orders`, order.id);
 
   if (balance > 0) {

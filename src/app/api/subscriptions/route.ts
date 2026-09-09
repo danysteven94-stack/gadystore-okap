@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { randomUUID } from "crypto";
-import { redis } from "@/lib/upstash";
+import { redis, hsetClean } from "@/lib/upstash";
 import { verifySession } from "@/lib/auth";
 
 export interface Subscription {
@@ -95,7 +95,7 @@ export async function POST(req: NextRequest) {
     createdAt: new Date().toISOString(),
   };
 
-  await redis.hset(
+  await hsetClean(
     `subscription:${subscription.id}`,
     subscription as unknown as Record<string, unknown>
   );

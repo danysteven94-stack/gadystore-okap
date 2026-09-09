@@ -28,3 +28,18 @@ export async function getJSON<T>(key: string): Promise<T | null> {
 export async function setJSON<T>(key: string, value: T): Promise<void> {
   await redis.set(key, value);
 }
+
+/**
+ * Menm bagay ak `redis.hset`, men li retire chan ki gen valè `undefined`
+ * anvan l ekri yo — Upstash rejte kòmand ki gen "null args" si w pa fè sa
+ * (sa rive fasil ak chan opsyonèl tankou customerId, imèl, barcode...).
+ */
+export async function hsetClean(
+  key: string,
+  obj: Record<string, unknown>
+): Promise<void> {
+  const clean = Object.fromEntries(
+    Object.entries(obj).filter(([, v]) => v !== undefined)
+  );
+  await redis.hset(key, clean);
+}

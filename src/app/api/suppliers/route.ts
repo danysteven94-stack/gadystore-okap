@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { randomUUID } from "crypto";
-import { redis } from "@/lib/upstash";
+import { redis, hsetClean } from "@/lib/upstash";
 import { verifySession } from "@/lib/auth";
 import type { Supplier } from "@/types";
 
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
 
   const supplier: Supplier = { id: randomUUID(), ...parsed.data };
 
-  await redis.hset(`supplier:${supplier.id}`, supplier as unknown as Record<string, unknown>);
+  await hsetClean(`supplier:${supplier.id}`, supplier as unknown as Record<string, unknown>);
   await redis.sadd(`business:${supplier.businessId}:suppliers`, supplier.id);
 
   return NextResponse.json({ supplier }, { status: 201 });

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { randomUUID } from "crypto";
-import { redis } from "@/lib/upstash";
+import { redis, hsetClean } from "@/lib/upstash";
 import { verifySession, can } from "@/lib/auth";
 import { notifyLowStock, notifyNewSale } from "@/lib/notifications";
 import type { Product, Sale } from "@/types";
@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
       createdAt: new Date().toISOString(),
     };
 
-    await redis.hset(`sale:${sale.id}`, sale as unknown as Record<string, unknown>);
+    await hsetClean(`sale:${sale.id}`, sale as unknown as Record<string, unknown>);
 
     const today = sale.createdAt.slice(0, 10); // YYYY-MM-DD
     await redis.lpush(`business:${businessId}:sales:${today}`, sale.id);
