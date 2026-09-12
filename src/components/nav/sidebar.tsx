@@ -2,45 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  LayoutDashboard,
-  Building2,
-  Package,
-  Boxes,
-  Users,
-  Truck,
-  ShoppingCart,
-  Undo2,
-  Receipt,
-  BarChart3,
-  DatabaseBackup,
-  UserCog,
-  ClipboardList,
-  MonitorPlay,
-  Moon,
-  Sun,
-} from "lucide-react";
+import { Building2, Moon, Sun } from "lucide-react";
 import { useTheme } from "@/components/providers/theme-provider";
 import { useLanguage } from "@/lib/i18n/language-provider";
-import { LANGUAGES, type TranslationKey } from "@/lib/i18n/dictionary";
+import { LANGUAGES } from "@/lib/i18n/dictionary";
 import { LogoutButton } from "@/components/nav/logout-button";
-
-const NAV: { href: string; icon: React.ElementType; key: TranslationKey }[] = [
-  { href: "/dashboard", icon: LayoutDashboard, key: "nav_dashboard" },
-  { href: "/businesses", icon: Building2, key: "nav_businesses" },
-  { href: "/products", icon: Package, key: "nav_products" },
-  { href: "/stock", icon: Boxes, key: "nav_stock" },
-  { href: "/contacts?kind=customer", icon: Users, key: "nav_customers" },
-  { href: "/contacts?kind=supplier", icon: Truck, key: "nav_suppliers" },
-  { href: "/pos", icon: ShoppingCart, key: "nav_pos" },
-  { href: "/orders", icon: ClipboardList, key: "nav_orders" },
-  { href: "/subscriptions", icon: MonitorPlay, key: "nav_subscriptions" },
-  { href: "/returns", icon: Undo2, key: "nav_returns" },
-  { href: "/expenses", icon: Receipt, key: "nav_expenses" },
-  { href: "/reports", icon: BarChart3, key: "nav_reports" },
-  { href: "/backup", icon: DatabaseBackup, key: "nav_backup" },
-  { href: "/users", icon: UserCog, key: "nav_users" },
-];
+import { NAV_ITEMS } from "@/lib/nav-items";
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -62,7 +29,7 @@ export function Sidebar() {
       </div>
 
       <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-0.5">
-        {NAV.map(({ href, icon: Icon, key }) => {
+        {NAV_ITEMS.map(({ href, icon: Icon, key }) => {
           const active = pathname === href.split("?")[0];
           return (
             <Link

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { redis } from "@/lib/upstash";
 import { verifySession } from "@/lib/auth";
+import { recordSubscriptionSale } from "@/lib/subscription-sale";
 import type { Subscription } from "@/app/api/subscriptions/route";
 
 async function getSession(req: NextRequest) {
@@ -30,11 +31,16 @@ export async function POST(
 
   await redis.hset(`subscription:${id}`, updates);
 
-  const today = new Date().toISOString().slice(0, 10);
-  await redis.lpush(
-    `business:${sub.businessId}:subscription-payments:${today}`,
-    JSON.stringify({ subscriptionId: id, amount: sub.monthlyPrice, date: today })
-  );
+  // Chak peman mansyèl kontabilize kòm yon vant, konsa li antre nan
+  // revni/rapò/dashboard yo.
+  await recordSubscriptionSale({
+    businessId: sub.businessId,
+    subscriptionId: id,
+    productName: sub.productName,
+    amount: sub.monthlyPrice,
+    customerId: sub.customerId,
+    cashierId: session.userId,
+  });
 
   return NextResponse.json({ subscription: { ...sub, ...updates } });
 }

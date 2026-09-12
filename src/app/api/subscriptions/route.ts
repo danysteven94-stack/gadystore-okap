@@ -3,6 +3,7 @@ import { z } from "zod";
 import { randomUUID } from "crypto";
 import { redis, hsetClean } from "@/lib/upstash";
 import { verifySession } from "@/lib/auth";
+import { recordSubscriptionSale } from "@/lib/subscription-sale";
 
 export interface Subscription {
   [key: string]: unknown;
@@ -100,6 +101,16 @@ export async function POST(req: NextRequest) {
     subscription as unknown as Record<string, unknown>
   );
   await redis.sadd(`business:${businessId}:subscriptions`, subscription.id);
+
+  // Premye peman an (dat kòmansman) kontabilize kòm yon vant tou de swit.
+  await recordSubscriptionSale({
+    businessId,
+    subscriptionId: subscription.id,
+    productName,
+    amount: monthlyPrice,
+    customerId,
+    cashierId: session.userId,
+  });
 
   return NextResponse.json({ subscription }, { status: 201 });
 }

@@ -22,31 +22,31 @@ export function RevenueChart({ data }: Props) {
         <AreaChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
           <defs>
             <linearGradient id="revenueFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#211F3D" stopOpacity={0.25} />
-              <stop offset="100%" stopColor="#211F3D" stopOpacity={0} />
+              <stop offset="0%" stopColor="#0F1B3C" stopOpacity={0.25} />
+              <stop offset="100%" stopColor="#0F1B3C" stopOpacity={0} />
             </linearGradient>
             <linearGradient id="profitFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#F2A93B" stopOpacity={0.3} />
-              <stop offset="100%" stopColor="#F2A93B" stopOpacity={0} />
+              <stop offset="0%" stopColor="#F5A623" stopOpacity={0.3} />
+              <stop offset="100%" stopColor="#F5A623" stopOpacity={0} />
             </linearGradient>
           </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="#E4E1F0" vertical={false} />
+          <CartesianGrid strokeDasharray="3 3" stroke="#E2E6EF" vertical={false} />
           <XAxis
             dataKey="date"
-            tick={{ fontSize: 10, fill: "#8A85B0" }}
+            tick={{ fontSize: 10, fill: "#6B8FAE" }}
             axisLine={false}
             tickLine={false}
           />
-          <YAxis tick={{ fontSize: 10, fill: "#8A85B0" }} axisLine={false} tickLine={false} />
+          <YAxis tick={{ fontSize: 10, fill: "#6B8FAE" }} axisLine={false} tickLine={false} />
           <Tooltip
-            contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid #E4E1F0" }}
+            contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid #E2E6EF" }}
             formatter={(value: number) => `${value.toLocaleString("fr-FR")} G`}
           />
           <Area
             type="monotone"
             dataKey="revenue"
             name="Revni"
-            stroke="#211F3D"
+            stroke="#0F1B3C"
             fill="url(#revenueFill)"
             strokeWidth={2}
           />
@@ -54,7 +54,7 @@ export function RevenueChart({ data }: Props) {
             type="monotone"
             dataKey="profit"
             name="Pwofi"
-            stroke="#F2A93B"
+            stroke="#F5A623"
             fill="url(#profitFill)"
             strokeWidth={2}
           />
