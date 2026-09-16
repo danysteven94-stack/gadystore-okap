@@ -152,6 +152,9 @@ Voir les commentaires dans `src/lib/upstash.ts` pour la convention de clés
 - [x] **Peman abònman kontabilize kòm vant** — chak fwa yon abònman kreye
       (premye peman) oswa "Make peye" klike, sa kreye yon vrè `Sale` ki antre
       nan revni/rapò/dashboard yo, olye pou l rete izole
+- [x] **Envantè** (`/inventory` + `/api/inventory`) — konte kantite fizik yo
+      pou chak pwodwi, konpare ak sistèm lan, konfime pou **ajiste stok la
+      otomatikman**, ak yon istorik ki montre diferans ki te jwenn yo
 - [x] **Plizyè kont itilizatè, done separe** — API `/api/users` (GET/POST,
       admin sèlman) + page `/users` pou kreye nouvo kont (Administratè,
       Jesyonè, oswa Kesye). Chak kont `admin` kòmanse ak pwòp `businessIds`
