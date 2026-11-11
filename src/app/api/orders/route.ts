@@ -15,8 +15,16 @@ export interface Order {
   totalAmount: number;
   depositAmount: number;
   balance: number; // dè — sa ki rete pou peye
-  status: "pending" | "partial" | "paid";
+  status: "pending" | "partial" | "paid" | "cancelled";
   createdAt: string;
+  // --- Kòmand ki soti nan boutik piblik la ---
+  source?: "shop";
+  code?: string;
+  customerPhone?: string;
+  customerAddress?: string;
+  note?: string;
+  paymentMethod?: string;
+  items?: { productId: string; name: string; qty: number; unitPrice: number; unit?: string }[];
 }
 
 const orderSchema = z.object({
@@ -54,7 +62,9 @@ export async function GET(req: NextRequest) {
     : [];
 
   const validOrders = orders.filter((o): o is Order => !!o);
-  const totalOutstanding = validOrders.reduce((sum, o) => sum + o.balance, 0);
+  const totalOutstanding = validOrders
+    .filter((o) => o.status !== "cancelled")
+    .reduce((sum, o) => sum + o.balance, 0);
 
   return NextResponse.json({ orders: validOrders, totalOutstanding });
 }

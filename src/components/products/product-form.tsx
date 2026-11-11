@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { X, Trash2 } from "lucide-react";
+import { useRef, useState } from "react";
+import { X, Trash2, ImagePlus, Loader2 } from "lucide-react";
+import { uploadProductImage } from "@/lib/compress-image";
 import { useLanguage } from "@/lib/i18n/language-provider";
 
 export interface ProductFormValues {
@@ -13,6 +14,10 @@ export interface ProductFormValues {
   stock: number;
   minStock: number;
   barcode?: string;
+  imageUrl?: string;
+  published?: boolean;
+  unit?: string;
+  description?: string;
 }
 
 interface Props {
@@ -30,6 +35,10 @@ const EMPTY: ProductFormValues = {
   stock: 0,
   minStock: 5,
   barcode: "",
+  imageUrl: "",
+  published: false,
+  unit: "",
+  description: "",
 };
 
 function Field({
@@ -54,6 +63,24 @@ export function ProductForm({ initial, onSave, onDelete, onClose }: Props) {
   const { t } = useLanguage();
   const [values, setValues] = useState<ProductFormValues>(initial ?? EMPTY);
   const isEditing = !!initial?.id;
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setUploading(true);
+    setUploadError(null);
+    try {
+      const url = await uploadProductImage(file);
+      setValues((v) => ({ ...v, imageUrl: url }));
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : "Pa ka voye foto a.");
+    }
+    setUploading(false);
+  }
 
   function update<K extends keyof ProductFormValues>(
     key: K,
@@ -64,8 +91,12 @@ export function ProductForm({ initial, onSave, onDelete, onClose }: Props) {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!values.name.trim() || !values.category.trim()) return;
-    onSave(values);
+    if (!values.name.trim() || !values.category.trim() || uploading) return;
+    onSave({
+      ...values,
+      imageUrl: values.imageUrl || undefined,
+      published: values.published === true || (values.published as unknown) === "true",
+    });
   }
 
   return (
@@ -81,6 +112,44 @@ export function ProductForm({ initial, onSave, onDelete, onClose }: Props) {
         </div>
 
         <form onSubmit={handleSubmit} className="px-5 py-4">
+          <Field label={t("product_form_photo")}>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => fileRef.current?.click()}
+                disabled={uploading}
+                className="w-24 h-24 shrink-0 rounded-card border border-dashed border-ink/25 dark:border-dark-border overflow-hidden flex flex-col items-center justify-center gap-1 text-ink/50 bg-white dark:bg-dark-surface"
+              >
+                {uploading ? (
+                  <Loader2 size={20} className="animate-spin" />
+                ) : values.imageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={values.imageUrl} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <>
+                    <ImagePlus size={22} />
+                    <span className="text-[10px]">{t("product_form_photo_add")}</span>
+                  </>
+                )}
+              </button>
+              <div className="text-xs space-y-1">
+                {uploading && <p className="text-ink/60 dark:text-paper/60">{t("product_form_photo_uploading")}</p>}
+                {values.imageUrl && !uploading && (
+                  <>
+                    <button type="button" onClick={() => fileRef.current?.click()} className="block font-medium text-forest underline underline-offset-2">
+                      {t("product_form_photo_change")}
+                    </button>
+                    <button type="button" onClick={() => update("imageUrl", "")} className="block text-brick underline underline-offset-2">
+                      {t("product_form_photo_remove")}
+                    </button>
+                  </>
+                )}
+                {uploadError && <p className="text-brick">{uploadError}</p>}
+              </div>
+              <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} className="hidden" />
+            </div>
+          </Field>
+
           <Field label={t("product_form_name")}>
             <input
               className={inputClass}
@@ -143,14 +212,47 @@ export function ProductForm({ initial, onSave, onDelete, onClose }: Props) {
             </Field>
           </div>
 
-          <Field label={t("product_form_barcode")}>
-            <input
+          <div className="grid grid-cols-2 gap-3">
+            <Field label={t("product_form_unit")}>
+              <input
+                className={inputClass}
+                value={values.unit ?? ""}
+                onChange={(e) => update("unit", e.target.value)}
+                placeholder="Ekz: Caisse"
+              />
+            </Field>
+            <Field label={t("product_form_barcode")}>
+              <input
+                className={inputClass}
+                value={values.barcode}
+                onChange={(e) => update("barcode", e.target.value)}
+                placeholder="Ekz: 0001"
+              />
+            </Field>
+          </div>
+
+          <Field label={t("product_form_description")}>
+            <textarea
               className={inputClass}
-              value={values.barcode}
-              onChange={(e) => update("barcode", e.target.value)}
-              placeholder="Ekz: 0001"
+              rows={2}
+              maxLength={500}
+              value={values.description ?? ""}
+              onChange={(e) => update("description", e.target.value)}
             />
           </Field>
+
+          <label className="flex items-start gap-3 rounded-card border border-forest/30 bg-forest/5 px-3 py-3 mb-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={values.published === true || (values.published as unknown) === "true"}
+              onChange={(e) => update("published", e.target.checked)}
+              className="mt-0.5 w-4 h-4 accent-emerald-600"
+            />
+            <span>
+              <span className="block text-sm font-medium">{t("product_form_published")}</span>
+              <span className="block text-xs text-ink/60 dark:text-paper/60">{t("product_form_published_hint")}</span>
+            </span>
+          </label>
 
           <div className="flex gap-2 mt-5 pb-2">
             {isEditing && onDelete && (

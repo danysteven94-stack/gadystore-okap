@@ -30,6 +30,10 @@ export async function POST(
   const order = await redis.hgetall<Order>(`order:${id}`);
   if (!order) return NextResponse.json({ error: "Kòmand pa jwenn." }, { status: 404 });
 
+  if (order.status === "cancelled") {
+    return NextResponse.json({ error: "Kòmand sa a anile." }, { status: 409 });
+  }
+
   const body = await req.json();
   const parsed = paymentSchema.safeParse(body);
   if (!parsed.success) {

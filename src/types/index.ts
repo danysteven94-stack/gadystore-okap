@@ -8,6 +8,12 @@ export interface Business {
   address?: string;
   phone?: string;
   email?: string;
+  // --- Boutik piblik ---
+  slug?: string; // lyen piblik: /shop/{slug}
+  shopEnabled?: boolean;
+  whatsapp?: string; // nimewo WhatsApp (chif sèlman, ak kòd peyi: 50912345678)
+  shopTagline?: string;
+  shopPaymentInfo?: string; // ekz: "MonCash: 3700-0000"
   currency: string; // ex: "HTG", "USD"
   taxRate: number; // pourcentage
   ownerId: string;
@@ -26,6 +32,10 @@ export interface Product {
   minStock: number;
   imageUrl?: string;
   barcode?: string;
+  // --- Boutik piblik ---
+  published?: boolean; // parèt nan boutik piblik la
+  unit?: string; // ekz: "Caisse", "Sak", "Pyès"
+  description?: string;
 }
 
 export interface Sale {

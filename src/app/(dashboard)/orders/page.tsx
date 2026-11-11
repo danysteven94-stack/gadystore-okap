@@ -18,6 +18,7 @@ const STATUS_STYLE: Record<Order["status"], string> = {
   paid: "bg-emerald-100 text-emerald-700",
   partial: "bg-gold/20 text-gold-dark",
   pending: "bg-brick/10 text-brick",
+  cancelled: "bg-ink/10 text-ink/60",
 };
 
 export default function OrdersPage() {
@@ -26,6 +27,7 @@ export default function OrdersPage() {
     paid: t("orders_paid_status"),
     partial: t("orders_partial_status"),
     pending: t("orders_pending_status"),
+    cancelled: t("orders_cancelled_status"),
   };
 
   const [businesses, setBusinesses] = useState<Business[] | null>(null);
@@ -100,6 +102,20 @@ export default function OrdersPage() {
       setError("Erè rezo — eseye ankò.");
     }
     setSaving(false);
+  }
+
+  async function handleCancel(o: Order) {
+    if (!window.confirm(t("orders_cancel_confirm"))) return;
+    try {
+      const res = await fetch(`/api/orders/${o.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "cancel" }),
+      });
+      if (res.ok) await load();
+    } catch {
+      // silans — lis la pa chanje
+    }
   }
 
   async function handleAddPayment(e: React.FormEvent) {
@@ -262,8 +278,31 @@ export default function OrdersPage() {
             >
               <div className="flex items-start justify-between mb-2">
                 <div>
-                  <p className="text-sm font-medium">{o.customerName}</p>
+                  <p className="text-sm font-medium">
+                    {o.customerName}
+                    {o.source === "shop" && (
+                      <span className="ml-2 align-middle inline-block rounded-full bg-forest/15 text-forest px-2 py-0.5 text-[10px] font-medium">
+                        {t("orders_from_shop")} #{o.code}
+                      </span>
+                    )}
+                  </p>
                   <p className="text-xs text-ink/50 dark:text-paper/50">{o.description}</p>
+                  {o.source === "shop" && (
+                    <p className="text-xs text-ink/50 dark:text-paper/50 mt-1">
+                      {o.customerPhone && (
+                        <a
+                          href={`https://wa.me/${o.customerPhone.replace(/\D/g, "")}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-forest underline underline-offset-2"
+                        >
+                          {o.customerPhone}
+                        </a>
+                      )}
+                      {o.customerAddress ? ` · ${o.customerAddress}` : ""}
+                      {o.note ? ` · “${o.note}”` : ""}
+                    </p>
+                  )}
                 </div>
                 <span className={`text-[11px] font-medium px-2.5 py-1 rounded-full ${STATUS_STYLE[o.status]}`}>
                   {STATUS_LABEL[o.status]}
@@ -283,16 +322,28 @@ export default function OrdersPage() {
                   <p className="stat-figure font-medium text-brick">{fmt(o.balance)}</p>
                 </div>
               </div>
-              {o.balance > 0 && (
-                <button
-                  onClick={() => {
-                    setPayTarget(o);
-                    setPayAmount(0);
-                  }}
-                  className="text-xs font-medium text-forest underline underline-offset-2"
-                >
-                  {t("orders_add_payment")}
-                </button>
+              {o.status !== "cancelled" && (
+                <div className="flex gap-4">
+                  {o.balance > 0 && (
+                    <button
+                      onClick={() => {
+                        setPayTarget(o);
+                        setPayAmount(0);
+                      }}
+                      className="text-xs font-medium text-forest underline underline-offset-2"
+                    >
+                      {t("orders_add_payment")}
+                    </button>
+                  )}
+                  {o.source === "shop" && o.status === "pending" && (
+                    <button
+                      onClick={() => handleCancel(o)}
+                      className="text-xs font-medium text-brick underline underline-offset-2"
+                    >
+                      {t("orders_cancel")}
+                    </button>
+                  )}
+                </div>
               )}
             </div>
           ))}

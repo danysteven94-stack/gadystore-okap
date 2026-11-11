@@ -3,6 +3,7 @@ import { z } from "zod";
 import { randomUUID } from "crypto";
 import { redis, hsetClean } from "@/lib/upstash";
 import { verifySession } from "@/lib/auth";
+import { userOwnsBusiness } from "@/lib/shop";
 import type { Product } from "@/types";
 
 const productSchema = z.object({
@@ -13,7 +14,10 @@ const productSchema = z.object({
   sellPrice: z.number().nonnegative(),
   stock: z.number().nonnegative(),
   minStock: z.number().nonnegative(),
-  imageUrl: z.string().url().optional(),
+  imageUrl: z.string().refine((v) => v.startsWith("/api/img/") || /^https?:\/\//.test(v), "URL foto pa valid").optional(),
+  published: z.boolean().optional(),
+  unit: z.string().max(20).optional(),
+  description: z.string().max(500).optional(),
   barcode: z.string().optional(),
 });
 
@@ -29,6 +33,10 @@ export async function GET(req: NextRequest) {
   const businessId = req.nextUrl.searchParams.get("businessId");
   if (!businessId) {
     return NextResponse.json({ error: "businessId obligatwa." }, { status: 400 });
+  }
+
+  if (!(await userOwnsBusiness(session.email, businessId))) {
+    return NextResponse.json({ error: "Aksè refize." }, { status: 403 });
   }
 
   const ids = await redis.smembers(`business:${businessId}:products`);
@@ -49,6 +57,10 @@ export async function POST(req: NextRequest) {
   const parsed = productSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+  }
+
+  if (!(await userOwnsBusiness(session.email, parsed.data.businessId))) {
+    return NextResponse.json({ error: "Aksè refize." }, { status: 403 });
   }
 
   const product: Product = { id: randomUUID(), ...parsed.data };

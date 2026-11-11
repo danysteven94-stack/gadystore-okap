@@ -3,6 +3,7 @@ import { z } from "zod";
 import { redis } from "@/lib/upstash";
 import { verifySession } from "@/lib/auth";
 import { notifyLowStock } from "@/lib/notifications";
+import { userOwnsBusiness } from "@/lib/shop";
 import type { Product } from "@/types";
 
 const updateSchema = z.object({
@@ -12,7 +13,10 @@ const updateSchema = z.object({
   sellPrice: z.number().nonnegative().optional(),
   stock: z.number().nonnegative().optional(),
   minStock: z.number().nonnegative().optional(),
-  imageUrl: z.string().url().optional(),
+  imageUrl: z.string().refine((v) => v.startsWith("/api/img/") || /^https?:\/\//.test(v), "URL foto pa valid").optional(),
+  published: z.boolean().optional(),
+  unit: z.string().max(20).optional(),
+  description: z.string().max(500).optional(),
   barcode: z.string().optional(),
 });
 
@@ -45,6 +49,9 @@ export async function PATCH(
   const { id } = await params;
   const existing = await redis.hgetall<Product>(`product:${id}`);
   if (!existing) return NextResponse.json({ error: "Pwodwi pa jwenn." }, { status: 404 });
+  if (!(await userOwnsBusiness(session.email, existing.businessId))) {
+    return NextResponse.json({ error: "Aksè refize." }, { status: 403 });
+  }
 
   const body = await req.json();
   const parsed = updateSchema.safeParse(body);
@@ -72,6 +79,9 @@ export async function DELETE(
   const { id } = await params;
   const existing = await redis.hgetall<Product>(`product:${id}`);
   if (!existing) return NextResponse.json({ error: "Pwodwi pa jwenn." }, { status: 404 });
+  if (!(await userOwnsBusiness(session.email, existing.businessId))) {
+    return NextResponse.json({ error: "Aksè refize." }, { status: 403 });
+  }
 
   await redis.del(`product:${id}`);
   await redis.srem(`business:${existing.businessId}:products`, id);

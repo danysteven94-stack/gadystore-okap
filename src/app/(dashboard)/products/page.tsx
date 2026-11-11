@@ -233,10 +233,21 @@ export default function ProductsPage() {
               onClick={() => setFormTarget(p)}
               className="w-full text-left rounded-card border border-ink/10 dark:border-dark-border bg-white dark:bg-dark-surface p-4"
             >
-              <div className="flex items-start justify-between mb-2">
-                <div>
+              <div className="flex items-start justify-between mb-2 gap-3">
+                {p.imageUrl && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={p.imageUrl} alt="" className="w-12 h-12 rounded-lg object-cover shrink-0" />
+                )}
+                <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium">{p.name}</p>
-                  <p className="text-xs text-ink/50 dark:text-paper/50">{p.category}</p>
+                  <p className="text-xs text-ink/50 dark:text-paper/50">
+                    {p.category}
+                    {(p.published === true || (p.published as unknown) === "true") && (
+                      <span className="ml-2 inline-block rounded-full bg-forest/15 text-forest px-2 py-0.5 text-[10px] font-medium">
+                        {t("products_in_shop")}
+                      </span>
+                    )}
+                  </p>
                 </div>
                 <div className="text-right">
                   <p className="stat-figure text-sm font-medium">{fmt(p.sellPrice)}</p>

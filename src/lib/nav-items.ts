@@ -14,6 +14,7 @@ import {
   UserCog,
   ClipboardList,
   MonitorPlay,
+  Store,
 } from "lucide-react";
 import type { TranslationKey } from "@/lib/i18n/dictionary";
 
@@ -21,6 +22,7 @@ export const NAV_ITEMS: { href: string; icon: React.ElementType; key: Translatio
   { href: "/dashboard", icon: LayoutDashboard, key: "nav_dashboard" },
   { href: "/businesses", icon: Building2, key: "nav_businesses" },
   { href: "/products", icon: Package, key: "nav_products" },
+  { href: "/shop", icon: Store, key: "nav_shop" },
   { href: "/stock", icon: Boxes, key: "nav_stock" },
   { href: "/inventory", icon: ClipboardCheck, key: "nav_inventory" },
   { href: "/contacts?kind=customer", icon: Users, key: "nav_customers" },
