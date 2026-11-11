@@ -74,6 +74,7 @@ export interface PublicProduct {
 export interface PublicShop {
   slug: string;
   name: string;
+  logoUrl: string | null;
   tagline: string;
   currency: string;
   whatsapp: string | null;
@@ -108,7 +109,8 @@ export async function getPublicShop(slug: string): Promise<PublicShop | null> {
 
   return {
     slug: business.slug || slug,
-    name: business.name,
+    name: ((business.shopName as string) || "").trim() || business.name,
+    logoUrl: (business.shopLogo as string) || null,
     tagline: (business.shopTagline as string) || "Katalòg & Kòmand",
     currency: business.currency || "HTG",
     whatsapp: (business.whatsapp as string) || null,

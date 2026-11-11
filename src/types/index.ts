@@ -12,6 +12,8 @@ export interface Business {
   slug?: string; // lyen piblik: /shop/{slug}
   shopEnabled?: boolean;
   whatsapp?: string; // nimewo WhatsApp (chif sèlman, ak kòd peyi: 50912345678)
+  shopName?: string; // non ki parèt sou boutik la (si vid: non biznis la)
+  shopLogo?: string; // /api/img/{id}
   shopTagline?: string;
   shopPaymentInfo?: string; // ekz: "MonCash: 3700-0000"
   currency: string; // ex: "HTG", "USD"

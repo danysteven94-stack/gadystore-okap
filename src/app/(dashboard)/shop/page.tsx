@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Store, Loader2, Copy, ExternalLink, MessageCircle, Check } from "lucide-react";
+import { Store, Loader2, Copy, ExternalLink, MessageCircle, Check, ImagePlus } from "lucide-react";
+import { uploadProductImage } from "@/lib/compress-image";
 import { BusinessSwitcher } from "@/components/dashboard/business-switcher";
 import { useLanguage } from "@/lib/i18n/language-provider";
 import type { Product } from "@/types";
@@ -13,6 +14,8 @@ interface ShopSettings {
   slug: string;
   shopEnabled: boolean;
   whatsapp: string;
+  shopName: string;
+  shopLogo: string;
   shopTagline: string;
   shopPaymentInfo: string;
   productCount: number;
@@ -28,7 +31,7 @@ export default function ShopPage() {
   const { t } = useLanguage();
   const [shops, setShops] = useState<ShopSettings[] | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [form, setForm] = useState({ slug: "", whatsapp: "", shopTagline: "", shopPaymentInfo: "" });
+  const [form, setForm] = useState({ slug: "", whatsapp: "", shopName: "", shopLogo: "", shopTagline: "", shopPaymentInfo: "" });
   const [products, setProducts] = useState<Product[]>([]);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
@@ -55,6 +58,8 @@ export default function ShopPage() {
     setForm({
       slug: active.slug,
       whatsapp: active.whatsapp,
+      shopName: active.shopName,
+      shopLogo: active.shopLogo,
       shopTagline: active.shopTagline,
       shopPaymentInfo: active.shopPaymentInfo,
     });
@@ -101,6 +106,8 @@ export default function ShopPage() {
       const r = await patch({
         slug: form.slug || undefined,
         whatsapp: form.whatsapp,
+        shopName: form.shopName,
+        shopLogo: form.shopLogo,
         shopTagline: form.shopTagline,
         shopPaymentInfo: form.shopPaymentInfo,
       });
@@ -128,6 +135,21 @@ export default function ShopPage() {
       /* rechaje pou resynchronize */
     }
     await Promise.all([loadProducts(), loadShops()]);
+  }
+
+  const [logoBusy, setLogoBusy] = useState(false);
+  async function handleLogo(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setLogoBusy(true);
+    try {
+      const url = await uploadProductImage(file);
+      setForm((f) => ({ ...f, shopLogo: url }));
+    } catch (err) {
+      setMessage({ ok: false, text: err instanceof Error ? err.message : "Erè foto." });
+    }
+    setLogoBusy(false);
   }
 
   async function publishAll() {
@@ -235,6 +257,31 @@ export default function ShopPage() {
 
           {/* Paramèt */}
           <form onSubmit={saveSettings} className="rounded-card border border-ink/10 dark:border-dark-border bg-white dark:bg-dark-surface p-5 space-y-4">
+            <div>
+              <span className="block text-xs font-medium text-ink/70 dark:text-paper/70 mb-1">{t("shop_logo_label")}</span>
+              <div className="flex items-center gap-3">
+                <label className="w-16 h-16 rounded-full border border-dashed border-ink/25 dark:border-dark-border overflow-hidden flex items-center justify-center cursor-pointer bg-white dark:bg-dark-surface">
+                  {logoBusy ? (
+                    <Loader2 size={18} className="animate-spin" />
+                  ) : form.shopLogo ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={form.shopLogo} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <ImagePlus size={20} className="text-ink/40" />
+                  )}
+                  <input type="file" accept="image/*" className="hidden" onChange={handleLogo} />
+                </label>
+                {form.shopLogo && (
+                  <button type="button" onClick={() => setForm({ ...form, shopLogo: "" })} className="text-xs text-brick underline underline-offset-2">
+                    Retire
+                  </button>
+                )}
+              </div>
+            </div>
+            <label className="block">
+              <span className="block text-xs font-medium text-ink/70 dark:text-paper/70 mb-1">{t("shop_name_label")}</span>
+              <input className={inputClass} maxLength={60} value={form.shopName} onChange={(e) => setForm({ ...form, shopName: e.target.value })} placeholder={active.name} />
+            </label>
             <label className="block">
               <span className="block text-xs font-medium text-ink/70 dark:text-paper/70 mb-1">{t("shop_slug_label")}</span>
               <div className="flex items-center gap-1 text-sm">
