@@ -177,7 +177,23 @@ Voir les commentaires dans `src/lib/upstash.ts` pour la convention de clés
 - [x] **Navigation en bas** (`BottomNav`) reliant Tableau de bord / Kès / Pwodwi
       / Kontak — masquée sur `/login` et `/verify`
 
+- [x] **Boutik piblik (`/boutik/[slug]`)** — chak antrepriz gen pwòp lyen li. Kliyan an
+      wè katalòg la (foto, pri, stok, "Pa disponib" + "Notifye m"), ajoute nan panye,
+      epi voye kòmand lan (non, telefòn, adrès, mòd peman) — pa bezwen kont.
+- [x] **Paj `/shop` (anndan app la)** — louvri/fèmen boutik la, kopye/pataje lyen an
+      sou WhatsApp, chanje non lyen an, nimewo WhatsApp, enstriksyon MonCash/NatCash,
+      epi pibliye/kache chak pwodwi ak yon switch
+- [x] **Foto pwodwi** — voye depi telefòn/galri, konprese nan navigatè a (~900px),
+      estoke nan Upstash (`productimg:{id}`), sèvi pa `/api/img/[id]` (kach 1 an)
+- [x] **Kòmand boutik → `/orders`** — parèt ak badge "Boutik an liy", telefòn (lyen
+      WhatsApp), adrès; stok la rezève otomatikman, epi "Anile" remèt stok la
+- [x] Sekirite: API piblik yo pa janm voye pri acha/stok minimòm; pri yo rekalkile sou
+      sèvè; limit pa IP; chak API pwodwi/boutik verifye ke antrepriz la se pa itilizatè a
+
 ## Prochaines étapes suggérées
+
+- [ ] Peman an liy otomatik (MonCash/NatCash API — bezwen kle machann)
+- [ ] Notifye kliyan yo ki nan `product:{id}:waitlist` lè stok la retounen
 
 - [ ] Traduire les chaînes restantes (formulaires, POS, factures) via `dictionary.ts`
 - [ ] Déploiement Vercel + connexion GitHub
