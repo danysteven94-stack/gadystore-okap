@@ -16,6 +16,7 @@ interface ShopSettings {
   whatsapp: string;
   shopName: string;
   shopLogo: string;
+  shopCover: string;
   shopTagline: string;
   shopPaymentInfo: string;
   productCount: number;
@@ -31,7 +32,7 @@ export default function ShopPage() {
   const { t } = useLanguage();
   const [shops, setShops] = useState<ShopSettings[] | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [form, setForm] = useState({ slug: "", whatsapp: "", shopName: "", shopLogo: "", shopTagline: "", shopPaymentInfo: "" });
+  const [form, setForm] = useState({ slug: "", whatsapp: "", shopName: "", shopLogo: "", shopCover: "", shopTagline: "", shopPaymentInfo: "" });
   const [products, setProducts] = useState<Product[]>([]);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
@@ -60,6 +61,7 @@ export default function ShopPage() {
       whatsapp: String(active.whatsapp ?? ""),
       shopName: active.shopName,
       shopLogo: active.shopLogo,
+      shopCover: active.shopCover ?? "",
       shopTagline: active.shopTagline,
       shopPaymentInfo: active.shopPaymentInfo,
     });
@@ -108,6 +110,7 @@ export default function ShopPage() {
         whatsapp: form.whatsapp,
         shopName: form.shopName,
         shopLogo: form.shopLogo,
+        shopCover: form.shopCover,
         shopTagline: form.shopTagline,
         shopPaymentInfo: form.shopPaymentInfo,
       });
@@ -150,6 +153,21 @@ export default function ShopPage() {
       setMessage({ ok: false, text: err instanceof Error ? err.message : "Erè foto." });
     }
     setLogoBusy(false);
+  }
+
+  const [coverBusy, setCoverBusy] = useState(false);
+  async function handleCover(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setCoverBusy(true);
+    try {
+      const url = await uploadProductImage(file, 1400);
+      setForm((f) => ({ ...f, shopCover: url }));
+    } catch (err) {
+      setMessage({ ok: false, text: err instanceof Error ? err.message : "Erè foto." });
+    }
+    setCoverBusy(false);
   }
 
   async function publishAll() {
@@ -257,6 +275,27 @@ export default function ShopPage() {
 
           {/* Paramèt */}
           <form onSubmit={saveSettings} className="rounded-card border border-ink/10 dark:border-dark-border bg-white dark:bg-dark-surface p-5 space-y-4">
+            <div>
+              <span className="block text-xs font-medium text-ink/70 dark:text-paper/70 mb-1">{t("shop_cover_label")}</span>
+              <label className="relative block h-28 rounded-card border border-dashed border-ink/25 dark:border-dark-border overflow-hidden cursor-pointer bg-white dark:bg-dark-surface">
+                {coverBusy ? (
+                  <span className="absolute inset-0 flex items-center justify-center"><Loader2 size={20} className="animate-spin" /></span>
+                ) : form.shopCover ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={form.shopCover} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="absolute inset-0 flex flex-col items-center justify-center gap-1 text-ink/40 text-xs">
+                    <ImagePlus size={22} /> Ajoute yon imaj laj (pi bon an peyizaj)
+                  </span>
+                )}
+                <input type="file" accept="image/*" className="hidden" onChange={handleCover} />
+              </label>
+              {form.shopCover && (
+                <button type="button" onClick={() => setForm({ ...form, shopCover: "" })} className="mt-1 text-xs text-brick underline underline-offset-2">
+                  Retire
+                </button>
+              )}
+            </div>
             <div>
               <span className="block text-xs font-medium text-ink/70 dark:text-paper/70 mb-1">{t("shop_logo_label")}</span>
               <div className="flex items-center gap-3">

@@ -308,6 +308,7 @@ export const dictionary = {
   shop_copied: { ht: "Kopye!", fr: "Copié !", en: "Copied!" },
   shop_open: { ht: "Louvri", fr: "Ouvrir", en: "Open" },
   shop_share_whatsapp: { ht: "Pataje sou WhatsApp", fr: "Partager sur WhatsApp", en: "Share on WhatsApp" },
+  shop_cover_label: { ht: "Imaj dèyè tèt paj la (kouvèti)", fr: "Image de couverture (fond de l'en-tête)", en: "Cover image (header background)" },
   shop_name_label: { ht: "Non boutik la (sa kliyan yo wè)", fr: "Nom de la boutique (visible par les clients)", en: "Shop name (what customers see)" },
   shop_logo_label: { ht: "Logo boutik la", fr: "Logo de la boutique", en: "Shop logo" },
   shop_slug_label: { ht: "Non nan lyen an", fr: "Nom dans le lien", en: "Name in the link" },
