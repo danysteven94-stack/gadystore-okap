@@ -56,8 +56,8 @@ export default function ShopPage() {
   useEffect(() => {
     if (!active) return;
     setForm({
-      slug: active.slug,
-      whatsapp: active.whatsapp,
+      slug: String(active.slug ?? ""),
+      whatsapp: String(active.whatsapp ?? ""),
       shopName: active.shopName,
       shopLogo: active.shopLogo,
       shopTagline: active.shopTagline,
