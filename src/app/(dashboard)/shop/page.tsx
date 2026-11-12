@@ -24,7 +24,7 @@ interface ShopSettings {
 }
 
 const inputClass =
-  "w-full border border-ink/15 dark:border-dark-border bg-white dark:bg-dark-surface rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-forest/30";
+  "w-full border border-ink/15 dark:border-dark-border bg-white dark:bg-dark-surface rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brick/30";
 
 const isOn = (v: unknown) => v === true || v === "true";
 
@@ -181,7 +181,7 @@ export default function ShopPage() {
 
   if (shops === null) {
     return (
-      <main className="max-w-3xl mx-auto px-4 py-16 flex flex-col items-center text-ink/40 dark:text-paper/40">
+      <main className="max-w-3xl mx-auto px-4 py-16 flex flex-col items-center text-ink/40 dark:text-white/40">
         <Loader2 size={24} className="animate-spin mb-2" />
         <p className="text-sm">Ap chaje...</p>
       </main>
@@ -192,7 +192,7 @@ export default function ShopPage() {
     return (
       <main className="max-w-3xl mx-auto px-4 py-16 text-center">
         <Store size={28} className="mx-auto mb-3 text-ink/30" />
-        <p className="text-sm text-ink/60 dark:text-paper/60">{t("shop_need_business")}</p>
+        <p className="text-sm text-ink/60 dark:text-white/60">{t("shop_need_business")}</p>
       </main>
     );
   }
@@ -212,8 +212,8 @@ export default function ShopPage() {
 
   return (
     <main className="max-w-3xl mx-auto px-4 lg:px-8 py-8 pb-24">
-      <h1 className="font-display text-xl lg:text-2xl mb-1">{t("shop_title")}</h1>
-      <p className="text-sm text-ink/60 dark:text-paper/60 mb-5">{t("shop_subtitle")}</p>
+      <h1 className="font-display font-semibold text-xl lg:text-2xl mb-1">{t("shop_title")}</h1>
+      <p className="text-sm text-ink/60 dark:text-white/60 mb-5">{t("shop_subtitle")}</p>
 
       <BusinessSwitcher
         businesses={shops.map((b) => ({ id: b.id, name: b.name, icon: b.icon }))}
@@ -223,7 +223,7 @@ export default function ShopPage() {
       />
 
       {!active ? (
-        <p className="text-sm text-center text-ink/40 dark:text-paper/40 py-10">{t("choose_business_prompt")}</p>
+        <p className="text-sm text-center text-ink/40 dark:text-white/40 py-10">{t("choose_business_prompt")}</p>
       ) : (
         <div className="mt-5 space-y-5">
           {/* Lyen + switch */}
@@ -231,7 +231,7 @@ export default function ShopPage() {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <p className="text-sm font-medium">{active.shopEnabled ? t("shop_enabled") : t("shop_disabled")}</p>
-                <p className="text-xs text-ink/50 dark:text-paper/50">
+                <p className="text-xs text-ink/50 dark:text-white/50">
                   {active.publishedCount}/{active.productCount} {t("nav_products").toLowerCase()}
                 </p>
               </div>
@@ -239,7 +239,7 @@ export default function ShopPage() {
                 onClick={toggleShop}
                 role="switch"
                 aria-checked={active.shopEnabled}
-                className={`w-12 h-7 rounded-full p-1 transition-colors ${active.shopEnabled ? "bg-forest" : "bg-ink/20"}`}
+                className={`w-12 h-7 rounded-full p-1 transition-colors ${active.shopEnabled ? "bg-brick" : "bg-ink/20"}`}
               >
                 <span className={`block w-5 h-5 rounded-full bg-white transition-transform ${active.shopEnabled ? "translate-x-5" : ""}`} />
               </button>
@@ -247,27 +247,27 @@ export default function ShopPage() {
 
             {active.slug ? (
               <>
-                <p className="text-xs text-ink/50 dark:text-paper/50 mb-1">{t("shop_link")}</p>
+                <p className="text-xs text-ink/50 dark:text-white/50 mb-1">{t("shop_link")}</p>
                 <p className="stat-figure text-sm break-all rounded bg-ink/5 dark:bg-white/5 px-3 py-2 mb-3">{link}</p>
                 <div className="flex flex-wrap gap-2">
-                  <button onClick={copyLink} className="inline-flex items-center gap-1.5 rounded-full border border-ink/15 dark:border-dark-border px-3.5 py-2 text-xs font-medium">
+                  <button onClick={copyLink} className="inline-flex items-center gap-1.5 rounded-md border border-ink/15 dark:border-dark-border px-3.5 py-2 text-xs font-medium">
                     {copied ? <Check size={14} /> : <Copy size={14} />} {copied ? t("shop_copied") : t("shop_copy")}
                   </button>
-                  <a href={link} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 rounded-full border border-ink/15 dark:border-dark-border px-3.5 py-2 text-xs font-medium">
+                  <a href={link} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 rounded-md border border-ink/15 dark:border-dark-border px-3.5 py-2 text-xs font-medium">
                     <ExternalLink size={14} /> {t("shop_open")}
                   </a>
                   <a
                     href={`https://wa.me/?text=${encodeURIComponent(`${active.name} — ${link}`)}`}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex items-center gap-1.5 rounded-full bg-forest text-paper px-3.5 py-2 text-xs font-medium"
+                    className="inline-flex items-center gap-1.5 rounded-md bg-brick hover:bg-brick-dark text-white px-3.5 py-2 text-xs font-medium"
                   >
                     <MessageCircle size={14} /> {t("shop_share_whatsapp")}
                   </a>
                 </div>
               </>
             ) : (
-              <p className="text-xs text-ink/60 dark:text-paper/60">
+              <p className="text-xs text-ink/60 dark:text-white/60">
                 Pouse switch la pou kreye lyen boutik la epi anrejistre paramèt yo.
               </p>
             )}
@@ -276,7 +276,7 @@ export default function ShopPage() {
           {/* Paramèt */}
           <form onSubmit={saveSettings} className="rounded-card border border-ink/10 dark:border-dark-border bg-white dark:bg-dark-surface p-5 space-y-4">
             <div>
-              <span className="block text-xs font-medium text-ink/70 dark:text-paper/70 mb-1">{t("shop_cover_label")}</span>
+              <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">{t("shop_cover_label")}</span>
               <label className="relative block h-28 rounded-card border border-dashed border-ink/25 dark:border-dark-border overflow-hidden cursor-pointer bg-white dark:bg-dark-surface">
                 {coverBusy ? (
                   <span className="absolute inset-0 flex items-center justify-center"><Loader2 size={20} className="animate-spin" /></span>
@@ -297,7 +297,7 @@ export default function ShopPage() {
               )}
             </div>
             <div>
-              <span className="block text-xs font-medium text-ink/70 dark:text-paper/70 mb-1">{t("shop_logo_label")}</span>
+              <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">{t("shop_logo_label")}</span>
               <div className="flex items-center gap-3">
                 <label className="w-16 h-16 rounded-full border border-dashed border-ink/25 dark:border-dark-border overflow-hidden flex items-center justify-center cursor-pointer bg-white dark:bg-dark-surface">
                   {logoBusy ? (
@@ -318,29 +318,29 @@ export default function ShopPage() {
               </div>
             </div>
             <label className="block">
-              <span className="block text-xs font-medium text-ink/70 dark:text-paper/70 mb-1">{t("shop_name_label")}</span>
+              <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">{t("shop_name_label")}</span>
               <input className={inputClass} maxLength={60} value={form.shopName} onChange={(e) => setForm({ ...form, shopName: e.target.value })} placeholder={active.name} />
             </label>
             <label className="block">
-              <span className="block text-xs font-medium text-ink/70 dark:text-paper/70 mb-1">{t("shop_slug_label")}</span>
+              <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">{t("shop_slug_label")}</span>
               <div className="flex items-center gap-1 text-sm">
                 <span className="text-ink/40 shrink-0">/boutik/</span>
                 <input className={inputClass} value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} placeholder="non-biznis-ou" />
               </div>
             </label>
             <label className="block">
-              <span className="block text-xs font-medium text-ink/70 dark:text-paper/70 mb-1">{t("shop_whatsapp_label")}</span>
+              <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">{t("shop_whatsapp_label")}</span>
               <input className={inputClass} inputMode="tel" value={form.whatsapp} onChange={(e) => setForm({ ...form, whatsapp: e.target.value })} placeholder="50937001234" />
             </label>
             <label className="block">
-              <span className="block text-xs font-medium text-ink/70 dark:text-paper/70 mb-1">{t("shop_tagline_label")}</span>
+              <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">{t("shop_tagline_label")}</span>
               <input className={inputClass} maxLength={60} value={form.shopTagline} onChange={(e) => setForm({ ...form, shopTagline: e.target.value })} placeholder="Katalòg & Kòmand" />
             </label>
             <label className="block">
-              <span className="block text-xs font-medium text-ink/70 dark:text-paper/70 mb-1">{t("shop_payment_label")}</span>
+              <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">{t("shop_payment_label")}</span>
               <textarea className={inputClass} rows={3} maxLength={300} value={form.shopPaymentInfo} onChange={(e) => setForm({ ...form, shopPaymentInfo: e.target.value })} placeholder="MonCash: 3700-0000 (Non Biznis)" />
             </label>
-            <button type="submit" disabled={saving} className="w-full bg-ink text-paper rounded-full py-2.5 text-sm font-medium disabled:opacity-50">
+            <button type="submit" disabled={saving} className="w-full bg-brick hover:bg-brick-dark text-white rounded-md py-2.5 text-sm font-medium disabled:opacity-50">
               {saving ? "..." : t("shop_save")}
             </button>
             {message && <p className={`text-sm text-center ${message.ok ? "text-forest" : "text-brick"}`}>{message.text}</p>}
@@ -349,16 +349,16 @@ export default function ShopPage() {
           {/* Pwodwi */}
           <div>
             <div className="flex items-center justify-between mb-1">
-              <h2 className="font-display text-lg">{t("shop_products_heading")}</h2>
+              <h2 className="font-display font-semibold text-lg">{t("shop_products_heading")}</h2>
               {products.length > 0 && (
                 <button onClick={publishAll} className="text-xs font-medium text-forest underline underline-offset-2">
                   {t("shop_publish_all")}
                 </button>
               )}
             </div>
-            <p className="text-xs text-ink/50 dark:text-paper/50 mb-3">{t("shop_products_hint")}</p>
+            <p className="text-xs text-ink/50 dark:text-white/50 mb-3">{t("shop_products_hint")}</p>
             {products.length === 0 ? (
-              <p className="text-sm text-center text-ink/40 dark:text-paper/40 py-8">{t("shop_no_products")}</p>
+              <p className="text-sm text-center text-ink/40 dark:text-white/40 py-8">{t("shop_no_products")}</p>
             ) : (
               <div className="space-y-2">
                 {products.map((p) => {
@@ -373,7 +373,7 @@ export default function ShopPage() {
                       )}
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate">{p.name}</p>
-                        <p className="text-xs text-ink/50 dark:text-paper/50">
+                        <p className="text-xs text-ink/50 dark:text-white/50">
                           {p.stock} {p.unit || ""} · {Number(p.sellPrice).toLocaleString("fr-FR")} G
                           {!p.imageUrl && <span className="text-gold-dark"> · {t("shop_no_photo")}</span>}
                         </p>
@@ -382,7 +382,7 @@ export default function ShopPage() {
                         onClick={() => setPublished(p, !on)}
                         role="switch"
                         aria-checked={on}
-                        className={`w-11 h-6 rounded-full p-0.5 transition-colors shrink-0 ${on ? "bg-forest" : "bg-ink/20"}`}
+                        className={`w-11 h-6 rounded-full p-0.5 transition-colors shrink-0 ${on ? "bg-brick" : "bg-ink/20"}`}
                       >
                         <span className={`block w-5 h-5 rounded-full bg-white transition-transform ${on ? "translate-x-5" : ""}`} />
                       </button>
