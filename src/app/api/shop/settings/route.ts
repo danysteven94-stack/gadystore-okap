@@ -30,13 +30,14 @@ export async function GET(req: NextRequest) {
           id: b.id,
           name: b.name,
           icon: b.icon,
-          slug: b.slug ?? "",
+          slug: String(b.slug ?? ""),
           shopEnabled: isTrue(b.shopEnabled),
-          whatsapp: (b.whatsapp as string) ?? "",
-          shopName: (b.shopName as string) ?? "",
-          shopLogo: (b.shopLogo as string) ?? "",
-          shopTagline: (b.shopTagline as string) ?? "",
-          shopPaymentInfo: (b.shopPaymentInfo as string) ?? "",
+          whatsapp: String(b.whatsapp ?? ""),
+          shopName: String(b.shopName ?? ""),
+          shopLogo: String(b.shopLogo ?? ""),
+          shopCover: String(b.shopCover ?? ""),
+          shopTagline: String(b.shopTagline ?? ""),
+          shopPaymentInfo: String(b.shopPaymentInfo ?? ""),
           productCount: valid.length,
           publishedCount: valid.filter((p) => isTrue(p.published)).length,
         };
@@ -50,9 +51,10 @@ const patchSchema = z.object({
   businessId: z.string(),
   shopEnabled: z.boolean().optional(),
   slug: z.string().min(2).max(40).optional(),
-  whatsapp: z.string().max(20).optional(),
+  whatsapp: z.coerce.string().max(20).optional(),
   shopName: z.string().max(60).optional(),
   shopLogo: z.string().refine((v) => v === "" || v.startsWith("/api/img/")).optional(),
+  shopCover: z.string().refine((v) => v === "" || v.startsWith("/api/img/")).optional(),
   shopTagline: z.string().max(60).optional(),
   shopPaymentInfo: z.string().max(300).optional(),
 });
@@ -76,6 +78,7 @@ export async function PATCH(req: NextRequest) {
   if (rest.whatsapp !== undefined) updates.whatsapp = cleanPhone(rest.whatsapp).replace(/^\+/, "");
   if (rest.shopName !== undefined) updates.shopName = rest.shopName.trim();
   if (rest.shopLogo !== undefined) updates.shopLogo = rest.shopLogo;
+  if (rest.shopCover !== undefined) updates.shopCover = rest.shopCover;
   if (rest.shopTagline !== undefined) updates.shopTagline = rest.shopTagline.trim();
   if (rest.shopPaymentInfo !== undefined) updates.shopPaymentInfo = rest.shopPaymentInfo.trim();
 

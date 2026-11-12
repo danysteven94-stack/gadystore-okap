@@ -28,8 +28,8 @@ export async function compressImage(file: File, maxSize = 900, quality = 0.78): 
   }
 }
 
-export async function uploadProductImage(file: File): Promise<string> {
-  const dataUrl = await compressImage(file);
+export async function uploadProductImage(file: File, maxSize = 900): Promise<string> {
+  const dataUrl = await compressImage(file, maxSize, maxSize > 1000 ? 0.72 : 0.78);
   const res = await fetch("/api/products/image", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
