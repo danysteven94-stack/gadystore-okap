@@ -10,6 +10,15 @@ const secret = new TextEncoder().encode(
   process.env.JWT_SECRET || "changeme-in-production"
 );
 
+// Kont prensipal la (pwopriyetè app la). Se SÈL kont ki ka wè TOUT lòt kont yo.
+export const SUPER_ADMIN_EMAIL = (
+  process.env.SUPER_ADMIN_EMAIL || "danystevenj@gmail.com"
+).toLowerCase();
+
+export function isSuperAdmin(email: string | undefined | null): boolean {
+  return (email ?? "").trim().toLowerCase() === SUPER_ADMIN_EMAIL;
+}
+
 export type UserRole = "admin" | "gestionnaire" | "caissier";
 
 export interface SessionPayload {

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { randomUUID } from "crypto";
 import { redis } from "@/lib/upstash";
-import { verifySession, hashPassword, can, type UserRole } from "@/lib/auth";
+import { verifySession, hashPassword, can, isSuperAdmin, type UserRole } from "@/lib/auth";
 import { generateTempPassword, isTrue } from "@/lib/password";
 
 async function getSession(req: NextRequest) {
@@ -26,6 +26,7 @@ interface UserSummary {
   mustChangePassword: boolean;
   disabled: boolean;
   businessCount: number;
+  createdBy: string;
 }
 
 export async function GET(req: NextRequest) {
@@ -35,6 +36,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Sèl Administrateur ka jere itilizatè." }, { status: 403 });
   }
 
+  // Sèl kont prensipal la wè TOUT kont yo. Lòt administratè yo wè SÈLMAN
+  // kont segondè yo menm yo kreye (pou anplwaye yo) — pa gen lòt kont ki parèt.
+  const isSuper = isSuperAdmin(session.email);
+  const me = session.email.toLowerCase();
   const emails = await redis.smembers("users:all");
   const users: UserSummary[] = emails.length
     ? (
@@ -42,6 +47,8 @@ export async function GET(req: NextRequest) {
           emails.map(async (email) => {
             const record = await redis.hgetall<Record<string, unknown>>(`user:${email}`);
             if (!record || !record.id) return null;
+            const createdBy = record.createdBy ? String(record.createdBy).toLowerCase() : "";
+            if (!isSuper && createdBy !== me) return null;
             const rawIds = record.businessIds as string | string[] | undefined;
             const businessIds: string[] = Array.isArray(rawIds)
               ? rawIds
@@ -56,6 +63,7 @@ export async function GET(req: NextRequest) {
               mustChangePassword: isTrue(record.mustChangePassword),
               disabled: isTrue(record.disabled),
               businessCount: businessIds.length,
+              createdBy,
             };
           })
         )

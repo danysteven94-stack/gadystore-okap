@@ -16,6 +16,7 @@ interface UserSummary {
   mustChangePassword: boolean;
   disabled: boolean;
   businessCount: number;
+  createdBy: string;
 }
 
 interface Credentials {
@@ -357,6 +358,7 @@ export default function UsersPage() {
                 </div>
                 <p className="text-xs text-ink/50 dark:text-paper/50 mt-2">
                   {ROLE_LABELS[u.role]} · {u.businessCount} {t("users_businesses_count")}
+                  {isSuperAdmin && u.createdBy && <> · par {u.createdBy}</>}
                 </p>
 
                 {(canReset || (isSuperAdmin && !isSuper)) && (
