@@ -29,7 +29,7 @@ export default function LoginPage() {
         body: JSON.stringify({ email, password }),
       });
 
-      let data: { error?: string; detail?: string; ok?: boolean } = {};
+      let data: { error?: string; detail?: string; ok?: boolean; mustChangePassword?: boolean } = {};
       try {
         data = await res.json();
       } catch {
@@ -47,7 +47,7 @@ export default function LoginPage() {
         return;
       }
 
-      router.push("/dashboard");
+      router.push(data.mustChangePassword ? "/change-password" : "/dashboard");
     } catch {
       setLoading(false);
       setError("Erè rezo — verifye koneksyon entènèt ou epi eseye ankò.");

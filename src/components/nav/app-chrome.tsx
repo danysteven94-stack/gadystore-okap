@@ -6,7 +6,7 @@ import { Sidebar } from "@/components/nav/sidebar";
 import { MobileTopbar } from "@/components/nav/mobile-topbar";
 import { MobileDrawer } from "@/components/nav/mobile-drawer";
 
-const HIDE_NAV_PREFIXES = ["/login", "/verify", "/boutik"];
+const HIDE_NAV_PREFIXES = ["/login", "/verify", "/boutik", "/change-password"];
 
 export function AppChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
