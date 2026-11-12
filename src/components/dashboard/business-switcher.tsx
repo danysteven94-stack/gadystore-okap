@@ -21,9 +21,9 @@ const ICONS: Record<string, React.ElementType> = {
 };
 
 const ACTIVE =
-  "bg-gradient-to-r from-[#FFC21A] to-[#F5A100] text-night border-transparent shadow-[0_0_18px_rgba(255,194,26,0.35)]";
+  "bg-ink text-white border-ink dark:bg-white dark:text-ink dark:border-white";
 const INACTIVE =
-  "bg-night/60 text-white border-[#F5B800]/50 hover:border-[#F5B800]";
+  "bg-white text-ink border-line hover:border-ink dark:bg-dark-surface dark:text-white dark:border-dark-border dark:hover:border-white";
 
 interface Props {
   businesses: Pick<Business, "id" | "name" | "icon">[];
@@ -50,11 +50,11 @@ export function BusinessSwitcher({
           role="tab"
           aria-selected={activeId === "all"}
           onClick={() => onSelect("all")}
-          className={`flex items-center gap-2 whitespace-nowrap rounded-full px-5 py-2.5 text-[15px] font-semibold transition-colors border ${
+          className={`flex items-center gap-2 whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium transition-colors border ${
             activeId === "all" ? ACTIVE : INACTIVE
           }`}
         >
-          <LayoutGrid size={18} strokeWidth={2} />
+          <LayoutGrid size={16} strokeWidth={1.75} />
           Tout Antrepriz
         </button>
       )}
@@ -67,11 +67,11 @@ export function BusinessSwitcher({
             role="tab"
             aria-selected={active}
             onClick={() => onSelect(b.id)}
-            className={`flex items-center gap-2 whitespace-nowrap rounded-full px-5 py-2.5 text-[15px] font-semibold transition-colors border ${
+            className={`flex items-center gap-2 whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium transition-colors border ${
               active ? ACTIVE : INACTIVE
             }`}
           >
-            <Icon size={18} strokeWidth={2} />
+            <Icon size={16} strokeWidth={1.75} />
             {b.name}
           </button>
         );

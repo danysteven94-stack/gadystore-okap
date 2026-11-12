@@ -171,7 +171,7 @@ function DashboardInner() {
   // Chajman inisyal
   if (businesses === null) {
     return (
-      <main className="max-w-3xl mx-auto px-4 py-16 flex flex-col items-center text-ink/40 dark:text-paper/40">
+      <main className="max-w-3xl mx-auto px-4 py-16 flex flex-col items-center text-ink/40 dark:text-white/40">
         <Loader2 size={24} className="animate-spin mb-2" />
         <p className="text-sm">{t("dashboard_loading")}</p>
       </main>
@@ -182,13 +182,13 @@ function DashboardInner() {
   if (businesses.length === 0) {
     return (
       <main className="max-w-3xl mx-auto px-4 py-16 text-center">
-        <p className="font-display text-xl mb-2">{t("dashboard_welcome")}</p>
-        <p className="text-sm text-ink/60 dark:text-paper/60 mb-6">
+        <p className="text-xl font-semibold mb-2">{t("dashboard_welcome")}</p>
+        <p className="text-sm text-ink/60 dark:text-white/60 mb-6">
           {t("dashboard_no_business")}
         </p>
         <button
           onClick={() => setShowForm(true)}
-          className="inline-flex items-center gap-2 bg-ink text-paper rounded-full px-5 py-2.5 text-sm font-medium"
+          className="inline-flex items-center gap-2 bg-brick text-white rounded-lg px-5 py-2.5 text-sm font-medium"
         >
           <Plus size={16} /> {t("dashboard_add_first_business")}
         </button>
@@ -231,7 +231,7 @@ function DashboardInner() {
           <button
             onClick={() => setShowForm(true)}
             aria-label={t("dashboard_add_first_business")}
-            className="w-11 h-11 shrink-0 rounded-full border-2 border-[#F5B800]/70 text-white flex items-center justify-center ml-2"
+            className="w-10 h-10 shrink-0 rounded-lg border border-ink text-ink dark:border-white dark:text-white hover:bg-ink hover:text-white dark:hover:bg-white dark:hover:text-ink flex items-center justify-center ml-2 transition-colors"
           >
             <Plus size={20} />
           </button>
@@ -246,14 +246,14 @@ function DashboardInner() {
         </div>
 
         {loadingStats ? (
-          <div className="flex justify-center py-10 text-ink/40 dark:text-paper/40">
+          <div className="flex justify-center py-10 text-ink/40 dark:text-white/40">
             <Loader2 size={20} className="animate-spin" />
           </div>
         ) : (
           <StatsGrid s={empireStats} t={t} />
         )}
 
-        <h2 className="font-display text-base mb-2">{t("dashboard_breakdown")}</h2>
+        <h2 className="text-base font-semibold mb-2">{t("dashboard_breakdown")}</h2>
         <BusinessBreakdown
           businesses={businesses.map((b) => ({
             id: b.id,
@@ -292,15 +292,15 @@ function DashboardInner() {
         <button
           onClick={() => setShowForm(true)}
           aria-label={t("dashboard_add_first_business")}
-          className="w-11 h-11 shrink-0 rounded-full border-2 border-[#F5B800]/70 text-white flex items-center justify-center ml-2"
+          className="w-10 h-10 shrink-0 rounded-lg border border-ink text-ink dark:border-white dark:text-white hover:bg-ink hover:text-white dark:hover:bg-white dark:hover:text-ink flex items-center justify-center ml-2 transition-colors"
         >
           <Plus size={20} />
         </button>
       </div>
 
       <div className="flex items-baseline justify-between mt-6 mb-4">
-        <h1 className="font-display text-xl">{activeBusiness.name}</h1>
-        <p className="text-xs text-ink/50 dark:text-paper/50">
+        <h1 className="text-xl font-semibold">{activeBusiness.name}</h1>
+        <p className="text-xs text-ink/50 dark:text-white/50">
           {new Date().toLocaleDateString(
             "fr-FR",
             { weekday: "long", day: "numeric", month: "long" }
@@ -309,7 +309,7 @@ function DashboardInner() {
       </div>
 
       {!stats ? (
-        <div className="flex justify-center py-10 text-ink/40 dark:text-paper/40">
+        <div className="flex justify-center py-10 text-ink/40 dark:text-white/40">
           <Loader2 size={20} className="animate-spin" />
         </div>
       ) : (
@@ -317,48 +317,48 @@ function DashboardInner() {
           <StatsGrid s={{ ...stats, lowStockCount: stats.lowStock.length }} t={t} />
 
           <section className="mb-8">
-            <p className="text-[11px] uppercase tracking-wide text-ink/40 dark:text-paper/40 mb-2">
+            <p className="text-xs font-medium text-ink/50 dark:text-white/40 mb-2">
               {t("dashboard_quick_access")}
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <a
                 href="/pos"
-                className="flex items-center gap-3 rounded-card border border-ink/10 dark:border-dark-border bg-white dark:bg-dark-surface p-4 hover:border-forest/40 transition-colors"
+                className="flex items-center gap-3 rounded-card border border-line dark:border-dark-border bg-white dark:bg-dark-surface p-4 hover:border-ink dark:hover:border-white transition-colors"
               >
-                <span className="w-10 h-10 rounded-xl bg-brick/10 text-brick flex items-center justify-center shrink-0">
+                <span className="w-10 h-10 rounded-md bg-brick text-white flex items-center justify-center shrink-0">
                   <ShoppingCart size={18} />
                 </span>
                 <span>
                   <span className="block text-sm font-medium">{t("dashboard_open_pos")}</span>
-                  <span className="block text-xs text-ink/50 dark:text-paper/50">
+                  <span className="block text-xs text-ink/50 dark:text-white/50">
                     {t("dashboard_open_pos_sub")}
                   </span>
                 </span>
               </a>
               <a
                 href="/products"
-                className="flex items-center gap-3 rounded-card border border-ink/10 dark:border-dark-border bg-white dark:bg-dark-surface p-4 hover:border-forest/40 transition-colors"
+                className="flex items-center gap-3 rounded-card border border-line dark:border-dark-border bg-white dark:bg-dark-surface p-4 hover:border-ink dark:hover:border-white transition-colors"
               >
-                <span className="w-10 h-10 rounded-xl bg-forest/10 text-forest flex items-center justify-center shrink-0">
+                <span className="w-10 h-10 rounded-md bg-ink text-white dark:bg-white dark:text-ink flex items-center justify-center shrink-0">
                   <Package size={18} />
                 </span>
                 <span>
                   <span className="block text-sm font-medium">{t("dashboard_manage_products")}</span>
-                  <span className="block text-xs text-ink/50 dark:text-paper/50">
+                  <span className="block text-xs text-ink/50 dark:text-white/50">
                     {t("dashboard_manage_products_sub")}
                   </span>
                 </span>
               </a>
               <a
                 href="/returns"
-                className="flex items-center gap-3 rounded-card border border-ink/10 dark:border-dark-border bg-white dark:bg-dark-surface p-4 hover:border-forest/40 transition-colors"
+                className="flex items-center gap-3 rounded-card border border-line dark:border-dark-border bg-white dark:bg-dark-surface p-4 hover:border-ink dark:hover:border-white transition-colors"
               >
-                <span className="w-10 h-10 rounded-xl bg-gold/15 text-gold-dark flex items-center justify-center shrink-0">
+                <span className="w-10 h-10 rounded-md bg-mist text-ink dark:bg-white/10 dark:text-white flex items-center justify-center shrink-0">
                   <Undo2 size={18} />
                 </span>
                 <span>
                   <span className="block text-sm font-medium">{t("dashboard_returns_shortcut")}</span>
-                  <span className="block text-xs text-ink/50 dark:text-paper/50">
+                  <span className="block text-xs text-ink/50 dark:text-white/50">
                     {t("dashboard_returns_shortcut_sub")}
                   </span>
                 </span>
@@ -368,14 +368,14 @@ function DashboardInner() {
 
           <section className="mb-8">
             <div className="flex items-center justify-between mb-2">
-              <h2 className="font-display text-base">{t("dashboard_low_stock")}</h2>
+              <h2 className="text-base font-semibold">{t("dashboard_low_stock")}</h2>
               {stats.lowStock.length > 0 && (
                 <span className="text-xs text-brick">{stats.lowStock.length}</span>
               )}
             </div>
-            <div className="rounded-card border border-ink/10 dark:border-dark-border overflow-hidden bg-white dark:bg-dark-surface">
+            <div className="rounded-card border border-line dark:border-dark-border overflow-hidden bg-white dark:bg-dark-surface">
               {stats.lowStock.length === 0 ? (
-                <p className="text-sm text-ink/40 dark:text-paper/40 text-center py-6">
+                <p className="text-sm text-ink/40 dark:text-white/40 text-center py-6">
                   {t("dashboard_all_ok")}
                 </p>
               ) : (
@@ -383,14 +383,14 @@ function DashboardInner() {
                   <div
                     key={item.id}
                     className={`flex items-center justify-between px-4 py-3 text-sm ${
-                      i > 0 ? "border-t border-ink/8 dark:border-dark-border/60" : ""
+                      i > 0 ? "border-t border-line dark:border-dark-border/60" : ""
                     }`}
                   >
                     <span className="flex items-center gap-2">
-                      <AlertTriangle size={15} className="text-gold-dark" />
+                      <AlertTriangle size={15} className="text-brick" />
                       {item.name}
                     </span>
-                    <span className="text-ink/50 dark:text-paper/50 text-xs">
+                    <span className="text-ink/50 dark:text-white/50 text-xs">
                       {item.stock} / min {item.minStock}
                     </span>
                   </div>
@@ -400,12 +400,12 @@ function DashboardInner() {
           </section>
 
           <section>
-            <h2 className="font-display text-base mb-2 flex items-center gap-2">
-              <Trophy size={16} className="text-gold-dark" /> {t("dashboard_recent_sales")}
+            <h2 className="text-base font-semibold mb-2 flex items-center gap-2">
+              <Trophy size={16} className="text-brick" /> {t("dashboard_recent_sales")}
             </h2>
-            <div className="rounded-card border border-ink/10 dark:border-dark-border overflow-hidden bg-white dark:bg-dark-surface">
+            <div className="rounded-card border border-line dark:border-dark-border overflow-hidden bg-white dark:bg-dark-surface">
               {stats.recentSales.length === 0 ? (
-                <p className="text-sm text-ink/40 dark:text-paper/40 text-center py-6">
+                <p className="text-sm text-ink/40 dark:text-white/40 text-center py-6">
                   {t("dashboard_no_sales_today")}
                 </p>
               ) : (
@@ -413,15 +413,15 @@ function DashboardInner() {
                   <div
                     key={sale.id}
                     className={`flex items-center justify-between px-4 py-3 text-sm ${
-                      i > 0 ? "border-t border-ink/8 dark:border-dark-border/60" : ""
+                      i > 0 ? "border-t border-line dark:border-dark-border/60" : ""
                     }`}
                   >
-                    <span className="stat-figure text-ink/60 dark:text-paper/60">
+                    <span className="stat-figure text-ink/60 dark:text-white/60">
                       {sale.id.slice(0, 8).toUpperCase()}
                     </span>
                     <span className="text-right">
                       <span className="stat-figure block font-medium">{fmt(sale.total)}</span>
-                      <span className="block text-xs text-ink/40 dark:text-paper/40">
+                      <span className="block text-xs text-ink/40 dark:text-white/40">
                         {new Date(sale.createdAt).toLocaleTimeString(
                           "fr-FR",
                           { hour: "2-digit", minute: "2-digit" }
