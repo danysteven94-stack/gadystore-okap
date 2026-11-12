@@ -23,17 +23,17 @@ export default async function VerifyPage({ params }: Props) {
         {sale && business ? (
           <>
             <CheckCircle2 size={40} className="mx-auto text-forest mb-3" />
-            <h1 className="font-display text-lg mb-1">Fakti Otantik</h1>
-            <p className="text-sm text-ink/60 dark:text-paper/60 mb-6">
+            <h1 className="font-display font-semibold text-lg mb-1">Fakti Otantik</h1>
+            <p className="text-sm text-ink/60 dark:text-white/60 mb-6">
               Fakti sa a verifye epi li soti nan {business.name}.
             </p>
             <div className="text-left text-sm space-y-2 border-t border-ink/10 dark:border-dark-border pt-4">
               <div className="flex justify-between">
-                <span className="text-ink/50 dark:text-paper/50">Nimewo</span>
+                <span className="text-ink/50 dark:text-white/50">Nimewo</span>
                 <span className="stat-figure">{sale.id.slice(0, 8).toUpperCase()}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-ink/50 dark:text-paper/50">Dat</span>
+                <span className="text-ink/50 dark:text-white/50">Dat</span>
                 <span>{new Date(sale.createdAt).toLocaleDateString("fr-FR")}</span>
               </div>
               <div className="flex justify-between font-medium">
@@ -47,8 +47,8 @@ export default async function VerifyPage({ params }: Props) {
         ) : (
           <>
             <XCircle size={40} className="mx-auto text-brick mb-3" />
-            <h1 className="font-display text-lg mb-1">Fakti Pa Jwenn</h1>
-            <p className="text-sm text-ink/60 dark:text-paper/60">
+            <h1 className="font-display font-semibold text-lg mb-1">Fakti Pa Jwenn</h1>
+            <p className="text-sm text-ink/60 dark:text-white/60">
               Nou pa ka verifye fakti sa a. Li ka efase oswa lyen an pa kòrèk.
             </p>
           </>

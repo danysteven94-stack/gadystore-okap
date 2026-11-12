@@ -4,23 +4,23 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Bell, Check, Loader2, MessageCircle, Minus, Plus, Search, ShoppingBag, Trash2, X } from "lucide-react";
 import type { PublicProduct, PublicShop } from "@/lib/shop";
 
-// Palèt pwofesyonèl: vèt fonse + krèm + dore
+// Palèt: blan, nwa ak rouj
 const C = {
-  forest: "#17392b",
-  forestMid: "#1f4d3a",
-  forestSoft: "#e8efe9",
-  gold: "#c9a24b",
-  bg: "#f7f5ef",
+  forest: "#111111",
+  forestMid: "#2A2A2A",
+  forestSoft: "#F3F3F3",
+  gold: "#C8102E",
+  bg: "#FFFFFF",
   card: "#ffffff",
-  line: "#e7e2d6",
-  ink: "#17211b",
-  muted: "#7a7f77",
-  danger: "#b3402f",
-  warn: "#b7791f",
-  ok: "#2f855a",
+  line: "#E5E5E5",
+  ink: "#111111",
+  muted: "#6B6B6B",
+  danger: "#C8102E",
+  warn: "#6B6B6B",
+  ok: "#111111",
 };
 
-const DISPLAY = { fontFamily: "var(--font-display), Georgia, serif" } as const;
+const DISPLAY = { fontFamily: "var(--font-sans), system-ui, sans-serif" } as const;
 const clamp2 = {
   display: "-webkit-box",
   WebkitLineClamp: 2,
@@ -130,47 +130,20 @@ export function Storefront({ initial }: { initial: PublicShop }) {
 
   return (
     <div className="min-h-screen" style={{ background: C.bg, color: C.ink }}>
-      <style>{`
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
-        @keyframes heroZoom { from { transform: scale(1.08); } to { transform: scale(1); } }
-      `}</style>
-
-      {/* ---------- Header / Hero ---------- */}
-      <header className="relative overflow-hidden text-white text-center px-4 pt-[max(2.5rem,env(safe-area-inset-top))] pb-20 sm:pb-24 z-0">
-        {shop.coverUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={shop.coverUrl}
-            alt=""
-            className="absolute inset-0 w-full h-full object-cover"
-            style={{ animation: "heroZoom 1.4s ease-out both" }}
-          />
-        ) : (
-          <>
-            <div className="absolute inset-0" style={{ background: `linear-gradient(160deg, ${C.forestMid} 0%, ${C.forest} 70%)` }} />
-            <div aria-hidden className="absolute -top-28 -right-24 w-80 h-80 rounded-full opacity-[.12]" style={{ background: C.gold }} />
-            <div aria-hidden className="absolute -bottom-32 -left-20 w-72 h-72 rounded-full opacity-[.08]" style={{ background: "#fff" }} />
-          </>
-        )}
-        {/* Vwal pou tèks la rete lizib sou nenpot imaj */}
+      {/* ---------- Header ---------- */}
+      <header
+        className="relative text-center text-white px-4 pt-[max(2rem,env(safe-area-inset-top))] pb-9 overflow-hidden"
+        style={{ background: C.forest }}
+      >
         <div
-          className="absolute inset-0"
-          style={{
-            background: shop.coverUrl
-              ? "linear-gradient(180deg, rgba(8,20,14,.55) 0%, rgba(8,20,14,.68) 55%, rgba(8,20,14,.9) 100%)"
-              : "linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,.18) 100%)",
-          }}
+          aria-hidden
+          className="absolute -top-24 -right-24 w-72 h-72 rounded-full opacity-10"
+          style={{ background: C.gold }}
         />
-
-        <div className="relative max-w-3xl mx-auto" style={{ animation: "fadeUp .7s ease-out both" }}>
+        <div className="relative max-w-3xl mx-auto">
           <div
-            className="mx-auto w-24 h-24 rounded-full overflow-hidden flex items-center justify-center text-4xl font-semibold mb-5"
-            style={{
-              ...DISPLAY,
-              background: "#fff",
-              color: C.forest,
-              boxShadow: `0 0 0 3px ${C.gold}, 0 12px 32px rgba(0,0,0,.35)`,
-            }}
+            className="mx-auto w-[72px] h-[72px] rounded-full overflow-hidden flex items-center justify-center text-3xl font-semibold mb-4"
+            style={{ ...DISPLAY, background: "#fff", color: C.forest, boxShadow: `0 0 0 2px ${C.gold}` }}
           >
             {shop.logoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -179,21 +152,14 @@ export function Storefront({ initial }: { initial: PublicShop }) {
               initialLetter
             )}
           </div>
-          <h1
-            style={{ ...DISPLAY, textShadow: "0 2px 18px rgba(0,0,0,.45)" }}
-            className="text-4xl sm:text-6xl font-semibold leading-tight tracking-tight"
-          >
+          <h1 style={DISPLAY} className="text-[32px] sm:text-5xl font-semibold leading-tight tracking-tight">
             {shop.name}
           </h1>
-          <div className="mx-auto my-4 flex items-center justify-center gap-3">
-            <span className="h-px w-10" style={{ background: C.gold }} />
-            <span className="w-1.5 h-1.5 rotate-45" style={{ background: C.gold }} />
-            <span className="h-px w-10" style={{ background: C.gold }} />
-          </div>
-          <p className="text-[11px] sm:text-sm tracking-[0.3em] uppercase opacity-90">{shop.tagline}</p>
+          <div className="mx-auto my-3 h-px w-12" style={{ background: C.gold }} />
+          <p className="text-[11px] sm:text-xs tracking-[0.28em] uppercase opacity-85">{shop.tagline}</p>
 
-          <div className="mt-6 flex items-center justify-center gap-2.5 flex-wrap">
-            <span className="rounded-full bg-white/15 backdrop-blur px-4 py-2 text-xs font-medium border border-white/20">
+          <div className="mt-5 flex items-center justify-center gap-2 flex-wrap">
+            <span className="rounded-full bg-white/10 px-3.5 py-1.5 text-xs">
               {shop.products.length} pwodwi
             </span>
             {waHello && (
@@ -201,8 +167,8 @@ export function Storefront({ initial }: { initial: PublicShop }) {
                 href={waHello}
                 target="_blank"
                 rel="noreferrer"
-                className="rounded-full px-5 py-2 text-xs font-bold inline-flex items-center gap-1.5 shadow-lg"
-                style={{ background: C.gold, color: C.forest }}
+                className="rounded-full px-4 py-1.5 text-xs font-semibold inline-flex items-center gap-1.5"
+                style={{ background: C.gold, color: "#fff" }}
               >
                 <MessageCircle size={14} /> Kontakte nou
               </a>
@@ -210,11 +176,9 @@ export function Storefront({ initial }: { initial: PublicShop }) {
           </div>
         </div>
       </header>
-      {/* Kwen won ki fè tranzisyon an dous */}
-      <div className="relative z-10 -mt-7 h-7 rounded-t-[28px]" style={{ background: C.bg }} />
 
       {/* ---------- Tabs ---------- */}
-      <nav className="sticky top-0 z-30 backdrop-blur border-b" style={{ background: "rgba(247,245,239,.92)", borderColor: C.line }}>
+      <nav className="sticky top-0 z-30 backdrop-blur border-b" style={{ background: "rgba(255,255,255,.94)", borderColor: C.line }}>
         <div className="max-w-5xl mx-auto grid grid-cols-2">
           {(
             [
@@ -276,21 +240,15 @@ export function Storefront({ initial }: { initial: PublicShop }) {
             </div>
           )}
 
-          <div className="flex items-end justify-between mb-4">
-            <h2 style={DISPLAY} className="text-2xl font-semibold">Pwodwi nou yo</h2>
-            <span className="text-xs" style={{ color: C.muted }}>{filtered.length} rezilta</span>
-          </div>
-
           {filtered.length === 0 ? (
             <p className="text-center py-20" style={{ color: C.muted }}>
               {shop.products.length === 0 ? "Poko gen pwodwi nan boutik la." : "Okenn pwodwi pa matche."}
             </p>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
-              {filtered.map((p, i) => (
+              {filtered.map((p) => (
                 <ProductCard
                   key={p.id}
-                  index={i}
                   p={p}
                   qty={cart[p.id] ?? 0}
                   money={money}
@@ -418,7 +376,6 @@ function QtyControl({ p, qty, setQty, size = "md" }: { p: PublicProduct; qty: nu
 }
 
 function ProductCard({
-  index,
   p,
   qty,
   money,
@@ -426,7 +383,6 @@ function ProductCard({
   onOpen,
   onNotify,
 }: {
-  index: number;
   p: PublicProduct;
   qty: number;
   money: (n: number) => string;
@@ -437,10 +393,10 @@ function ProductCard({
   const out = p.stock <= 0;
   return (
     <article
-      className="group rounded-2xl bg-white border flex flex-col overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
-      style={{ borderColor: C.line, animation: `fadeUp .5s ease-out ${Math.min(index, 10) * 60}ms both` }}
+      className="group rounded-2xl bg-white border flex flex-col overflow-hidden transition-shadow hover:shadow-lg"
+      style={{ borderColor: C.line }}
     >
-      <button onClick={onOpen} className="relative block aspect-square w-full overflow-hidden" style={{ background: "#f1eee6" }} aria-label={p.name}>
+      <button onClick={onOpen} className="relative block aspect-square w-full overflow-hidden" style={{ background: "#F3F3F3" }} aria-label={p.name}>
         {p.imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -460,7 +416,7 @@ function ProductCard({
           </span>
         )}
         {!out && p.stock <= 5 && (
-          <span className="absolute top-2.5 left-2.5 rounded-full px-3 py-1 text-[10px] font-bold tracking-wider" style={{ background: C.gold, color: C.forest }}>
+          <span className="absolute top-2.5 left-2.5 rounded-full px-3 py-1 text-[10px] font-bold tracking-wider" style={{ background: C.gold, color: "#fff" }}>
             BALEN
           </span>
         )}
@@ -519,7 +475,7 @@ function DetailSheet({
   return (
     <Sheet onClose={onClose} flush>
       <div className="relative">
-        <div className="aspect-square sm:aspect-[4/3] w-full" style={{ background: "#f1eee6" }}>
+        <div className="aspect-square sm:aspect-[4/3] w-full" style={{ background: "#F3F3F3" }}>
           {p.imageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={p.imageUrl} alt={p.name} className={`w-full h-full object-cover ${out ? "grayscale opacity-70" : ""}`} />
@@ -538,7 +494,7 @@ function DetailSheet({
         <h3 style={DISPLAY} className="text-2xl font-semibold leading-tight mt-1">{p.name}</h3>
         <p className="text-2xl font-bold tabular-nums mt-2" style={{ color: C.forest }}>{money(p.price)}</p>
         <div className="mt-1 mb-4"><StockLine p={p} /></div>
-        {p.description && <p className="text-sm leading-relaxed mb-5" style={{ color: "#4a4f47" }}>{p.description}</p>}
+        {p.description && <p className="text-sm leading-relaxed mb-5" style={{ color: "#3A3A3A" }}>{p.description}</p>}
         {out ? (
           <button onClick={onNotify} className="w-full min-h-[52px] rounded-xl border text-base font-semibold flex items-center justify-center gap-2" style={{ borderColor: C.forest, color: C.forest }}>
             <Bell size={17} /> Notifye m lè l disponib
@@ -643,7 +599,7 @@ function CartView({
               // eslint-disable-next-line @next/next/no-img-element
               <img src={p.imageUrl} alt="" className="w-[68px] h-[68px] rounded-xl object-cover shrink-0" />
             ) : (
-              <div className="w-[68px] h-[68px] rounded-xl shrink-0" style={{ background: "#f1eee6" }} />
+              <div className="w-[68px] h-[68px] rounded-xl shrink-0" style={{ background: "#F3F3F3" }} />
             )}
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-sm leading-snug" style={clamp2}>{p.name}</p>
@@ -808,12 +764,12 @@ function SuccessModal({ shop, placed, money, onClose }: { shop: PublicShop; plac
         <p className="mt-1 text-sm" style={{ color: C.muted }}>Nimewo kòmand ou</p>
         <p className="text-3xl font-bold my-1 tabular-nums" style={{ color: C.forest }}>#{placed.code}</p>
         <p className="font-bold mb-4 tabular-nums">{money(placed.total)}</p>
-        <p className="text-sm mb-5" style={{ color: "#4a4f47" }}>
+        <p className="text-sm mb-5" style={{ color: "#3A3A3A" }}>
           {shop.name} ap kontakte w sou {placed.phone} pou konfime kòmand lan{placed.payment === "cash_delivery" ? "" : " ak peman an"}.
           {waLink ? " Pou ale pi vit, voye kòmand lan sou WhatsApp tou:" : ""}
         </p>
         {waLink && (
-          <a href={waLink} target="_blank" rel="noreferrer" className="w-full mb-2 min-h-[52px] rounded-xl font-bold text-white flex items-center justify-center gap-2" style={{ background: "#25a244" }}>
+          <a href={waLink} target="_blank" rel="noreferrer" className="w-full mb-2 min-h-[52px] rounded-xl font-bold text-white flex items-center justify-center gap-2" style={{ background: "#111111" }}>
             <MessageCircle size={20} /> Voye sou WhatsApp
           </a>
         )}

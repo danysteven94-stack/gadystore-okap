@@ -88,7 +88,7 @@ export default function ExpensesPage() {
 
   if (businesses === null) {
     return (
-      <main className="max-w-3xl mx-auto px-4 py-16 flex flex-col items-center text-ink/40 dark:text-paper/40">
+      <main className="max-w-3xl mx-auto px-4 py-16 flex flex-col items-center text-ink/40 dark:text-white/40">
         <Loader2 size={24} className="animate-spin mb-2" />
         <p className="text-sm">Ap chaje...</p>
       </main>
@@ -99,7 +99,7 @@ export default function ExpensesPage() {
     return (
       <main className="max-w-3xl mx-auto px-4 py-16 text-center">
         <Receipt size={28} className="mx-auto mb-3 text-ink/30" />
-        <p className="text-sm text-ink/60 dark:text-paper/60">
+        <p className="text-sm text-ink/60 dark:text-white/60">
           {t("expenses_need_business")}
         </p>
       </main>
@@ -115,7 +115,7 @@ export default function ExpensesPage() {
           onSelect={setBusinessId}
           showOverviewTab={false}
         />
-        <p className="text-sm text-center text-ink/40 dark:text-paper/40 py-10">
+        <p className="text-sm text-center text-ink/40 dark:text-white/40 py-10">
           {t("choose_business_prompt")}
         </p>
       </main>
@@ -125,10 +125,10 @@ export default function ExpensesPage() {
   return (
     <main className="max-w-3xl mx-auto px-4 lg:px-8 py-8 pb-24">
       <div className="flex items-start justify-between mb-4">
-        <h1 className="font-display text-xl lg:text-2xl">{t("expenses_title")}</h1>
+        <h1 className="font-display font-semibold text-xl lg:text-2xl">{t("expenses_title")}</h1>
         <button
           onClick={() => setShowForm((v) => !v)}
-          className="inline-flex items-center gap-2 bg-brick text-paper rounded-full px-4 py-2.5 text-sm font-medium"
+          className="inline-flex items-center gap-2 bg-brick hover:bg-brick-dark text-white rounded-md px-4 py-2.5 text-sm font-medium"
         >
           <Plus size={16} /> {t("expenses_add")}
         </button>
@@ -142,8 +142,8 @@ export default function ExpensesPage() {
       />
 
       <div className="rounded-card p-5 my-5 bg-ink dark:bg-dark-surface text-paper">
-        <p className="text-xs uppercase tracking-wide text-paper/50 mb-1">{t("expenses_total_today")}</p>
-        <p className="font-display text-2xl">{fmt(total)}</p>
+        <p className="text-xs uppercase tracking-wide text-white/50 mb-1">{t("expenses_total_today")}</p>
+        <p className="font-display font-semibold text-2xl">{fmt(total)}</p>
       </div>
 
       {showForm && (
@@ -152,13 +152,13 @@ export default function ExpensesPage() {
           className="rounded-card border border-ink/10 dark:border-dark-border bg-white dark:bg-dark-surface p-5 mb-5 space-y-4"
         >
           <label className="block">
-            <span className="block text-xs font-medium text-ink/70 dark:text-paper/70 mb-1">
+            <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">
               {t("expenses_category")}
             </span>
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value as Expense["category"])}
-              className="w-full border border-ink/15 dark:border-dark-border bg-white dark:bg-dark-surface rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-forest/30"
+              className="w-full border border-ink/15 dark:border-dark-border bg-white dark:bg-dark-surface rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brick/30"
             >
               {CATEGORIES.map((c) => (
                 <option key={c.key} value={c.key}>
@@ -168,7 +168,7 @@ export default function ExpensesPage() {
             </select>
           </label>
           <label className="block">
-            <span className="block text-xs font-medium text-ink/70 dark:text-paper/70 mb-1">
+            <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">
               {t("expenses_amount")}
             </span>
             <input
@@ -176,24 +176,24 @@ export default function ExpensesPage() {
               min={1}
               value={amount || ""}
               onChange={(e) => setAmount(Number(e.target.value))}
-              className="w-full border border-ink/15 dark:border-dark-border bg-white dark:bg-dark-surface rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-forest/30"
+              className="w-full border border-ink/15 dark:border-dark-border bg-white dark:bg-dark-surface rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brick/30"
               required
             />
           </label>
           <label className="block">
-            <span className="block text-xs font-medium text-ink/70 dark:text-paper/70 mb-1">
+            <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">
               {t("expenses_note")}
             </span>
             <input
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              className="w-full border border-ink/15 dark:border-dark-border bg-white dark:bg-dark-surface rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-forest/30"
+              className="w-full border border-ink/15 dark:border-dark-border bg-white dark:bg-dark-surface rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brick/30"
             />
           </label>
           <button
             type="submit"
             disabled={saving}
-            className="w-full bg-ink text-paper rounded-full py-2.5 text-sm font-medium disabled:opacity-50"
+            className="w-full bg-brick hover:bg-brick-dark text-white rounded-md py-2.5 text-sm font-medium disabled:opacity-50"
           >
             {saving ? t("expenses_saving") : t("expenses_submit")}
           </button>
@@ -202,11 +202,11 @@ export default function ExpensesPage() {
       )}
 
       {loading ? (
-        <div className="flex justify-center py-10 text-ink/40 dark:text-paper/40">
+        <div className="flex justify-center py-10 text-ink/40 dark:text-white/40">
           <Loader2 size={20} className="animate-spin" />
         </div>
       ) : expenses.length === 0 ? (
-        <p className="text-sm text-center text-ink/40 dark:text-paper/40 py-10">
+        <p className="text-sm text-center text-ink/40 dark:text-white/40 py-10">
           {t("expenses_empty")}
         </p>
       ) : (
@@ -220,7 +220,7 @@ export default function ExpensesPage() {
             >
               <span>
                 {CATEGORIES.find((c) => c.key === e.category)?.label ?? e.category}
-                {e.note && <span className="block text-xs text-ink/40 dark:text-paper/40">{e.note}</span>}
+                {e.note && <span className="block text-xs text-ink/40 dark:text-white/40">{e.note}</span>}
               </span>
               <span className="stat-figure font-medium">{fmt(e.amount)}</span>
             </div>

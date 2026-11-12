@@ -104,7 +104,7 @@ export default function ProductsPage() {
 
   if (businesses === null) {
     return (
-      <main className="max-w-3xl mx-auto px-4 py-16 flex flex-col items-center text-ink/40 dark:text-paper/40">
+      <main className="max-w-3xl mx-auto px-4 py-16 flex flex-col items-center text-ink/40 dark:text-white/40">
         <Loader2 size={24} className="animate-spin mb-2" />
         <p className="text-sm">Ap chaje...</p>
       </main>
@@ -115,7 +115,7 @@ export default function ProductsPage() {
     return (
       <main className="max-w-3xl mx-auto px-4 py-16 text-center">
         <Package size={28} className="mx-auto mb-3 text-ink/30" />
-        <p className="text-sm text-ink/60 dark:text-paper/60">
+        <p className="text-sm text-ink/60 dark:text-white/60">
           {t("products_need_business")}
         </p>
       </main>
@@ -131,7 +131,7 @@ export default function ProductsPage() {
           onSelect={setBusinessId}
           showOverviewTab={false}
         />
-        <p className="text-sm text-center text-ink/40 dark:text-paper/40 py-10">
+        <p className="text-sm text-center text-ink/40 dark:text-white/40 py-10">
           {t("choose_business_prompt")}
         </p>
       </main>
@@ -140,7 +140,7 @@ export default function ProductsPage() {
 
   return (
     <main className="max-w-3xl mx-auto px-4 py-6 pb-24">
-      <h1 className="font-display text-xl mb-4">{t("products_title")}</h1>
+      <h1 className="font-display font-semibold text-xl mb-4">{t("products_title")}</h1>
 
       <BusinessSwitcher
         businesses={businesses.map((b) => ({ id: b.id, name: b.name, icon: b.icon }))}
@@ -154,15 +154,15 @@ export default function ProductsPage() {
 
       <div className="grid grid-cols-3 gap-2 my-4">
         <div className="rounded-card border border-ink/10 dark:border-dark-border bg-white dark:bg-dark-surface p-3">
-          <p className="text-xs text-ink/50 dark:text-paper/50 mb-1">{t("products_count")}</p>
+          <p className="text-xs text-ink/50 dark:text-white/50 mb-1">{t("products_count")}</p>
           <p className="stat-figure text-lg font-medium">{products.length}</p>
         </div>
         <div className="rounded-card border border-ink/10 dark:border-dark-border bg-white dark:bg-dark-surface p-3">
-          <p className="text-xs text-ink/50 dark:text-paper/50 mb-1">{t("products_low_stock")}</p>
+          <p className="text-xs text-ink/50 dark:text-white/50 mb-1">{t("products_low_stock")}</p>
           <p className="stat-figure text-lg font-medium text-brick">{lowCount}</p>
         </div>
         <div className="rounded-card border border-ink/10 dark:border-dark-border bg-white dark:bg-dark-surface p-3">
-          <p className="text-xs text-ink/50 dark:text-paper/50 mb-1">{t("products_stock_value")}</p>
+          <p className="text-xs text-ink/50 dark:text-white/50 mb-1">{t("products_stock_value")}</p>
           <p className="stat-figure text-lg font-medium">{fmt(stockValue)}</p>
         </div>
       </div>
@@ -174,7 +174,7 @@ export default function ProductsPage() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={t("products_search")}
-            className="w-full border border-ink/15 dark:border-dark-border bg-white dark:bg-dark-surface rounded-full pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-forest/30"
+            className="w-full border border-ink/15 dark:border-dark-border bg-white dark:bg-dark-surface rounded-md pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brick/30"
           />
         </div>
         <button
@@ -190,8 +190,8 @@ export default function ProductsPage() {
         <div className="flex gap-2 overflow-x-auto pb-1 mb-4 -mx-1 px-1">
           <button
             onClick={() => setCategoryFilter(null)}
-            className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium border ${
-              !categoryFilter ? "bg-ink text-paper border-ink" : "border-ink/15 dark:border-dark-border text-ink/70 dark:text-paper/70"
+            className={`whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-medium border ${
+              !categoryFilter ? "bg-ink text-paper border-ink" : "border-ink/15 dark:border-dark-border text-ink/70 dark:text-white/70"
             }`}
           >
             {t("products_all_categories")}
@@ -200,10 +200,10 @@ export default function ProductsPage() {
             <button
               key={cat}
               onClick={() => setCategoryFilter(cat)}
-              className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium border ${
+              className={`whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-medium border ${
                 categoryFilter === cat
                   ? "bg-ink text-paper border-ink"
-                  : "border-ink/15 dark:border-dark-border text-ink/70 dark:text-paper/70"
+                  : "border-ink/15 dark:border-dark-border text-ink/70 dark:text-white/70"
               }`}
             >
               {cat}
@@ -215,11 +215,11 @@ export default function ProductsPage() {
       {error && <p className="text-sm text-brick mb-3">{error}</p>}
 
       {loadingProducts ? (
-        <div className="flex justify-center py-10 text-ink/40 dark:text-paper/40">
+        <div className="flex justify-center py-10 text-ink/40 dark:text-white/40">
           <Loader2 size={20} className="animate-spin" />
         </div>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-16 text-ink/40 dark:text-paper/40">
+        <div className="text-center py-16 text-ink/40 dark:text-white/40">
           <Package size={28} className="mx-auto mb-2" />
           <p className="text-sm">
             {products.length === 0 ? t("products_empty_none") : t("products_empty_filter")}
@@ -240,10 +240,10 @@ export default function ProductsPage() {
                 )}
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium">{p.name}</p>
-                  <p className="text-xs text-ink/50 dark:text-paper/50">
+                  <p className="text-xs text-ink/50 dark:text-white/50">
                     {p.category}
                     {(p.published === true || (p.published as unknown) === "true") && (
-                      <span className="ml-2 inline-block rounded-full bg-forest/15 text-forest px-2 py-0.5 text-[10px] font-medium">
+                      <span className="ml-2 inline-block rounded-md bg-forest/15 text-forest px-2 py-0.5 text-[10px] font-medium">
                         {t("products_in_shop")}
                       </span>
                     )}
@@ -251,7 +251,7 @@ export default function ProductsPage() {
                 </div>
                 <div className="text-right">
                   <p className="stat-figure text-sm font-medium">{fmt(p.sellPrice)}</p>
-                  <p className="text-xs text-ink/40 dark:text-paper/40">achte {fmt(p.buyPrice)}</p>
+                  <p className="text-xs text-ink/40 dark:text-white/40">achte {fmt(p.buyPrice)}</p>
                 </div>
               </div>
               <StockBar stock={p.stock} minStock={p.minStock} />

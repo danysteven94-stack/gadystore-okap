@@ -50,14 +50,14 @@ function Field({
 }) {
   return (
     <label className="block mb-3">
-      <span className="block text-xs font-medium text-ink/70 dark:text-paper/70 mb-1">{label}</span>
+      <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">{label}</span>
       {children}
     </label>
   );
 }
 
 const inputClass =
-  "w-full border border-ink/15 dark:border-dark-border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-forest/30";
+  "w-full border border-ink/15 dark:border-dark-border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brick/30";
 
 export function ProductForm({ initial, onSave, onDelete, onClose }: Props) {
   const { t } = useLanguage();
@@ -103,7 +103,7 @@ export function ProductForm({ initial, onSave, onDelete, onClose }: Props) {
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40">
       <div className="w-full sm:max-w-sm bg-paper dark:bg-dark-bg rounded-t-2xl sm:rounded-card max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between px-5 py-4 border-b border-ink/10 dark:border-dark-border sticky top-0 bg-paper dark:bg-dark-bg">
-          <h2 className="font-display text-lg">
+          <h2 className="font-display font-semibold text-lg">
             {isEditing ? t("products_edit") : t("products_add")}
           </h2>
           <button onClick={onClose} aria-label={t("common_close")}>
@@ -133,7 +133,7 @@ export function ProductForm({ initial, onSave, onDelete, onClose }: Props) {
                 )}
               </button>
               <div className="text-xs space-y-1">
-                {uploading && <p className="text-ink/60 dark:text-paper/60">{t("product_form_photo_uploading")}</p>}
+                {uploading && <p className="text-ink/60 dark:text-white/60">{t("product_form_photo_uploading")}</p>}
                 {values.imageUrl && !uploading && (
                   <>
                     <button type="button" onClick={() => fileRef.current?.click()} className="block font-medium text-forest underline underline-offset-2">
@@ -241,7 +241,7 @@ export function ProductForm({ initial, onSave, onDelete, onClose }: Props) {
             />
           </Field>
 
-          <label className="flex items-start gap-3 rounded-card border border-forest/30 bg-forest/5 px-3 py-3 mb-3 cursor-pointer">
+          <label className="flex items-start gap-3 rounded-card border border-ink/20 bg-forest/5 px-3 py-3 mb-3 cursor-pointer">
             <input
               type="checkbox"
               checked={values.published === true || (values.published as unknown) === "true"}
@@ -250,7 +250,7 @@ export function ProductForm({ initial, onSave, onDelete, onClose }: Props) {
             />
             <span>
               <span className="block text-sm font-medium">{t("product_form_published")}</span>
-              <span className="block text-xs text-ink/60 dark:text-paper/60">{t("product_form_published_hint")}</span>
+              <span className="block text-xs text-ink/60 dark:text-white/60">{t("product_form_published_hint")}</span>
             </span>
           </label>
 
@@ -267,7 +267,7 @@ export function ProductForm({ initial, onSave, onDelete, onClose }: Props) {
             )}
             <button
               type="submit"
-              className="flex-1 bg-ink text-paper rounded-full py-2.5 text-sm font-medium"
+              className="flex-1 bg-ink text-paper rounded-md py-2.5 text-sm font-medium"
             >
               {isEditing ? t("common_save") : t("products_add")}
             </button>

@@ -24,7 +24,7 @@ function fmt(n: number) {
 export function Cart({ items, onIncrease, onDecrease, onRemove }: Props) {
   if (items.length === 0) {
     return (
-      <p className="text-sm text-ink/40 dark:text-paper/40 text-center py-8">
+      <p className="text-sm text-ink/40 dark:text-white/40 text-center py-8">
         Panye a vid. Ajoute yon pwodwi pou kòmanse.
       </p>
     );
@@ -41,7 +41,7 @@ export function Cart({ items, onIncrease, onDecrease, onRemove }: Props) {
         >
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium truncate">{item.name}</p>
-            <p className="text-xs text-ink/50 dark:text-paper/50">{fmt(item.unitPrice)} / inite</p>
+            <p className="text-xs text-ink/50 dark:text-white/50">{fmt(item.unitPrice)} / inite</p>
           </div>
 
           <div className="flex items-center gap-2">

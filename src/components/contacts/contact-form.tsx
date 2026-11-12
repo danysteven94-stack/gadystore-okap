@@ -23,12 +23,12 @@ interface Props {
 const EMPTY: ContactFormValues = { name: "", phone: "", email: "", address: "" };
 
 const inputClass =
-  "w-full border border-ink/15 dark:border-dark-border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-forest/30";
+  "w-full border border-ink/15 dark:border-dark-border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brick/30";
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block mb-3">
-      <span className="block text-xs font-medium text-ink/70 dark:text-paper/70 mb-1">{label}</span>
+      <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">{label}</span>
       {children}
     </label>
   );
@@ -61,7 +61,7 @@ export function ContactForm({ kind, initial, onSave, onDelete, onClose }: Props)
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40">
       <div className="w-full sm:max-w-sm bg-paper dark:bg-dark-bg rounded-t-2xl sm:rounded-card max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between px-5 py-4 border-b border-ink/10 dark:border-dark-border sticky top-0 bg-paper dark:bg-dark-bg">
-          <h2 className="font-display text-lg">{title}</h2>
+          <h2 className="font-display font-semibold text-lg">{title}</h2>
           <button onClick={onClose} aria-label={t("common_close")}>
             <X size={20} />
           </button>
@@ -114,7 +114,7 @@ export function ContactForm({ kind, initial, onSave, onDelete, onClose }: Props)
             )}
             <button
               type="submit"
-              className="flex-1 bg-ink text-paper rounded-full py-2.5 text-sm font-medium"
+              className="flex-1 bg-ink text-paper rounded-md py-2.5 text-sm font-medium"
             >
               {isEditing ? t("common_save") : t("common_add")}
             </button>

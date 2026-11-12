@@ -75,7 +75,6 @@ export interface PublicShop {
   slug: string;
   name: string;
   logoUrl: string | null;
-  coverUrl: string | null;
   tagline: string;
   currency: string;
   whatsapp: string | null;
@@ -101,22 +100,21 @@ export async function getPublicShop(slug: string): Promise<PublicShop | null> {
       category: p.category,
       price: Number(p.sellPrice) || 0,
       stock: Math.max(0, Number(p.stock) || 0),
-      unit: p.unit ? String(p.unit) : "",
+      unit: (p.unit as string) || "",
       imageUrl: (p.imageUrl as string) || null,
-      description: p.description ? String(p.description) : null,
+      description: (p.description as string) || null,
     }))
     // disponib anvan, apre alfabetik
     .sort((a, b) => Number(b.stock > 0) - Number(a.stock > 0) || a.name.localeCompare(b.name));
 
   return {
     slug: business.slug || slug,
-    name: String(business.shopName ?? "").trim() || String(business.name),
-    logoUrl: business.shopLogo ? String(business.shopLogo) : null,
-    coverUrl: business.shopCover ? String(business.shopCover) : null,
-    tagline: String(business.shopTagline || "Katalòg & Kòmand"),
+    name: ((business.shopName as string) || "").trim() || business.name,
+    logoUrl: (business.shopLogo as string) || null,
+    tagline: (business.shopTagline as string) || "Katalòg & Kòmand",
     currency: business.currency || "HTG",
-    whatsapp: business.whatsapp ? String(business.whatsapp).replace(/\D/g, "") : null,
-    paymentInfo: business.shopPaymentInfo ? String(business.shopPaymentInfo) : null,
+    whatsapp: (business.whatsapp as string) || null,
+    paymentInfo: (business.shopPaymentInfo as string) || null,
     products,
   };
 }

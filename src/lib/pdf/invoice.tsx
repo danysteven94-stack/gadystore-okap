@@ -9,21 +9,21 @@ import {
 import type { Business, Sale, Customer } from "@/types";
 
 const styles = StyleSheet.create({
-  page: { padding: 40, fontSize: 10, fontFamily: "Helvetica", color: "#0F1B3C" },
+  page: { padding: 40, fontSize: 10, fontFamily: "Helvetica", color: "#111111" },
   headerRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 24 },
   logo: { width: 56, height: 56, marginBottom: 8 },
   businessName: { fontSize: 16, fontFamily: "Helvetica-Bold" },
-  muted: { color: "#6B8FAE", fontSize: 9 },
+  muted: { color: "#6B6B6B", fontSize: 9 },
   invoiceTitle: { fontSize: 20, fontFamily: "Helvetica-Bold", textAlign: "right" },
   section: { marginBottom: 16 },
-  label: { fontSize: 8, color: "#6B8FAE", marginBottom: 2, textTransform: "uppercase" },
-  table: { marginTop: 8, borderTop: "1 solid #E2E6EF" },
+  label: { fontSize: 8, color: "#6B6B6B", marginBottom: 2, textTransform: "uppercase" },
+  table: { marginTop: 8, borderTop: "1 solid #E5E5E5" },
   tableRow: {
     flexDirection: "row",
-    borderBottom: "1 solid #E2E6EF",
+    borderBottom: "1 solid #E5E5E5",
     paddingVertical: 6,
   },
-  tableHeader: { fontFamily: "Helvetica-Bold", backgroundColor: "#EEF1F7" },
+  tableHeader: { fontFamily: "Helvetica-Bold", backgroundColor: "#F3F3F3" },
   colName: { flex: 3 },
   colQty: { flex: 1, textAlign: "center" },
   colPrice: { flex: 1.5, textAlign: "right" },
@@ -35,14 +35,14 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginTop: 6,
     paddingTop: 6,
-    borderTop: "1 solid #0F1B3C",
+    borderTop: "1 solid #111111",
     fontFamily: "Helvetica-Bold",
     fontSize: 12,
   },
   footer: { position: "absolute", bottom: 40, left: 40, right: 40, textAlign: "center" },
   qrRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end", marginTop: 24 },
   qrCode: { width: 64, height: 64 },
-  signature: { fontSize: 8, color: "#6B8FAE" },
+  signature: { fontSize: 8, color: "#6B6B6B" },
 });
 
 interface InvoiceProps {

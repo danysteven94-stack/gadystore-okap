@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { redis } from "@/lib/upstash";
-import { verifyPassword, signSession, signPwChangeToken, type SessionPayload } from "@/lib/auth";
-import { isTrue } from "@/lib/password";
+import { verifyPassword, signSession, type SessionPayload } from "@/lib/auth";
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -40,27 +39,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (await redis.sismember("users:disabled", email)) {
-      return NextResponse.json(
-        { error: "Kont sa a dezaktive. Kontakte administratè prensipal la." },
-        { status: 403 }
-      );
-    }
-
-    // Premye koneksyon (modpas tanporè): PA bay sesyon konplè. Bay yon token kout
-    // ki sèvi sèlman pou chanje modpas la.
-    if (isTrue(user.mustChangePassword)) {
-      const res = NextResponse.json({ ok: true, mustChangePassword: true });
-      res.cookies.set("pwchange", await signPwChangeToken(email), {
-        httpOnly: true,
-        secure: true,
-        sameSite: "lax",
-        maxAge: 60 * 15,
-        path: "/api/auth",
-      });
-      return res;
-    }
-
     const session: SessionPayload = {
       userId: user.id,
       email: user.email,
@@ -73,7 +51,6 @@ export async function POST(req: NextRequest) {
     // Backfill: si kont sa a te kreye anvan seksyon "Itilizatè" a, ajoute l
     // nan endèks la kounye a pou l parèt nan lis la.
     await redis.sadd("users:all", email);
-    await redis.hset(`user:${email}`, { lastLoginAt: new Date().toISOString() });
 
     const token = await signSession(session);
     const res = NextResponse.json({ ok: true });

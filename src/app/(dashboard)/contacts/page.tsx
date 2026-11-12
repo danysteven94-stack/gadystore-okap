@@ -104,7 +104,7 @@ function ContactsPageInner() {
 
   if (businesses === null) {
     return (
-      <main className="max-w-3xl mx-auto px-4 py-16 flex flex-col items-center text-ink/40 dark:text-paper/40">
+      <main className="max-w-3xl mx-auto px-4 py-16 flex flex-col items-center text-ink/40 dark:text-white/40">
         <Loader2 size={24} className="animate-spin mb-2" />
         <p className="text-sm">Ap chaje...</p>
       </main>
@@ -115,7 +115,7 @@ function ContactsPageInner() {
     return (
       <main className="max-w-3xl mx-auto px-4 py-16 text-center">
         <Users size={28} className="mx-auto mb-3 text-ink/30" />
-        <p className="text-sm text-ink/60 dark:text-paper/60">
+        <p className="text-sm text-ink/60 dark:text-white/60">
           {t("products_need_business")}
         </p>
       </main>
@@ -131,7 +131,7 @@ function ContactsPageInner() {
           onSelect={setBusinessId}
           showOverviewTab={false}
         />
-        <p className="text-sm text-center text-ink/40 dark:text-paper/40 py-10">
+        <p className="text-sm text-center text-ink/40 dark:text-white/40 py-10">
           {t("choose_business_prompt")}
         </p>
       </main>
@@ -140,21 +140,21 @@ function ContactsPageInner() {
 
   return (
     <main className="max-w-3xl mx-auto px-4 py-6 pb-24">
-      <h1 className="font-display text-xl mb-4">{t("contacts_title")}</h1>
+      <h1 className="font-display font-semibold text-xl mb-4">{t("contacts_title")}</h1>
 
       <div className="flex gap-2 mb-4">
         <button
           onClick={() => setKind("customer")}
-          className={`flex-1 py-2.5 rounded-full text-sm font-medium border ${
-            kind === "customer" ? "bg-ink text-paper border-ink" : "border-ink/15 dark:border-dark-border text-ink/70 dark:text-paper/70"
+          className={`flex-1 py-2.5 rounded-md text-sm font-medium border ${
+            kind === "customer" ? "bg-ink text-paper border-ink" : "border-ink/15 dark:border-dark-border text-ink/70 dark:text-white/70"
           }`}
         >
           {t("contacts_customers")}
         </button>
         <button
           onClick={() => setKind("supplier")}
-          className={`flex-1 py-2.5 rounded-full text-sm font-medium border ${
-            kind === "supplier" ? "bg-ink text-paper border-ink" : "border-ink/15 dark:border-dark-border text-ink/70 dark:text-paper/70"
+          className={`flex-1 py-2.5 rounded-md text-sm font-medium border ${
+            kind === "supplier" ? "bg-ink text-paper border-ink" : "border-ink/15 dark:border-dark-border text-ink/70 dark:text-white/70"
           }`}
         >
           {t("contacts_suppliers")}
@@ -175,7 +175,7 @@ function ContactsPageInner() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={kind === "customer" ? t("contacts_search_customer") : t("contacts_search_supplier")}
-            className="w-full border border-ink/15 dark:border-dark-border bg-white dark:bg-dark-surface rounded-full pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-forest/30"
+            className="w-full border border-ink/15 dark:border-dark-border bg-white dark:bg-dark-surface rounded-md pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brick/30"
           />
         </div>
         <button
@@ -190,11 +190,11 @@ function ContactsPageInner() {
       {error && <p className="text-sm text-brick mb-3">{error}</p>}
 
       {loadingContacts ? (
-        <div className="flex justify-center py-10 text-ink/40 dark:text-paper/40">
+        <div className="flex justify-center py-10 text-ink/40 dark:text-white/40">
           <Loader2 size={20} className="animate-spin" />
         </div>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-16 text-ink/40 dark:text-paper/40">
+        <div className="text-center py-16 text-ink/40 dark:text-white/40">
           <Users size={28} className="mx-auto mb-2" />
           <p className="text-sm">
             {contacts.length === 0
@@ -214,7 +214,7 @@ function ContactsPageInner() {
             >
               <p className="text-sm font-medium">{c.name}</p>
               {c.phone && (
-                <p className="text-xs text-ink/50 dark:text-paper/50 flex items-center gap-1 mt-0.5">
+                <p className="text-xs text-ink/50 dark:text-white/50 flex items-center gap-1 mt-0.5">
                   <Phone size={11} /> {c.phone}
                 </p>
               )}

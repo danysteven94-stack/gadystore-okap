@@ -12,7 +12,7 @@ function fmt(n: number) {
 }
 
 const inputClass =
-  "w-full border border-ink/15 dark:border-dark-border bg-white dark:bg-dark-surface rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-forest/30";
+  "w-full border border-ink/15 dark:border-dark-border bg-white dark:bg-dark-surface rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brick/30";
 
 export default function SubscriptionsPage() {
   const { t } = useLanguage();
@@ -24,7 +24,7 @@ export default function SubscriptionsPage() {
   const STATUS_STYLE: Record<Subscription["status"], string> = {
     active: "bg-emerald-100 text-emerald-700",
     expired: "bg-brick/10 text-brick",
-    cancelled: "bg-ink/10 dark:bg-paper/10 text-ink/50 dark:text-paper/50",
+    cancelled: "bg-ink/10 dark:bg-paper/10 text-ink/50 dark:text-white/50",
   };
 
   const [businesses, setBusinesses] = useState<Business[] | null>(null);
@@ -126,7 +126,7 @@ export default function SubscriptionsPage() {
 
   if (businesses === null) {
     return (
-      <main className="max-w-3xl mx-auto px-4 py-16 flex flex-col items-center text-ink/40 dark:text-paper/40">
+      <main className="max-w-3xl mx-auto px-4 py-16 flex flex-col items-center text-ink/40 dark:text-white/40">
         <Loader2 size={24} className="animate-spin mb-2" />
         <p className="text-sm">Ap chaje...</p>
       </main>
@@ -137,7 +137,7 @@ export default function SubscriptionsPage() {
     return (
       <main className="max-w-3xl mx-auto px-4 py-16 text-center">
         <MonitorPlay size={28} className="mx-auto mb-3 text-ink/30" />
-        <p className="text-sm text-ink/60 dark:text-paper/60">{t("subscriptions_need_business")}</p>
+        <p className="text-sm text-ink/60 dark:text-white/60">{t("subscriptions_need_business")}</p>
       </main>
     );
   }
@@ -151,7 +151,7 @@ export default function SubscriptionsPage() {
           onSelect={setBusinessId}
           showOverviewTab={false}
         />
-        <p className="text-sm text-center text-ink/40 dark:text-paper/40 py-10">
+        <p className="text-sm text-center text-ink/40 dark:text-white/40 py-10">
           {t("choose_business_prompt")}
         </p>
       </main>
@@ -161,10 +161,10 @@ export default function SubscriptionsPage() {
   return (
     <main className="max-w-3xl mx-auto px-4 lg:px-8 py-8 pb-24">
       <div className="flex items-start justify-between mb-4">
-        <h1 className="font-display text-xl lg:text-2xl">{t("subscriptions_title")}</h1>
+        <h1 className="font-display font-semibold text-xl lg:text-2xl">{t("subscriptions_title")}</h1>
         <button
           onClick={() => setShowForm((v) => !v)}
-          className="inline-flex items-center gap-2 bg-forest text-paper rounded-full px-4 py-2.5 text-sm font-medium shrink-0"
+          className="inline-flex items-center gap-2 bg-brick hover:bg-brick-dark text-white rounded-md px-4 py-2.5 text-sm font-medium shrink-0"
         >
           <Plus size={16} /> {t("subscriptions_add")}
         </button>
@@ -177,11 +177,11 @@ export default function SubscriptionsPage() {
         showOverviewTab={false}
       />
 
-      <div className="rounded-card p-5 my-5 bg-gradient-to-br from-forest to-forest-light text-paper">
+      <div className="rounded-card p-5 my-5 bg-ink text-white border-l-4 border-brick">
         <p className="text-xs uppercase tracking-wide text-gold-light mb-1">
           {t("subscriptions_monthly_revenue")}
         </p>
-        <p className="font-display text-2xl">{fmt(monthlyRevenue)}</p>
+        <p className="font-display font-semibold text-2xl">{fmt(monthlyRevenue)}</p>
       </div>
 
       {showForm && (
@@ -190,7 +190,7 @@ export default function SubscriptionsPage() {
           className="rounded-card border border-ink/10 dark:border-dark-border bg-white dark:bg-dark-surface p-5 mb-6 space-y-4"
         >
           <label className="block">
-            <span className="block text-xs font-medium text-ink/70 dark:text-paper/70 mb-1">
+            <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">
               {t("subscriptions_customer_name")}
             </span>
             <input
@@ -201,7 +201,7 @@ export default function SubscriptionsPage() {
             />
           </label>
           <label className="block">
-            <span className="block text-xs font-medium text-ink/70 dark:text-paper/70 mb-1">
+            <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">
               {t("subscriptions_product")}
             </span>
             <input
@@ -214,7 +214,7 @@ export default function SubscriptionsPage() {
           </label>
           <div className="grid grid-cols-2 gap-3">
             <label className="block">
-              <span className="block text-xs font-medium text-ink/70 dark:text-paper/70 mb-1">
+              <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">
                 {t("subscriptions_monthly_price")}
               </span>
               <input
@@ -227,7 +227,7 @@ export default function SubscriptionsPage() {
               />
             </label>
             <label className="block">
-              <span className="block text-xs font-medium text-ink/70 dark:text-paper/70 mb-1">
+              <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">
                 {t("subscriptions_start_date")}
               </span>
               <input
@@ -242,7 +242,7 @@ export default function SubscriptionsPage() {
           <button
             type="submit"
             disabled={saving}
-            className="w-full bg-ink text-paper rounded-full py-2.5 text-sm font-medium disabled:opacity-50"
+            className="w-full bg-brick hover:bg-brick-dark text-white rounded-md py-2.5 text-sm font-medium disabled:opacity-50"
           >
             {saving ? t("subscriptions_creating") : t("subscriptions_create")}
           </button>
@@ -251,11 +251,11 @@ export default function SubscriptionsPage() {
       )}
 
       {loading ? (
-        <div className="flex justify-center py-10 text-ink/40 dark:text-paper/40">
+        <div className="flex justify-center py-10 text-ink/40 dark:text-white/40">
           <Loader2 size={20} className="animate-spin" />
         </div>
       ) : subs.length === 0 ? (
-        <p className="text-sm text-center text-ink/40 dark:text-paper/40 py-10">
+        <p className="text-sm text-center text-ink/40 dark:text-white/40 py-10">
           {t("subscriptions_empty")}
         </p>
       ) : (
@@ -270,11 +270,11 @@ export default function SubscriptionsPage() {
                   <p className="text-sm font-medium">
                     {s.customerName} — {s.productName}
                   </p>
-                  <p className="text-xs text-ink/50 dark:text-paper/50">
+                  <p className="text-xs text-ink/50 dark:text-white/50">
                     {t("subscriptions_next_payment")}: {new Date(s.nextPaymentDate).toLocaleDateString("fr-FR")}
                   </p>
                 </div>
-                <span className={`text-[11px] font-medium px-2.5 py-1 rounded-full shrink-0 ${STATUS_STYLE[s.status]}`}>
+                <span className={`text-[11px] font-medium px-2.5 py-1 rounded-md shrink-0 ${STATUS_STYLE[s.status]}`}>
                   {STATUS_LABEL[s.status]}
                 </span>
               </div>

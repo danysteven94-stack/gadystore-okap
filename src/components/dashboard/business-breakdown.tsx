@@ -24,7 +24,7 @@ export function BusinessBreakdown({ businesses }: Props) {
             </div>
             <div className="h-1.5 bg-mist dark:bg-white/10 rounded-full overflow-hidden">
               <div
-                className="h-full bg-brick rounded-full"
+                className="h-full bg-brick rounded-md"
                 style={{ width: `${pct}%` }}
               />
             </div>

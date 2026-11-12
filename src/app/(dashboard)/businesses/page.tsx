@@ -94,14 +94,14 @@ export default function BusinessesPage() {
     <main className="max-w-5xl mx-auto px-4 lg:px-8 py-8">
       <div className="flex items-start justify-between mb-2">
         <div>
-          <h1 className="font-display text-2xl mb-1">{t("businesses_title")}</h1>
-          <p className="text-sm text-ink/60 dark:text-paper/60">
+          <h1 className="font-display font-semibold text-2xl mb-1">{t("businesses_title")}</h1>
+          <p className="text-sm text-ink/60 dark:text-white/60">
             {t("businesses_subtitle")}
           </p>
         </div>
         <button
           onClick={() => setFormTarget("new")}
-          className="inline-flex items-center gap-2 bg-forest text-paper rounded-full px-4 py-2.5 text-sm font-medium shrink-0"
+          className="inline-flex items-center gap-2 bg-brick hover:bg-brick-dark text-white rounded-md px-4 py-2.5 text-sm font-medium shrink-0"
         >
           <Plus size={16} /> {t("businesses_add")}
         </button>
@@ -110,11 +110,11 @@ export default function BusinessesPage() {
       {error && <p className="text-sm text-brick mt-4">{error}</p>}
 
       {businesses === null ? (
-        <div className="flex justify-center py-16 text-ink/40 dark:text-paper/40">
+        <div className="flex justify-center py-16 text-ink/40 dark:text-white/40">
           <Loader2 size={24} className="animate-spin" />
         </div>
       ) : businesses.length === 0 ? (
-        <div className="text-center py-16 text-ink/40 dark:text-paper/40">
+        <div className="text-center py-16 text-ink/40 dark:text-white/40">
           <Building2 size={28} className="mx-auto mb-2" />
           <p className="text-sm">{t("businesses_empty")}</p>
         </div>
@@ -128,19 +128,19 @@ export default function BusinessesPage() {
                 className="rounded-card border border-ink/10 dark:border-dark-border bg-white dark:bg-dark-surface p-5"
               >
                 <div className="flex items-start justify-between mb-3">
-                  <div className="w-11 h-11 rounded-xl bg-brick/10 flex items-center justify-center text-brick">
+                  <div className="w-11 h-11 rounded-lg bg-brick/10 flex items-center justify-center text-brick">
                     <Icon size={20} />
                   </div>
                   <button
                     onClick={() => setFormTarget(b)}
                     aria-label={`Modifye ${b.name}`}
-                    className="text-ink/40 dark:text-paper/40 hover:text-ink dark:hover:text-paper"
+                    className="text-ink/40 dark:text-white/40 hover:text-ink dark:hover:text-paper"
                   >
                     <Pencil size={15} />
                   </button>
                 </div>
-                <p className="font-display text-base mb-0.5">{b.name}</p>
-                <p className="text-[11px] uppercase tracking-wide text-ink/40 dark:text-paper/40 mb-3">
+                <p className="font-display font-semibold text-base mb-0.5">{b.name}</p>
+                <p className="text-[11px] uppercase tracking-wide text-ink/40 dark:text-white/40 mb-3">
                   {b.currency} · {b.taxRate}% taks
                 </p>
                 {b.tags && b.tags.length > 0 && (
@@ -148,7 +148,7 @@ export default function BusinessesPage() {
                     {b.tags.map((tag) => (
                       <span
                         key={tag}
-                        className="text-[11px] bg-ink/5 dark:bg-paper/10 text-ink/70 dark:text-paper/70 rounded-full px-2.5 py-1"
+                        className="text-[11px] bg-ink/5 dark:bg-paper/10 text-ink/70 dark:text-white/70 rounded-md px-2.5 py-1"
                       >
                         {tag}
                       </span>

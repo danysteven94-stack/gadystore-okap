@@ -22,7 +22,7 @@ interface Props {
 }
 
 const inputClass =
-  "w-full border border-ink/15 dark:border-dark-border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-forest/30 bg-white dark:bg-dark-surface";
+  "w-full border border-ink/15 dark:border-dark-border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brick/30 bg-white dark:bg-dark-surface";
 
 const EMPTY: BusinessFormValues = { name: "", icon: "store", currency: "HTG", taxRate: 0, tags: [] };
 
@@ -50,7 +50,7 @@ export function BusinessForm({ initial, onSave, onDelete, onClose, saving }: Pro
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40">
       <div className="w-full sm:max-w-sm bg-paper dark:bg-dark-bg rounded-t-2xl sm:rounded-card max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between px-5 py-4 border-b border-ink/10 dark:border-dark-border sticky top-0 bg-paper dark:bg-dark-bg">
-          <h2 className="font-display text-lg">
+          <h2 className="font-display font-semibold text-lg">
             {isEditing ? t("business_form_edit_title") : t("business_form_create_title")}
           </h2>
           <button onClick={onClose} aria-label={t("common_close")}>
@@ -60,7 +60,7 @@ export function BusinessForm({ initial, onSave, onDelete, onClose, saving }: Pro
 
         <form onSubmit={handleSubmit} className="px-5 py-4">
           <label className="block mb-3">
-            <span className="block text-xs font-medium text-ink/70 dark:text-paper/70 mb-1">
+            <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">
               {t("business_form_name")}
             </span>
             <input
@@ -74,7 +74,7 @@ export function BusinessForm({ initial, onSave, onDelete, onClose, saving }: Pro
           </label>
 
           <label className="block mb-4">
-            <span className="block text-xs font-medium text-ink/70 dark:text-paper/70 mb-1">
+            <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">
               {t("business_form_tags")}
             </span>
             <input
@@ -87,7 +87,7 @@ export function BusinessForm({ initial, onSave, onDelete, onClose, saving }: Pro
 
           <div className="grid grid-cols-2 gap-3 mb-4">
             <label className="block">
-              <span className="block text-xs font-medium text-ink/70 dark:text-paper/70 mb-1">
+              <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">
                 {t("business_form_currency")}
               </span>
               <select
@@ -100,7 +100,7 @@ export function BusinessForm({ initial, onSave, onDelete, onClose, saving }: Pro
               </select>
             </label>
             <label className="block">
-              <span className="block text-xs font-medium text-ink/70 dark:text-paper/70 mb-1">
+              <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">
                 {t("business_form_tax")}
               </span>
               <input
@@ -127,7 +127,7 @@ export function BusinessForm({ initial, onSave, onDelete, onClose, saving }: Pro
             <button
               type="submit"
               disabled={saving}
-              className="flex-1 bg-ink text-paper rounded-full py-2.5 text-sm font-medium disabled:opacity-50"
+              className="flex-1 bg-ink text-paper rounded-md py-2.5 text-sm font-medium disabled:opacity-50"
             >
               {saving ? "Ap anrejistre..." : isEditing ? t("common_save") : t("business_form_create_button")}
             </button>

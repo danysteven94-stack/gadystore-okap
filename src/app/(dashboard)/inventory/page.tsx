@@ -83,7 +83,7 @@ export default function InventoryPage() {
 
   if (businesses === null) {
     return (
-      <main className="max-w-3xl mx-auto px-4 py-16 flex flex-col items-center text-ink/40 dark:text-paper/40">
+      <main className="max-w-3xl mx-auto px-4 py-16 flex flex-col items-center text-ink/40 dark:text-white/40">
         <Loader2 size={24} className="animate-spin mb-2" />
         <p className="text-sm">Ap chaje...</p>
       </main>
@@ -94,7 +94,7 @@ export default function InventoryPage() {
     return (
       <main className="max-w-3xl mx-auto px-4 py-16 text-center">
         <ClipboardCheck size={28} className="mx-auto mb-3 text-ink/30" />
-        <p className="text-sm text-ink/60 dark:text-paper/60">{t("inventory_need_business")}</p>
+        <p className="text-sm text-ink/60 dark:text-white/60">{t("inventory_need_business")}</p>
       </main>
     );
   }
@@ -108,7 +108,7 @@ export default function InventoryPage() {
           onSelect={setBusinessId}
           showOverviewTab={false}
         />
-        <p className="text-sm text-center text-ink/40 dark:text-paper/40 py-10">
+        <p className="text-sm text-center text-ink/40 dark:text-white/40 py-10">
           {t("choose_business_prompt")}
         </p>
       </main>
@@ -117,8 +117,8 @@ export default function InventoryPage() {
 
   return (
     <main className="max-w-3xl mx-auto px-4 lg:px-8 py-8 pb-16">
-      <h1 className="font-display text-xl lg:text-2xl mb-1">{t("inventory_title")}</h1>
-      <p className="text-sm text-ink/60 dark:text-paper/60 mb-4">{t("inventory_subtitle")}</p>
+      <h1 className="font-display font-semibold text-xl lg:text-2xl mb-1">{t("inventory_title")}</h1>
+      <p className="text-sm text-ink/60 dark:text-white/60 mb-4">{t("inventory_subtitle")}</p>
 
       <BusinessSwitcher
         businesses={businesses.map((b) => ({ id: b.id, name: b.name, icon: b.icon }))}
@@ -128,11 +128,11 @@ export default function InventoryPage() {
       />
 
       {loading ? (
-        <div className="flex justify-center py-10 text-ink/40 dark:text-paper/40">
+        <div className="flex justify-center py-10 text-ink/40 dark:text-white/40">
           <Loader2 size={20} className="animate-spin" />
         </div>
       ) : products.length === 0 ? (
-        <p className="text-sm text-center text-ink/40 dark:text-paper/40 py-10 mt-4">
+        <p className="text-sm text-center text-ink/40 dark:text-white/40 py-10 mt-4">
           {t("inventory_no_products")}
         </p>
       ) : (
@@ -150,7 +150,7 @@ export default function InventoryPage() {
                 >
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium truncate">{p.name}</p>
-                    <p className="text-xs text-ink/40 dark:text-paper/40">
+                    <p className="text-xs text-ink/40 dark:text-white/40">
                       {t("inventory_system_qty")}: {p.stock}
                       {diff !== 0 && (
                         <span className={diff > 0 ? "text-forest" : "text-brick"}>
@@ -166,7 +166,7 @@ export default function InventoryPage() {
                     min={0}
                     value={counted}
                     onChange={(e) => updateCount(p.id, Number(e.target.value))}
-                    className="w-20 shrink-0 border border-ink/15 dark:border-dark-border bg-white dark:bg-dark-surface rounded px-2 py-1.5 text-sm text-right focus:outline-none focus:ring-2 focus:ring-forest/30"
+                    className="w-20 shrink-0 border border-ink/15 dark:border-dark-border bg-white dark:bg-dark-surface rounded px-2 py-1.5 text-sm text-right focus:outline-none focus:ring-2 focus:ring-brick/30"
                   />
                 </div>
               );
@@ -176,19 +176,19 @@ export default function InventoryPage() {
           <button
             onClick={handleSubmit}
             disabled={submitting}
-            className="w-full bg-forest text-paper rounded-full py-3 text-sm font-medium disabled:opacity-50"
+            className="w-full bg-brick hover:bg-brick-dark text-white rounded-md py-3 text-sm font-medium disabled:opacity-50"
           >
             {submitting ? t("inventory_submitting") : t("inventory_submit")}
           </button>
-          {status && <p className="text-sm text-center text-ink/60 dark:text-paper/60 mt-3">{status}</p>}
+          {status && <p className="text-sm text-center text-ink/60 dark:text-white/60 mt-3">{status}</p>}
         </>
       )}
 
-      <h2 className="font-display text-base mt-8 mb-2 flex items-center gap-2">
+      <h2 className="font-display font-semibold text-base mt-8 mb-2 flex items-center gap-2">
         <History size={16} /> {t("inventory_history")}
       </h2>
       {sessions.length === 0 ? (
-        <p className="text-sm text-center text-ink/40 dark:text-paper/40 py-8">
+        <p className="text-sm text-center text-ink/40 dark:text-white/40 py-8">
           {t("inventory_history_empty")}
         </p>
       ) : (
@@ -206,7 +206,7 @@ export default function InventoryPage() {
                     year: "numeric",
                   })}
                 </p>
-                <span className="text-xs text-ink/40 dark:text-paper/40">
+                <span className="text-xs text-ink/40 dark:text-white/40">
                   {s.itemsCounted} {t("inventory_no_diff")}
                 </span>
               </div>

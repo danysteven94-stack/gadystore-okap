@@ -72,7 +72,7 @@ export default function ReportsPage() {
 
   if (businesses === null) {
     return (
-      <main className="max-w-3xl mx-auto px-4 py-16 flex flex-col items-center text-ink/40 dark:text-paper/40">
+      <main className="max-w-3xl mx-auto px-4 py-16 flex flex-col items-center text-ink/40 dark:text-white/40">
         <Loader2 size={24} className="animate-spin mb-2" />
         <p className="text-sm">Ap chaje...</p>
       </main>
@@ -83,7 +83,7 @@ export default function ReportsPage() {
     return (
       <main className="max-w-3xl mx-auto px-4 py-16 text-center">
         <BarChart3 size={28} className="mx-auto mb-3 text-ink/30" />
-        <p className="text-sm text-ink/60 dark:text-paper/60">
+        <p className="text-sm text-ink/60 dark:text-white/60">
           {t("reports_need_business")}
         </p>
       </main>
@@ -99,7 +99,7 @@ export default function ReportsPage() {
           onSelect={setBusinessId}
           showOverviewTab={false}
         />
-        <p className="text-sm text-center text-ink/40 dark:text-paper/40 py-10">
+        <p className="text-sm text-center text-ink/40 dark:text-white/40 py-10">
           {t("choose_business_prompt")}
         </p>
       </main>
@@ -108,7 +108,7 @@ export default function ReportsPage() {
 
   return (
     <main className="max-w-3xl mx-auto px-4 lg:px-8 py-8 pb-24">
-      <h1 className="font-display text-xl lg:text-2xl mb-4">{t("reports_title")}</h1>
+      <h1 className="font-display font-semibold text-xl lg:text-2xl mb-4">{t("reports_title")}</h1>
 
       <BusinessSwitcher
         businesses={businesses.map((b) => ({ id: b.id, name: b.name, icon: b.icon }))}
@@ -119,27 +119,27 @@ export default function ReportsPage() {
 
       <div className="flex items-end gap-3 my-5">
         <label className="block flex-1">
-          <span className="block text-xs font-medium text-ink/70 dark:text-paper/70 mb-1">{t("reports_from")}</span>
+          <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">{t("reports_from")}</span>
           <input
             type="date"
             value={from}
             onChange={(e) => setFrom(e.target.value)}
-            className="w-full border border-ink/15 dark:border-dark-border bg-white dark:bg-dark-surface rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-forest/30"
+            className="w-full border border-ink/15 dark:border-dark-border bg-white dark:bg-dark-surface rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brick/30"
           />
         </label>
         <label className="block flex-1">
-          <span className="block text-xs font-medium text-ink/70 dark:text-paper/70 mb-1">{t("reports_to")}</span>
+          <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">{t("reports_to")}</span>
           <input
             type="date"
             value={to}
             onChange={(e) => setTo(e.target.value)}
-            className="w-full border border-ink/15 dark:border-dark-border bg-white dark:bg-dark-surface rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-forest/30"
+            className="w-full border border-ink/15 dark:border-dark-border bg-white dark:bg-dark-surface rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brick/30"
           />
         </label>
         {businessId && (
           <a
             href={`/api/reports/financial?businessId=${businessId}&from=${from}&to=${to}&format=excel`}
-            className="flex items-center gap-1.5 bg-ink text-paper rounded-full px-4 py-2.5 text-xs font-medium shrink-0"
+            className="flex items-center gap-1.5 bg-ink text-paper rounded-md px-4 py-2.5 text-xs font-medium shrink-0"
           >
             <Download size={14} /> {t("reports_export_excel")}
           </a>
@@ -147,20 +147,20 @@ export default function ReportsPage() {
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-16 text-ink/40 dark:text-paper/40">
+        <div className="flex justify-center py-16 text-ink/40 dark:text-white/40">
           <Loader2 size={24} className="animate-spin" />
         </div>
       ) : (
         <>
           <div className="grid grid-cols-3 gap-3 mb-6">
             <div className="rounded-card border border-ink/10 dark:border-dark-border bg-white dark:bg-dark-surface p-3">
-              <p className="text-xs text-ink/50 dark:text-paper/50 mb-1">{t("reports_revenue")}</p>
+              <p className="text-xs text-ink/50 dark:text-white/50 mb-1">{t("reports_revenue")}</p>
               <p className="stat-figure text-base font-medium">
                 {fmt(financial?.totals.revenue ?? 0)}
               </p>
             </div>
             <div className="rounded-card border border-ink/10 dark:border-dark-border bg-white dark:bg-dark-surface p-3">
-              <p className="text-xs text-ink/50 dark:text-paper/50 mb-1">{t("reports_expenses")}</p>
+              <p className="text-xs text-ink/50 dark:text-white/50 mb-1">{t("reports_expenses")}</p>
               <p className="stat-figure text-base font-medium">
                 {fmt(financial?.totals.expenses ?? 0)}
               </p>
@@ -173,12 +173,12 @@ export default function ReportsPage() {
             </div>
           </div>
 
-          <h2 className="font-display text-base mb-2 flex items-center gap-2">
+          <h2 className="font-display font-semibold text-base mb-2 flex items-center gap-2">
             <Trophy size={16} className="text-gold-dark" /> {t("reports_top_products")}
           </h2>
           <div className="rounded-card border border-ink/10 dark:border-dark-border bg-white dark:bg-dark-surface overflow-hidden mb-6">
             {!sales || sales.topProducts.length === 0 ? (
-              <p className="text-sm text-center text-ink/40 dark:text-paper/40 py-8">
+              <p className="text-sm text-center text-ink/40 dark:text-white/40 py-8">
                 {t("reports_no_sales_period")}
               </p>
             ) : (
@@ -194,17 +194,17 @@ export default function ReportsPage() {
                   </span>
                   <span className="text-right">
                     <span className="stat-figure block font-medium">{fmt(p.revenue)}</span>
-                    <span className="block text-xs text-ink/40 dark:text-paper/40">{p.qty} {t("reports_sold")}</span>
+                    <span className="block text-xs text-ink/40 dark:text-white/40">{p.qty} {t("reports_sold")}</span>
                   </span>
                 </div>
               ))
             )}
           </div>
 
-          <h2 className="font-display text-base mb-2">{t("reports_by_payment")}</h2>
+          <h2 className="font-display font-semibold text-base mb-2">{t("reports_by_payment")}</h2>
           <div className="rounded-card border border-ink/10 dark:border-dark-border bg-white dark:bg-dark-surface overflow-hidden">
             {!sales || Object.keys(sales.byPaymentMethod).length === 0 ? (
-              <p className="text-sm text-center text-ink/40 dark:text-paper/40 py-8">
+              <p className="text-sm text-center text-ink/40 dark:text-white/40 py-8">
                 {t("reports_no_data")}
               </p>
             ) : (

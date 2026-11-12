@@ -60,7 +60,7 @@ export default function StockPage() {
 
   if (businesses === null) {
     return (
-      <main className="max-w-3xl mx-auto px-4 py-16 flex flex-col items-center text-ink/40 dark:text-paper/40">
+      <main className="max-w-3xl mx-auto px-4 py-16 flex flex-col items-center text-ink/40 dark:text-white/40">
         <Loader2 size={24} className="animate-spin mb-2" />
         <p className="text-sm">Ap chaje...</p>
       </main>
@@ -71,7 +71,7 @@ export default function StockPage() {
     return (
       <main className="max-w-3xl mx-auto px-4 py-16 text-center">
         <Boxes size={28} className="mx-auto mb-3 text-ink/30" />
-        <p className="text-sm text-ink/60 dark:text-paper/60">
+        <p className="text-sm text-ink/60 dark:text-white/60">
           {t("stock_need_business")}
         </p>
       </main>
@@ -87,7 +87,7 @@ export default function StockPage() {
           onSelect={setBusinessId}
           showOverviewTab={false}
         />
-        <p className="text-sm text-center text-ink/40 dark:text-paper/40 py-10">
+        <p className="text-sm text-center text-ink/40 dark:text-white/40 py-10">
           {t("choose_business_prompt")}
         </p>
       </main>
@@ -98,7 +98,7 @@ export default function StockPage() {
 
   return (
     <main className="max-w-3xl mx-auto px-4 lg:px-8 py-8 pb-24">
-      <h1 className="font-display text-xl lg:text-2xl mb-4">{t("stock_title")}</h1>
+      <h1 className="font-display font-semibold text-xl lg:text-2xl mb-4">{t("stock_title")}</h1>
 
       <BusinessSwitcher
         businesses={businesses.map((b) => ({ id: b.id, name: b.name, icon: b.icon }))}
@@ -108,26 +108,26 @@ export default function StockPage() {
       />
 
       {loading || !report ? (
-        <div className="flex justify-center py-16 text-ink/40 dark:text-paper/40">
+        <div className="flex justify-center py-16 text-ink/40 dark:text-white/40">
           <Loader2 size={24} className="animate-spin" />
         </div>
       ) : (
         <>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 my-5">
             <div className="rounded-card border border-ink/10 dark:border-dark-border bg-white dark:bg-dark-surface p-3">
-              <p className="text-xs text-ink/50 dark:text-paper/50 mb-1">{t("stock_total_products")}</p>
+              <p className="text-xs text-ink/50 dark:text-white/50 mb-1">{t("stock_total_products")}</p>
               <p className="stat-figure text-lg font-medium">{report.summary.totalProducts}</p>
             </div>
             <div className="rounded-card border border-ink/10 dark:border-dark-border bg-white dark:bg-dark-surface p-3">
-              <p className="text-xs text-ink/50 dark:text-paper/50 mb-1">{t("stock_low")}</p>
+              <p className="text-xs text-ink/50 dark:text-white/50 mb-1">{t("stock_low")}</p>
               <p className="stat-figure text-lg font-medium text-gold-dark">{report.summary.lowCount}</p>
             </div>
             <div className="rounded-card border border-ink/10 dark:border-dark-border bg-white dark:bg-dark-surface p-3">
-              <p className="text-xs text-ink/50 dark:text-paper/50 mb-1">{t("stock_out")}</p>
+              <p className="text-xs text-ink/50 dark:text-white/50 mb-1">{t("stock_out")}</p>
               <p className="stat-figure text-lg font-medium text-brick">{report.summary.outOfStockCount}</p>
             </div>
             <div className="rounded-card border border-ink/10 dark:border-dark-border bg-white dark:bg-dark-surface p-3">
-              <p className="text-xs text-ink/50 dark:text-paper/50 mb-1">{t("stock_total_value")}</p>
+              <p className="text-xs text-ink/50 dark:text-white/50 mb-1">{t("stock_total_value")}</p>
               <p className="stat-figure text-lg font-medium">{fmt(report.totalStockValue)}</p>
             </div>
           </div>
@@ -137,10 +137,10 @@ export default function StockPage() {
               <button
                 key={key}
                 onClick={() => setTab(key)}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-full text-xs font-medium border ${
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-md text-xs font-medium border ${
                   tab === key
                     ? "bg-ink text-paper border-ink"
-                    : "border-ink/15 dark:border-dark-border text-ink/70 dark:text-paper/70"
+                    : "border-ink/15 dark:border-dark-border text-ink/70 dark:text-white/70"
                 }`}
               >
                 <Icon size={13} className={tab === key ? "" : color} />
@@ -150,7 +150,7 @@ export default function StockPage() {
           </div>
 
           {list.length === 0 ? (
-            <p className="text-sm text-center text-ink/40 dark:text-paper/40 py-10">
+            <p className="text-sm text-center text-ink/40 dark:text-white/40 py-10">
               {t("stock_empty_category")}
             </p>
           ) : (
@@ -164,9 +164,9 @@ export default function StockPage() {
                 >
                   <span>
                     {p.name}
-                    <span className="block text-xs text-ink/40 dark:text-paper/40">{p.category}</span>
+                    <span className="block text-xs text-ink/40 dark:text-white/40">{p.category}</span>
                   </span>
-                  <span className="stat-figure text-ink/60 dark:text-paper/60">
+                  <span className="stat-figure text-ink/60 dark:text-white/60">
                     {p.stock} / min {p.minStock}
                   </span>
                 </div>

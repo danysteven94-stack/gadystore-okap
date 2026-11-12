@@ -12,7 +12,7 @@ function fmt(n: number) {
 }
 
 const inputClass =
-  "w-full border border-ink/15 dark:border-dark-border bg-white dark:bg-dark-surface rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-forest/30";
+  "w-full border border-ink/15 dark:border-dark-border bg-white dark:bg-dark-surface rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brick/30";
 
 const STATUS_STYLE: Record<Order["status"], string> = {
   paid: "bg-emerald-100 text-emerald-700",
@@ -141,7 +141,7 @@ export default function OrdersPage() {
 
   if (businesses === null) {
     return (
-      <main className="max-w-3xl mx-auto px-4 py-16 flex flex-col items-center text-ink/40 dark:text-paper/40">
+      <main className="max-w-3xl mx-auto px-4 py-16 flex flex-col items-center text-ink/40 dark:text-white/40">
         <Loader2 size={24} className="animate-spin mb-2" />
         <p className="text-sm">Ap chaje...</p>
       </main>
@@ -152,7 +152,7 @@ export default function OrdersPage() {
     return (
       <main className="max-w-3xl mx-auto px-4 py-16 text-center">
         <ClipboardList size={28} className="mx-auto mb-3 text-ink/30" />
-        <p className="text-sm text-ink/60 dark:text-paper/60">{t("orders_need_business")}</p>
+        <p className="text-sm text-ink/60 dark:text-white/60">{t("orders_need_business")}</p>
       </main>
     );
   }
@@ -166,7 +166,7 @@ export default function OrdersPage() {
           onSelect={setBusinessId}
           showOverviewTab={false}
         />
-        <p className="text-sm text-center text-ink/40 dark:text-paper/40 py-10">
+        <p className="text-sm text-center text-ink/40 dark:text-white/40 py-10">
           {t("choose_business_prompt")}
         </p>
       </main>
@@ -176,10 +176,10 @@ export default function OrdersPage() {
   return (
     <main className="max-w-3xl mx-auto px-4 lg:px-8 py-8 pb-24">
       <div className="flex items-start justify-between mb-4">
-        <h1 className="font-display text-xl lg:text-2xl">{t("orders_title")}</h1>
+        <h1 className="font-display font-semibold text-xl lg:text-2xl">{t("orders_title")}</h1>
         <button
           onClick={() => setShowForm((v) => !v)}
-          className="inline-flex items-center gap-2 bg-forest text-paper rounded-full px-4 py-2.5 text-sm font-medium shrink-0"
+          className="inline-flex items-center gap-2 bg-brick hover:bg-brick-dark text-white rounded-md px-4 py-2.5 text-sm font-medium shrink-0"
         >
           <Plus size={16} /> {t("orders_add")}
         </button>
@@ -193,8 +193,8 @@ export default function OrdersPage() {
       />
 
       <div className="rounded-card p-5 my-5 bg-ink dark:bg-dark-surface text-paper">
-        <p className="text-xs uppercase tracking-wide text-paper/50 mb-1">{t("orders_outstanding")}</p>
-        <p className="font-display text-2xl">{fmt(totalOutstanding)}</p>
+        <p className="text-xs uppercase tracking-wide text-white/50 mb-1">{t("orders_outstanding")}</p>
+        <p className="font-display font-semibold text-2xl">{fmt(totalOutstanding)}</p>
       </div>
 
       {showForm && (
@@ -203,7 +203,7 @@ export default function OrdersPage() {
           className="rounded-card border border-ink/10 dark:border-dark-border bg-white dark:bg-dark-surface p-5 mb-6 space-y-4"
         >
           <label className="block">
-            <span className="block text-xs font-medium text-ink/70 dark:text-paper/70 mb-1">
+            <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">
               {t("orders_customer_name")}
             </span>
             <input
@@ -214,7 +214,7 @@ export default function OrdersPage() {
             />
           </label>
           <label className="block">
-            <span className="block text-xs font-medium text-ink/70 dark:text-paper/70 mb-1">
+            <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">
               {t("orders_description")}
             </span>
             <input
@@ -227,7 +227,7 @@ export default function OrdersPage() {
           </label>
           <div className="grid grid-cols-2 gap-3">
             <label className="block">
-              <span className="block text-xs font-medium text-ink/70 dark:text-paper/70 mb-1">
+              <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">
                 {t("orders_total")}
               </span>
               <input
@@ -240,7 +240,7 @@ export default function OrdersPage() {
               />
             </label>
             <label className="block">
-              <span className="block text-xs font-medium text-ink/70 dark:text-paper/70 mb-1">
+              <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">
                 {t("orders_deposit")}
               </span>
               <input
@@ -255,7 +255,7 @@ export default function OrdersPage() {
           <button
             type="submit"
             disabled={saving}
-            className="w-full bg-ink text-paper rounded-full py-2.5 text-sm font-medium disabled:opacity-50"
+            className="w-full bg-brick hover:bg-brick-dark text-white rounded-md py-2.5 text-sm font-medium disabled:opacity-50"
           >
             {saving ? t("orders_creating") : t("orders_create")}
           </button>
@@ -264,11 +264,11 @@ export default function OrdersPage() {
       )}
 
       {loading ? (
-        <div className="flex justify-center py-10 text-ink/40 dark:text-paper/40">
+        <div className="flex justify-center py-10 text-ink/40 dark:text-white/40">
           <Loader2 size={20} className="animate-spin" />
         </div>
       ) : orders.length === 0 ? (
-        <p className="text-sm text-center text-ink/40 dark:text-paper/40 py-10">{t("orders_empty")}</p>
+        <p className="text-sm text-center text-ink/40 dark:text-white/40 py-10">{t("orders_empty")}</p>
       ) : (
         <div className="space-y-2">
           {orders.map((o) => (
@@ -281,17 +281,17 @@ export default function OrdersPage() {
                   <p className="text-sm font-medium">
                     {o.customerName}
                     {o.source === "shop" && (
-                      <span className="ml-2 align-middle inline-block rounded-full bg-forest/15 text-forest px-2 py-0.5 text-[10px] font-medium">
+                      <span className="ml-2 align-middle inline-block rounded-md bg-forest/15 text-forest px-2 py-0.5 text-[10px] font-medium">
                         {t("orders_from_shop")} #{o.code}
                       </span>
                     )}
                   </p>
-                  <p className="text-xs text-ink/50 dark:text-paper/50">{o.description}</p>
+                  <p className="text-xs text-ink/50 dark:text-white/50">{o.description}</p>
                   {o.source === "shop" && (
-                    <p className="text-xs text-ink/50 dark:text-paper/50 mt-1">
+                    <p className="text-xs text-ink/50 dark:text-white/50 mt-1">
                       {o.customerPhone && (
                         <a
-                          href={`https://wa.me/${String(o.customerPhone).replace(/\D/g, "")}`}
+                          href={`https://wa.me/${o.customerPhone.replace(/\D/g, "")}`}
                           target="_blank"
                           rel="noreferrer"
                           className="text-forest underline underline-offset-2"
@@ -304,21 +304,21 @@ export default function OrdersPage() {
                     </p>
                   )}
                 </div>
-                <span className={`text-[11px] font-medium px-2.5 py-1 rounded-full ${STATUS_STYLE[o.status]}`}>
+                <span className={`text-[11px] font-medium px-2.5 py-1 rounded-md ${STATUS_STYLE[o.status]}`}>
                   {STATUS_LABEL[o.status]}
                 </span>
               </div>
-              <div className="grid grid-cols-3 gap-2 text-xs text-ink/60 dark:text-paper/60 mb-3">
+              <div className="grid grid-cols-3 gap-2 text-xs text-ink/60 dark:text-white/60 mb-3">
                 <div>
-                  <p className="text-ink/40 dark:text-paper/40">{t("orders_total")}</p>
-                  <p className="stat-figure font-medium text-ink dark:text-paper">{fmt(o.totalAmount)}</p>
+                  <p className="text-ink/40 dark:text-white/40">{t("orders_total")}</p>
+                  <p className="stat-figure font-medium text-ink dark:text-white">{fmt(o.totalAmount)}</p>
                 </div>
                 <div>
-                  <p className="text-ink/40 dark:text-paper/40">{t("orders_deposit_paid")}</p>
-                  <p className="stat-figure font-medium text-ink dark:text-paper">{fmt(o.depositAmount)}</p>
+                  <p className="text-ink/40 dark:text-white/40">{t("orders_deposit_paid")}</p>
+                  <p className="stat-figure font-medium text-ink dark:text-white">{fmt(o.depositAmount)}</p>
                 </div>
                 <div>
-                  <p className="text-ink/40 dark:text-paper/40">{t("orders_balance_due")}</p>
+                  <p className="text-ink/40 dark:text-white/40">{t("orders_balance_due")}</p>
                   <p className="stat-figure font-medium text-brick">{fmt(o.balance)}</p>
                 </div>
               </div>
@@ -354,12 +354,12 @@ export default function OrdersPage() {
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40">
           <div className="w-full sm:max-w-sm bg-paper dark:bg-dark-bg rounded-t-2xl sm:rounded-card p-5">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-display text-lg">{t("orders_add_payment")}</h2>
+              <h2 className="font-display font-semibold text-lg">{t("orders_add_payment")}</h2>
               <button onClick={() => setPayTarget(null)} aria-label={t("common_close")}>
                 <X size={20} />
               </button>
             </div>
-            <p className="text-sm text-ink/60 dark:text-paper/60 mb-4">
+            <p className="text-sm text-ink/60 dark:text-white/60 mb-4">
               {payTarget.customerName} — {t("orders_balance_due")}: {fmt(payTarget.balance)}
             </p>
             <form onSubmit={handleAddPayment}>
@@ -377,7 +377,7 @@ export default function OrdersPage() {
               <button
                 type="submit"
                 disabled={paying}
-                className="w-full bg-forest text-paper rounded-full py-2.5 text-sm font-medium disabled:opacity-50"
+                className="w-full bg-brick hover:bg-brick-dark text-white rounded-md py-2.5 text-sm font-medium disabled:opacity-50"
               >
                 {paying ? "..." : t("orders_payment_submit")}
               </button>

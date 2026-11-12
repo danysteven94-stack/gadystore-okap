@@ -89,7 +89,7 @@ export default function ReturnsPage() {
 
   if (businesses === null) {
     return (
-      <main className="max-w-3xl mx-auto px-4 py-16 flex flex-col items-center text-ink/40 dark:text-paper/40">
+      <main className="max-w-3xl mx-auto px-4 py-16 flex flex-col items-center text-ink/40 dark:text-white/40">
         <Loader2 size={24} className="animate-spin mb-2" />
         <p className="text-sm">Ap chaje...</p>
       </main>
@@ -100,7 +100,7 @@ export default function ReturnsPage() {
     return (
       <main className="max-w-3xl mx-auto px-4 py-16 text-center">
         <Undo2 size={28} className="mx-auto mb-3 text-ink/30" />
-        <p className="text-sm text-ink/60 dark:text-paper/60">
+        <p className="text-sm text-ink/60 dark:text-white/60">
           {t("returns_need_business")}
         </p>
       </main>
@@ -116,7 +116,7 @@ export default function ReturnsPage() {
           onSelect={setBusinessId}
           showOverviewTab={false}
         />
-        <p className="text-sm text-center text-ink/40 dark:text-paper/40 py-10">
+        <p className="text-sm text-center text-ink/40 dark:text-white/40 py-10">
           {t("choose_business_prompt")}
         </p>
       </main>
@@ -125,8 +125,8 @@ export default function ReturnsPage() {
 
   return (
     <main className="max-w-3xl mx-auto px-4 lg:px-8 py-8 pb-24">
-      <h1 className="font-display text-xl lg:text-2xl mb-1">{t("returns_title")}</h1>
-      <p className="text-sm text-ink/60 dark:text-paper/60 mb-4">
+      <h1 className="font-display font-semibold text-xl lg:text-2xl mb-1">{t("returns_title")}</h1>
+      <p className="text-sm text-ink/60 dark:text-white/60 mb-4">
         {t("returns_subtitle")}
       </p>
 
@@ -142,13 +142,13 @@ export default function ReturnsPage() {
         className="rounded-card border border-ink/10 dark:border-dark-border bg-white dark:bg-dark-surface p-5 my-5 space-y-4"
       >
         <label className="block">
-          <span className="block text-xs font-medium text-ink/70 dark:text-paper/70 mb-1">
+          <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">
             {t("returns_product")}
           </span>
           <select
             value={productId}
             onChange={(e) => setProductId(e.target.value)}
-            className="w-full border border-ink/15 dark:border-dark-border bg-white dark:bg-dark-surface rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-forest/30"
+            className="w-full border border-ink/15 dark:border-dark-border bg-white dark:bg-dark-surface rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brick/30"
           >
             {products.length === 0 && <option value="">{t("returns_no_products")}</option>}
             {products.map((p) => (
@@ -161,7 +161,7 @@ export default function ReturnsPage() {
 
         <div className="grid grid-cols-2 gap-3">
           <label className="block">
-            <span className="block text-xs font-medium text-ink/70 dark:text-paper/70 mb-1">
+            <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">
               {t("returns_qty")}
             </span>
             <input
@@ -169,11 +169,11 @@ export default function ReturnsPage() {
               min={1}
               value={qty}
               onChange={(e) => setQty(Number(e.target.value))}
-              className="w-full border border-ink/15 dark:border-dark-border bg-white dark:bg-dark-surface rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-forest/30"
+              className="w-full border border-ink/15 dark:border-dark-border bg-white dark:bg-dark-surface rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brick/30"
             />
           </label>
           <label className="block">
-            <span className="block text-xs font-medium text-ink/70 dark:text-paper/70 mb-1">
+            <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">
               {t("returns_refund")}
             </span>
             <input
@@ -181,19 +181,19 @@ export default function ReturnsPage() {
               min={0}
               value={refundAmount}
               onChange={(e) => setRefundAmount(Number(e.target.value))}
-              className="w-full border border-ink/15 dark:border-dark-border bg-white dark:bg-dark-surface rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-forest/30"
+              className="w-full border border-ink/15 dark:border-dark-border bg-white dark:bg-dark-surface rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brick/30"
             />
           </label>
         </div>
 
         <label className="block">
-          <span className="block text-xs font-medium text-ink/70 dark:text-paper/70 mb-1">
+          <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">
             {t("returns_reason")}
           </span>
           <select
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            className="w-full border border-ink/15 dark:border-dark-border bg-white dark:bg-dark-surface rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-forest/30"
+            className="w-full border border-ink/15 dark:border-dark-border bg-white dark:bg-dark-surface rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brick/30"
           >
             {REASONS.map((r) => (
               <option key={r} value={r}>
@@ -206,21 +206,21 @@ export default function ReturnsPage() {
         <button
           type="submit"
           disabled={saving || !productId}
-          className="w-full bg-brick text-paper rounded-full py-2.5 text-sm font-medium disabled:opacity-50"
+          className="w-full bg-brick hover:bg-brick-dark text-white rounded-md py-2.5 text-sm font-medium disabled:opacity-50"
         >
           {saving ? t("returns_saving") : t("returns_confirm")}
         </button>
 
-        {status && <p className="text-sm text-center text-ink/60 dark:text-paper/60">{status}</p>}
+        {status && <p className="text-sm text-center text-ink/60 dark:text-white/60">{status}</p>}
       </form>
 
-      <h2 className="font-display text-base mb-2">{t("returns_recent")}</h2>
+      <h2 className="font-display font-semibold text-base mb-2">{t("returns_recent")}</h2>
       {loading ? (
-        <div className="flex justify-center py-10 text-ink/40 dark:text-paper/40">
+        <div className="flex justify-center py-10 text-ink/40 dark:text-white/40">
           <Loader2 size={20} className="animate-spin" />
         </div>
       ) : returns.length === 0 ? (
-        <div className="text-center py-10 text-ink/40 dark:text-paper/40">
+        <div className="text-center py-10 text-ink/40 dark:text-white/40">
           <PackageCheck size={24} className="mx-auto mb-2" />
           <p className="text-sm">{t("returns_empty")}</p>
         </div>
@@ -235,11 +235,11 @@ export default function ReturnsPage() {
             >
               <span>
                 {r.qty} × {r.productName}
-                <span className="block text-xs text-ink/40 dark:text-paper/40">{r.reason}</span>
+                <span className="block text-xs text-ink/40 dark:text-white/40">{r.reason}</span>
               </span>
               <span className="text-right">
                 <span className="stat-figure block font-medium">{fmt(r.refundAmount)}</span>
-                <span className="block text-xs text-ink/40 dark:text-paper/40">
+                <span className="block text-xs text-ink/40 dark:text-white/40">
                   {new Date(r.createdAt).toLocaleDateString("fr-FR")}
                 </span>
               </span>
