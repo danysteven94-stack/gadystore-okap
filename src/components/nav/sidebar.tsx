@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Building2, ChevronRight, Moon, Sun } from "lucide-react";
+import { ChevronRight, Moon, Sun } from "lucide-react";
 import { useTheme } from "@/components/providers/theme-provider";
 import { useLanguage } from "@/lib/i18n/language-provider";
 import { LANGUAGES } from "@/lib/i18n/dictionary";
@@ -19,8 +19,8 @@ export function Sidebar() {
   return (
     <aside className="hidden lg:flex lg:flex-col w-64 shrink-0 h-screen sticky top-0 bg-night text-paper border-r border-white/10">
       <div className="flex items-center gap-3 px-4 py-4 border-b border-white/10">
-        <div className="w-9 h-9 rounded-md bg-brick flex items-center justify-center text-white shrink-0">
-          <Building2 size={18} strokeWidth={2} />
+        <div className="w-9 h-9 rounded-md bg-white p-0.5 flex items-center justify-center shrink-0">
+          <img src="/logo.png" alt="Platfomnou" className="w-full h-full object-contain" />
         </div>
         <div className="min-w-0">
           <p className="text-base font-semibold leading-tight truncate text-white">{t("nav_brand_name")}</p>

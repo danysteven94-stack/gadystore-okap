@@ -34,16 +34,14 @@ export default function LoginPage() {
         data = await res.json();
       } catch {
         setLoading(false);
-        setError(`Erè sèvè (kòd ${res.status}). Verifye konfigirasyon Upstash/JWT_SECRET sou Vercel.`);
+        setError(`Erè sèvè (kòd ${res.status}).`);
         return;
       }
 
       setLoading(false);
 
       if (!res.ok) {
-        setError(
-          data.detail ? `${data.error} — ${data.detail}` : data.error || `Koneksyon echwe (kòd ${res.status}).`
-        );
+        setError(data.error || `Koneksyon echwe (kòd ${res.status}).`);
         return;
       }
 

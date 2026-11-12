@@ -6,8 +6,11 @@ import { redis } from "@/lib/upstash"; // @upstash/redis = REST/fetch, konpatib 
 // de `auth.ts` (ki gen bcryptjs), otreman build la ka echwe oswa kraze sou
 // Edge Runtime Vercel la.
 
+if (!process.env.JWT_SECRET && process.env.NODE_ENV === "production") {
+  throw new Error("JWT_SECRET manke nan varyab anviwònman yo.");
+}
 const secret = new TextEncoder().encode(
-  process.env.JWT_SECRET || "changeme-in-production"
+  process.env.JWT_SECRET || "dev-only-secret"
 );
 
 // Kont prensipal la (pwopriyetè app la). Se SÈL kont ki ka wè TOUT lòt kont yo.

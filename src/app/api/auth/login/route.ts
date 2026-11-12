@@ -86,11 +86,9 @@ export async function POST(req: NextRequest) {
     });
     return res;
   } catch (err) {
-    // TEMPORARY: montre mesaj erè a dirèkteman pou fasilite debogaj.
-    // Retire detay sa a ("detail") yon fwa login fonksyone kòrèkteman.
-    const message = err instanceof Error ? err.message : String(err);
+    console.error("login error", err);
     return NextResponse.json(
-      { error: "Erè sèvè.", detail: message },
+      { error: "Erè sèvè. Eseye ankò." },
       { status: 500 }
     );
   }

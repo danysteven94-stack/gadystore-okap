@@ -1,6 +1,6 @@
 "use client";
 
-import { Menu, Building2 } from "lucide-react";
+import { Menu } from "lucide-react";
 import { useLanguage } from "@/lib/i18n/language-provider";
 
 interface Props {
@@ -11,7 +11,7 @@ export function MobileTopbar({ onOpen }: Props) {
   const { t } = useLanguage();
 
   return (
-    <header className="lg:hidden sticky top-0 z-30 flex items-center gap-3 px-4 py-3 bg-night text-paper border-b border-white/10">
+    <header className="lg:hidden sticky top-0 z-30 flex items-center gap-3 px-4 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top))] bg-night text-paper border-b border-white/10">
       <button
         onClick={onOpen}
         aria-label="Louvri meni"
@@ -19,8 +19,8 @@ export function MobileTopbar({ onOpen }: Props) {
       >
         <Menu size={20} />
       </button>
-      <div className="w-9 h-9 rounded-md bg-brick flex items-center justify-center text-white shrink-0">
-        <Building2 size={18} strokeWidth={2.2} />
+      <div className="w-9 h-9 rounded-md bg-white p-0.5 flex items-center justify-center shrink-0">
+        <img src="/logo.png" alt="Platfomnou" className="w-full h-full object-contain" />
       </div>
       <p className="text-base font-semibold truncate">{t("nav_brand_name")}</p>
     </header>

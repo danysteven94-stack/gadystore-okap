@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Building2, ChevronRight, Moon, Sun, X } from "lucide-react";
+import { ChevronRight, Moon, Sun, X } from "lucide-react";
 import { useTheme } from "@/components/providers/theme-provider";
 import { useLanguage } from "@/lib/i18n/language-provider";
 import { LANGUAGES } from "@/lib/i18n/dictionary";
@@ -35,10 +35,10 @@ export function MobileDrawer({ open, onClose }: Props) {
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="flex items-center justify-between px-4 py-4 border-b border-white/10">
+        <div className="flex items-center justify-between px-4 pb-4 pt-[calc(1rem+env(safe-area-inset-top))] border-b border-white/10">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-9 h-9 rounded-md bg-brick flex items-center justify-center text-white shrink-0">
-              <Building2 size={18} strokeWidth={2} />
+            <div className="w-9 h-9 rounded-md bg-white p-0.5 flex items-center justify-center shrink-0">
+              <img src="/logo.png" alt="Platfomnou" className="w-full h-full object-contain" />
             </div>
             <div className="min-w-0">
               <p className="text-base font-semibold leading-tight truncate text-white">{t("nav_brand_name")}</p>

@@ -41,7 +41,7 @@ export const dictionary = {
   nav_logout: { ht: "Dekonekte", fr: "Déconnexion", en: "Log out" },
   nav_dark_mode: { ht: "Mòd fonse", fr: "Mode sombre", en: "Dark mode" },
   nav_light_mode: { ht: "Mòd klè", fr: "Mode clair", en: "Light mode" },
-  nav_brand_name: { ht: "Platfòm Antrepriz", fr: "Plateforme Entreprise", en: "Business Platform" },
+  nav_brand_name: { ht: "Platfomnou", fr: "Platfomnou", en: "Platfomnou" },
   nav_brand_subtitle: { ht: "Gestion Komèsyal", fr: "Gestion Commerciale", en: "Business Management" },
 
   dashboard_title: { ht: "Tout Antrepriz", fr: "Toutes les entreprises", en: "All Businesses" },

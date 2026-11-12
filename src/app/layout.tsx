@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/providers/theme-provider";
@@ -13,8 +13,20 @@ const mono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Platfòm Antrepriz — Gestion multi-entreprises",
+  title: "Platfomnou — Gestion multi-entreprises",
   description: "Ventes, stocks, factures et rapports en temps réel.",
+  manifest: "/manifest.webmanifest",
+  applicationName: "Platfomnou",
+  appleWebApp: { capable: true, title: "Platfomnou", statusBarStyle: "black-translucent" },
+  icons: { icon: "/icons/icon-192.png", apple: "/icons/apple-touch-icon.png" },
+  formatDetection: { telephone: false },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#111111",
 };
 
 export default function RootLayout({
