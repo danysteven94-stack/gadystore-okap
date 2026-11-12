@@ -8,11 +8,13 @@ import { useLanguage } from "@/lib/i18n/language-provider";
 import { LANGUAGES } from "@/lib/i18n/dictionary";
 import { LogoutButton } from "@/components/nav/logout-button";
 import { NAV_ITEMS } from "@/lib/nav-items";
+import { useSuperInfo } from "@/lib/use-super-info";
 
 export function Sidebar() {
   const pathname = usePathname();
   const { theme, toggleTheme } = useTheme();
   const { lang, setLang, t } = useLanguage();
+  const { isSuper, alertCount } = useSuperInfo();
 
   return (
     <aside className="hidden lg:flex lg:flex-col w-64 shrink-0 h-screen sticky top-0 bg-night text-paper border-r border-white/10">
@@ -29,7 +31,7 @@ export function Sidebar() {
       </div>
 
       <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-        {NAV_ITEMS.map(({ href, icon: Icon, key }) => {
+        {NAV_ITEMS.filter((i) => !i.superOnly || isSuper).map(({ href, icon: Icon, key }) => {
           const active = pathname === href.split("?")[0];
           return (
             <Link
@@ -43,6 +45,9 @@ export function Sidebar() {
             >
               <Icon size={18} strokeWidth={1.75} className={active ? "" : "text-white/70"} />
               <span className="flex-1">{t(key)}</span>
+                        {href === "/user-billing" && alertCount > 0 && (
+                          <span className="min-w-5 h-5 px-1.5 rounded-full bg-brick text-white text-[11px] font-bold flex items-center justify-center">{alertCount}</span>
+                        )}
               {active && <ChevronRight size={18} />}
             </Link>
           );

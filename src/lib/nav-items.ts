@@ -15,10 +15,11 @@ import {
   ClipboardList,
   MonitorPlay,
   Store,
+  WalletCards,
 } from "lucide-react";
 import type { TranslationKey } from "@/lib/i18n/dictionary";
 
-export const NAV_ITEMS: { href: string; icon: React.ElementType; key: TranslationKey }[] = [
+export const NAV_ITEMS: { href: string; icon: React.ElementType; key: TranslationKey; superOnly?: boolean }[] = [
   { href: "/dashboard", icon: LayoutDashboard, key: "nav_dashboard" },
   { href: "/businesses", icon: Building2, key: "nav_businesses" },
   { href: "/products", icon: Package, key: "nav_products" },
@@ -35,4 +36,5 @@ export const NAV_ITEMS: { href: string; icon: React.ElementType; key: Translatio
   { href: "/reports", icon: BarChart3, key: "nav_reports" },
   { href: "/backup", icon: DatabaseBackup, key: "nav_backup" },
   { href: "/users", icon: UserCog, key: "nav_users" },
+  { href: "/user-billing", icon: WalletCards, key: "nav_user_billing", superOnly: true },
 ];
