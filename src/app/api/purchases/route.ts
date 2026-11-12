@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withIdempotency } from "@/lib/idempotency";
 import { z } from "zod";
 import { randomUUID } from "crypto";
 import { redis } from "@/lib/upstash";
@@ -48,7 +49,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({ purchases });
 }
 
-export async function POST(req: NextRequest) {
+async function postHandler(req: NextRequest) {
   const token = req.cookies.get("session")?.value;
   const session = token ? await verifySession(token) : null;
   if (!session) return NextResponse.json({ error: "Pa otorize." }, { status: 401 });
@@ -88,3 +89,5 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ purchase }, { status: 201 });
 }
+
+export const POST = withIdempotency("purchases", postHandler);

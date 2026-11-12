@@ -13,7 +13,8 @@ const config: CapacitorConfig = {
     cleartext: false,
     allowNavigation: [new URL(APP_URL).hostname],
   },
-  ios: { contentInset: "never", backgroundColor: "#111111" },
+  // limitsNavigationsToAppBoundDomains: nesesè pou service worker mache nan iOS (WKWebView)
+  ios: { contentInset: "never", backgroundColor: "#111111", limitsNavigationsToAppBoundDomains: true },
   android: { backgroundColor: "#111111", allowMixedContent: false },
   plugins: {
     SplashScreen: {

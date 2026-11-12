@@ -25,6 +25,11 @@ if [[ -f "$PLIST" ]]; then
   /usr/libexec/PlistBuddy -c "Add :NSCameraUsageDescription string 'Kamera a sèvi pou eskane kòd-baf pwodwi yo.'" "$PLIST" 2>/dev/null || true
   /usr/libexec/PlistBuddy -c "Add :NSPhotoLibraryUsageDescription string 'Chwazi foto pwodwi nan galri ou.'" "$PLIST" 2>/dev/null || true
   /usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" "$PLIST" 2>/dev/null || true
+  # Mòd offline (service worker) nan iOS bezwen domèn app la deklare isit la
+  HOST=$(echo "$APP_URL" | sed -E 's#https?://([^/]+).*#\1#')
+  /usr/libexec/PlistBuddy -c "Delete :WKAppBoundDomains" "$PLIST" 2>/dev/null || true
+  /usr/libexec/PlistBuddy -c "Add :WKAppBoundDomains array" "$PLIST"
+  /usr/libexec/PlistBuddy -c "Add :WKAppBoundDomains:0 string $HOST" "$PLIST"
 fi
 
 npx cap sync

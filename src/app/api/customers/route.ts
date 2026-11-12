@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withIdempotency } from "@/lib/idempotency";
 import { z } from "zod";
 import { randomUUID } from "crypto";
 import { redis, hsetClean } from "@/lib/upstash";
@@ -36,7 +37,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({ customers });
 }
 
-export async function POST(req: NextRequest) {
+async function postHandler(req: NextRequest) {
   const session = await requireSession(req);
   if (!session) return NextResponse.json({ error: "Pa otorize." }, { status: 401 });
 
@@ -54,3 +55,5 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ customer }, { status: 201 });
 }
+
+export const POST = withIdempotency("customers", postHandler);

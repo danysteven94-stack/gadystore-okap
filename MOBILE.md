@@ -49,3 +49,19 @@ ajoute pèmisyon kamera, epi sync.
 ## 4. Mizajou
 - Chanjman web (UI, API) → `git push` → Vercel → mobil la ajou otomatikman.
 - Chanjman natif (ikòn, pèmisyon, plugin) → `npx cap sync` → nouvo build → soumèt ankò. Monte `versionCode`/`CFBundleVersion`.
+
+## 5. Mòd offline (done sove sou telefòn)
+App la kounye a mache san entènèt apre yon premye koneksyon:
+- **Premye fwa:** louvri app la **ak entènèt** epi konekte. Pandan ~30 segonn l ap sove paj yo ak done
+  chak antrepriz (pwodwi, kliyan, founisè, depans, kòmand...) sou telefòn nan (IndexedDB). Li rafrechi chak 6 èdtan.
+- **Offline ou ka:** gade tout done ki sove, fè **vant (POS)**, anrejistre **depans**, **acha** ak **nouvo kliyan**.
+  Stok la ajiste lokalman. Operasyon sa yo ale nan yon fil epi **voye otomatikman** lè entènèt retounen
+  (yon ti bann nan ba a montre estati a). Pwoteksyon kont doub (`X-Idempotency-Key`) sou sèvè a.
+- **Offline ou PA ka:** kreye/modifye/efase pwodwi, antrepriz, kòmand, itilizatè; faktiti PDF; rapò ki poko louvri;
+  boutik piblik la. Yo ap di "Fonksyon sa a mande entènèt".
+- **Konfli:** si 2 moun vann menm pwodwi a offline epi stok la pa sifi lè yo senkronize, vant lan make
+  "pa t ka senkronize" nan bann nan (ou retire l epi korije manyèlman).
+- **Atansyon:** pa dekonekte oswa efase done app la pandan gen operasyon k ap tann (app la avèti w).
+  Done yo sove san chifreman sou telefòn nan (nan sandbox app la).
+- **iOS:** service worker bezwen `WKAppBoundDomains` (script la ajoute l). Teste ke lyen WhatsApp (wa.me) louvri toujou.
+- Teste: mete telefòn nan mòd avyon → louvri app la → fè yon vant → dezaktive mòd avyon → verifye vant lan parèt nan Rapò.

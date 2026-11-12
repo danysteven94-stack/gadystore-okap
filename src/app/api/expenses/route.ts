@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withIdempotency } from "@/lib/idempotency";
 import { z } from "zod";
 import { randomUUID } from "crypto";
 import { redis } from "@/lib/upstash";
@@ -7,6 +8,7 @@ import { notifyLargeExpense } from "@/lib/notifications";
 import type { Expense } from "@/types";
 
 const expenseSchema = z.object({
+  createdAt: z.string().datetime().optional(), // depans fèt offline
   businessId: z.string(),
   category: z.enum([
     "salaires",
@@ -45,7 +47,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({ expenses, total });
 }
 
-export async function POST(req: NextRequest) {
+async function postHandler(req: NextRequest) {
   const session = await requireSession(req);
   if (!session) return NextResponse.json({ error: "Pa otorize." }, { status: 401 });
 
@@ -68,3 +70,5 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ expense }, { status: 201 });
 }
+
+export const POST = withIdempotency("expenses", postHandler);

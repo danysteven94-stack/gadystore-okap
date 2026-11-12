@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withIdempotency } from "@/lib/idempotency";
 import { z } from "zod";
 import { randomUUID } from "crypto";
 import { redis, hsetClean } from "@/lib/upstash";
@@ -22,9 +23,10 @@ const saleSchema = z.object({
   taxRate: z.number().nonnegative().default(0), // pourcentage
   paymentMethod: z.enum(["cash", "card", "mobile_money", "mixed"]),
   customerId: z.string().optional(),
+  createdAt: z.string().datetime().optional(), // vant fèt offline
 });
 
-export async function POST(req: NextRequest) {
+async function postHandler(req: NextRequest) {
   try {
     const token = req.cookies.get("session")?.value;
     const session = token ? await verifySession(token) : null;
@@ -41,6 +43,12 @@ export async function POST(req: NextRequest) {
 
     const { businessId, items, discount, taxRate, paymentMethod, customerId } =
       parsed.data;
+    // Dat vant offline: aksepte sèlman si pa nan lavni epi mwens pase 30 jou
+    const claimed = parsed.data.createdAt ? Date.parse(parsed.data.createdAt) : NaN;
+    const createdAt =
+      !Number.isNaN(claimed) && claimed <= Date.now() + 60_000 && Date.now() - claimed < 30 * 86400_000
+        ? new Date(claimed).toISOString()
+        : new Date().toISOString();
 
     // Verifye epi debite stok la pou chak atik
     for (const item of items) {
@@ -75,7 +83,7 @@ export async function POST(req: NextRequest) {
       paymentMethod,
       customerId,
       cashierId: session.userId,
-      createdAt: new Date().toISOString(),
+      createdAt,
     };
 
     await hsetClean(`sale:${sale.id}`, sale as unknown as Record<string, unknown>);
@@ -100,7 +108,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ sale }, { status: 201 });
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    return NextResponse.json({ error: "Erè sèvè.", detail: message }, { status: 500 });
+    console.error("sales error", err);
+    return NextResponse.json({ error: "Erè sèvè." }, { status: 500 });
   }
 }
+
+export const POST = withIdempotency("sales", postHandler);
