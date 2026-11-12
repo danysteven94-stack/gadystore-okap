@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Building2, Moon, Sun, X } from "lucide-react";
+import { Building2, ChevronRight, Moon, Sun, X } from "lucide-react";
 import { useTheme } from "@/components/providers/theme-provider";
 import { useLanguage } from "@/lib/i18n/language-provider";
 import { LANGUAGES } from "@/lib/i18n/dictionary";
@@ -29,18 +29,18 @@ export function MobileDrawer({ open, onClose }: Props) {
       <div onClick={onClose} className="absolute inset-0 bg-black/50" />
 
       <aside
-        className={`absolute top-0 left-0 h-full w-72 max-w-[85vw] bg-ink dark:bg-dark-surface text-paper flex flex-col transition-transform duration-200 ease-out ${
+        className={`absolute top-0 left-0 h-full w-72 max-w-[85vw] bg-night text-paper border-r border-[#F5B800]/30 flex flex-col transition-transform duration-200 ease-out ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         <div className="flex items-center justify-between px-5 py-5 border-b border-white/10">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-xl bg-gold flex items-center justify-center text-ink shrink-0">
+            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#FFD84D] to-[#F5A100] shadow-[0_0_16px_rgba(255,194,26,0.45)] flex items-center justify-center text-night shrink-0">
               <Building2 size={19} strokeWidth={2.2} />
             </div>
             <div className="min-w-0">
-              <p className="font-display text-base leading-tight truncate">{t("nav_brand_name")}</p>
-              <p className="text-[10px] uppercase tracking-wide text-paper/50 truncate">
+              <p className="font-display text-lg leading-tight truncate text-[#FFD84D]">{t("nav_brand_name")}</p>
+              <p className="text-[11px] tracking-wide text-paper/80 truncate">
                 {t("nav_brand_subtitle")}
               </p>
             </div>
@@ -54,7 +54,7 @@ export function MobileDrawer({ open, onClose }: Props) {
           </button>
         </div>
 
-        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-0.5">
+        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-2">
           {NAV_ITEMS.map(({ href, icon: Icon, key }) => {
             const active = pathname === href.split("?")[0];
             return (
@@ -62,14 +62,15 @@ export function MobileDrawer({ open, onClose }: Props) {
                 key={href}
                 href={href}
                 onClick={onClose}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                className={`flex items-center gap-3 px-3.5 py-3 rounded-xl text-[15px] transition-colors ${
                   active
-                    ? "bg-gold/15 text-gold-light font-medium"
-                    : "text-paper/70 hover:bg-white/5 hover:text-paper"
+                    ? "bg-gradient-to-r from-[#FFC21A] to-[#F5A100] text-night font-semibold shadow-[0_0_18px_rgba(255,194,26,0.35)]"
+                    : "bg-[#0C1730] border border-[#F5B800]/25 text-paper hover:border-[#F5B800]/60"
                 }`}
               >
-                <Icon size={17} strokeWidth={active ? 2.2 : 1.75} />
-                {t(key)}
+                <Icon size={20} strokeWidth={active ? 2.2 : 1.75} className={active ? "" : "text-[#FFC21A]"} />
+                <span className="flex-1">{t(key)}</span>
+                {active && <ChevronRight size={18} />}
               </Link>
             );
           })}

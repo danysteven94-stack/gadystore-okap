@@ -22,9 +22,9 @@ export function BusinessBreakdown({ businesses }: Props) {
               <span>{b.name}</span>
               <span className="stat-figure font-medium">{fmt(b.revenue)}</span>
             </div>
-            <div className="h-1.5 bg-ink/8 rounded-full overflow-hidden">
+            <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
               <div
-                className="h-full bg-forest rounded-full"
+                className="h-full bg-gradient-to-r from-[#FFC21A] to-[#4ADE80] rounded-full"
                 style={{ width: `${pct}%` }}
               />
             </div>

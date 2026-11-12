@@ -19,6 +19,7 @@ const config: Config = {
           muted: "#6B8FAE",
         },
         brick: "#E5484D",
+        night: "#050A16",
         // Mode fonse — fon prèske nwa ak yon tint ble maren, sifas kat yo yon
         // ti jan pi klè pou kenbe yerachi vizyèl la san yo pa vin gri plat.
         dark: {

@@ -1,7 +1,26 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { AlertTriangle, Trophy, Plus, Loader2, ShoppingCart, Package, Undo2 } from "lucide-react";
+import {
+  AlertTriangle,
+  Trophy,
+  Plus,
+  Loader2,
+  ShoppingCart,
+  Package,
+  Undo2,
+  Coins,
+  CalendarClock,
+  TrendingUp,
+  Wallet,
+  CheckCircle2,
+  RefreshCcw,
+  BadgeDollarSign,
+  HandCoins,
+  Boxes,
+} from "lucide-react";
+import { DashShell } from "@/components/dashboard/dash-shell";
+import { HeroCard } from "@/components/dashboard/hero-card";
 import { BusinessSwitcher } from "@/components/dashboard/business-switcher";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { BusinessBreakdown } from "@/components/dashboard/business-breakdown";
@@ -14,6 +33,44 @@ function fmt(n: number) {
 }
 
 export default function DashboardPage() {
+  return (
+    <DashShell>
+      <DashboardInner />
+    </DashShell>
+  );
+}
+
+interface StatsLike {
+  todayRevenue: number;
+  monthRevenue: number;
+  yearRevenue: number;
+  monthSales: number;
+  monthReturns: number;
+  monthExpenses: number;
+  monthProfit: number;
+  outOfStockCount: number;
+  lowStockCount: number;
+  stockValue: number;
+}
+
+function StatsGrid({ s, t }: { s: StatsLike; t: (k: any) => string }) {
+  return (
+    <div className="grid grid-cols-2 gap-3 mb-8">
+      <StatCard icon={Coins} tone="gold" label={t("dashboard_today_revenue")} value={fmt(s.todayRevenue)} />
+      <StatCard icon={CalendarClock} label={t("dashboard_month_revenue")} value={fmt(s.monthRevenue)} />
+      <StatCard icon={TrendingUp} tone="gold" label={t("dashboard_year_revenue")} value={fmt(s.yearRevenue)} />
+      <StatCard icon={Wallet} label={t("dashboard_month_sales")} value={String(s.monthSales)} />
+      <StatCard icon={CheckCircle2} label={t("dashboard_month_returns")} value={fmt(s.monthReturns)} />
+      <StatCard icon={RefreshCcw} label={t("dashboard_month_expenses")} value={fmt(s.monthExpenses)} />
+      <StatCard icon={BadgeDollarSign} accent label={t("dashboard_month_profit")} value={fmt(s.monthProfit)} />
+      <StatCard icon={HandCoins} label={t("dashboard_out_of_stock")} value={String(s.outOfStockCount)} />
+      <StatCard icon={AlertTriangle} label={t("dashboard_low_stock_count")} value={String(s.lowStockCount)} />
+      <StatCard icon={Boxes} label={t("dashboard_stock_value")} value={fmt(s.stockValue)} />
+    </div>
+  );
+}
+
+function DashboardInner() {
   const { t } = useLanguage();
   const [businesses, setBusinesses] = useState<Business[] | null>(null);
   const [activeId, setActiveId] = useState("all");
@@ -164,7 +221,7 @@ export default function DashboardPage() {
 
   if (activeId === "all") {
     return (
-      <main className="max-w-3xl mx-auto px-4 py-8">
+      <main className="max-w-3xl mx-auto px-4 py-5">
         <div className="flex items-center justify-between mb-3">
           <BusinessSwitcher
             businesses={switcherBusinesses}
@@ -174,22 +231,18 @@ export default function DashboardPage() {
           <button
             onClick={() => setShowForm(true)}
             aria-label={t("dashboard_add_first_business")}
-            className="w-9 h-9 shrink-0 rounded-full border border-ink/15 dark:border-dark-border flex items-center justify-center ml-2"
+            className="w-11 h-11 shrink-0 rounded-full border-2 border-[#F5B800]/70 text-white flex items-center justify-center ml-2"
           >
-            <Plus size={16} />
+            <Plus size={20} />
           </button>
         </div>
 
-        <div className="mt-6 mb-6 rounded-card p-5 bg-gradient-to-br from-forest to-forest-light text-paper">
-          <p className="text-xs uppercase tracking-wide text-gold-light mb-2">
-            {t("dashboard_consolidated")}
-          </p>
-          <p className="font-display text-2xl mb-1">
-            {loadingStats ? "..." : fmt(empireStats.todayRevenue)}
-          </p>
-          <p className="text-sm opacity-70">
-            · {businesses.length} {t("dashboard_active_businesses")}
-          </p>
+        <div className="mt-5 mb-5">
+          <HeroCard
+            label={t("dashboard_consolidated")}
+            value={loadingStats ? "..." : fmt(empireStats.todayRevenue)}
+            sub={`${businesses.length} ${t("dashboard_active_businesses")}`}
+          />
         </div>
 
         {loadingStats ? (
@@ -197,18 +250,7 @@ export default function DashboardPage() {
             <Loader2 size={20} className="animate-spin" />
           </div>
         ) : (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
-            <StatCard label={t("dashboard_today_revenue")} value={fmt(empireStats.todayRevenue)} />
-            <StatCard label={t("dashboard_month_revenue")} value={fmt(empireStats.monthRevenue)} />
-            <StatCard label={t("dashboard_year_revenue")} value={fmt(empireStats.yearRevenue)} />
-            <StatCard label={t("dashboard_month_sales")} value={String(empireStats.monthSales)} />
-            <StatCard label={t("dashboard_month_returns")} value={fmt(empireStats.monthReturns)} />
-            <StatCard label={t("dashboard_month_expenses")} value={fmt(empireStats.monthExpenses)} />
-            <StatCard label={t("dashboard_month_profit")} value={fmt(empireStats.monthProfit)} accent />
-            <StatCard label={t("dashboard_out_of_stock")} value={String(empireStats.outOfStockCount)} />
-            <StatCard label={t("dashboard_low_stock_count")} value={String(empireStats.lowStockCount)} />
-            <StatCard label={t("dashboard_stock_value")} value={fmt(empireStats.stockValue)} />
-          </div>
+          <StatsGrid s={empireStats} t={t} />
         )}
 
         <h2 className="font-display text-base mb-2">{t("dashboard_breakdown")}</h2>
@@ -240,7 +282,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <main className="max-w-3xl mx-auto px-4 py-8">
+    <main className="max-w-3xl mx-auto px-4 py-5">
       <div className="flex items-center justify-between mb-3">
         <BusinessSwitcher
           businesses={switcherBusinesses}
@@ -250,9 +292,9 @@ export default function DashboardPage() {
         <button
           onClick={() => setShowForm(true)}
           aria-label={t("dashboard_add_first_business")}
-          className="w-9 h-9 shrink-0 rounded-full border border-ink/15 dark:border-dark-border flex items-center justify-center ml-2"
+          className="w-11 h-11 shrink-0 rounded-full border-2 border-[#F5B800]/70 text-white flex items-center justify-center ml-2"
         >
-          <Plus size={16} />
+          <Plus size={20} />
         </button>
       </div>
 
@@ -272,18 +314,7 @@ export default function DashboardPage() {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
-            <StatCard label={t("dashboard_today_revenue")} value={fmt(stats.todayRevenue)} />
-            <StatCard label={t("dashboard_month_revenue")} value={fmt(stats.monthRevenue)} />
-            <StatCard label={t("dashboard_year_revenue")} value={fmt(stats.yearRevenue)} />
-            <StatCard label={t("dashboard_month_sales")} value={String(stats.monthSales)} />
-            <StatCard label={t("dashboard_month_returns")} value={fmt(stats.monthReturns)} />
-            <StatCard label={t("dashboard_month_expenses")} value={fmt(stats.monthExpenses)} />
-            <StatCard label={t("dashboard_month_profit")} value={fmt(stats.monthProfit)} accent />
-            <StatCard label={t("dashboard_out_of_stock")} value={String(stats.outOfStockCount)} />
-            <StatCard label={t("dashboard_low_stock_count")} value={String(stats.lowStock.length)} />
-            <StatCard label={t("dashboard_stock_value")} value={fmt(stats.stockValue)} />
-          </div>
+          <StatsGrid s={{ ...stats, lowStockCount: stats.lowStock.length }} t={t} />
 
           <section className="mb-8">
             <p className="text-[11px] uppercase tracking-wide text-ink/40 dark:text-paper/40 mb-2">

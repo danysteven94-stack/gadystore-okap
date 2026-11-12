@@ -20,6 +20,11 @@ const ICONS: Record<string, React.ElementType> = {
   all: LayoutGrid, // Vi ansanm (tout antrepriz)
 };
 
+const ACTIVE =
+  "bg-gradient-to-r from-[#FFC21A] to-[#F5A100] text-night border-transparent shadow-[0_0_18px_rgba(255,194,26,0.35)]";
+const INACTIVE =
+  "bg-night/60 text-white border-[#F5B800]/50 hover:border-[#F5B800]";
+
 interface Props {
   businesses: Pick<Business, "id" | "name" | "icon">[];
   activeId: string;
@@ -45,13 +50,11 @@ export function BusinessSwitcher({
           role="tab"
           aria-selected={activeId === "all"}
           onClick={() => onSelect("all")}
-          className={`flex items-center gap-2 whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition-colors border ${
-            activeId === "all"
-              ? "bg-ink text-paper border-ink"
-              : "bg-transparent text-ink/70 dark:text-paper/70 border-ink/15 dark:border-dark-border hover:border-ink/30"
+          className={`flex items-center gap-2 whitespace-nowrap rounded-full px-5 py-2.5 text-[15px] font-semibold transition-colors border ${
+            activeId === "all" ? ACTIVE : INACTIVE
           }`}
         >
-          <LayoutGrid size={16} strokeWidth={1.75} />
+          <LayoutGrid size={18} strokeWidth={2} />
           Tout Antrepriz
         </button>
       )}
@@ -64,13 +67,11 @@ export function BusinessSwitcher({
             role="tab"
             aria-selected={active}
             onClick={() => onSelect(b.id)}
-            className={`flex items-center gap-2 whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition-colors border ${
-              active
-                ? "bg-ink text-paper border-ink"
-                : "bg-transparent text-ink/70 dark:text-paper/70 border-ink/15 dark:border-dark-border hover:border-ink/30"
+            className={`flex items-center gap-2 whitespace-nowrap rounded-full px-5 py-2.5 text-[15px] font-semibold transition-colors border ${
+              active ? ACTIVE : INACTIVE
             }`}
           >
-            <Icon size={16} strokeWidth={1.75} />
+            <Icon size={18} strokeWidth={2} />
             {b.name}
           </button>
         );
