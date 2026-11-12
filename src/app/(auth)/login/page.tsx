@@ -29,7 +29,7 @@ export default function LoginPage() {
         body: JSON.stringify({ email, password }),
       });
 
-      let data: { error?: string; detail?: string; ok?: boolean } = {};
+      let data: { error?: string; detail?: string; ok?: boolean; mustChangePassword?: boolean } = {};
       try {
         data = await res.json();
       } catch {
@@ -47,7 +47,7 @@ export default function LoginPage() {
         return;
       }
 
-      router.push("/dashboard");
+      router.push(data.mustChangePassword ? "/change-password" : "/dashboard");
     } catch {
       setLoading(false);
       setError("Erè rezo — verifye koneksyon entènèt ou epi eseye ankò.");
@@ -60,12 +60,12 @@ export default function LoginPage() {
         onSubmit={handleSubmit}
         className="w-full max-w-sm bg-white dark:bg-dark-surface border border-ink/10 dark:border-dark-border rounded-card p-8"
       >
-        <h1 className="font-display font-semibold text-2xl mb-1">{t("nav_brand_name")}</h1>
-        <p className="text-sm text-ink/60 dark:text-white/60 mb-6">
+        <h1 className="font-display text-2xl mb-1">{t("nav_brand_name")}</h1>
+        <p className="text-sm text-ink/60 dark:text-paper/60 mb-6">
           {t("login_title")}
         </p>
 
-        <label className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">
+        <label className="block text-xs font-medium text-ink/70 dark:text-paper/70 mb-1">
           {t("login_email")}
         </label>
         <input
@@ -73,10 +73,10 @@ export default function LoginPage() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="admin@gadys.com"
-          className="w-full border border-ink/15 dark:border-dark-border rounded px-3 py-2 mb-4 text-sm focus:outline-none focus:ring-2 focus:ring-brick/30"
+          className="w-full border border-ink/15 dark:border-dark-border rounded px-3 py-2 mb-4 text-sm focus:outline-none focus:ring-2 focus:ring-forest/30"
         />
 
-        <label className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">
+        <label className="block text-xs font-medium text-ink/70 dark:text-paper/70 mb-1">
           {t("login_password")}
         </label>
         <input
@@ -84,7 +84,7 @@ export default function LoginPage() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="••••••••"
-          className="w-full border border-ink/15 dark:border-dark-border rounded px-3 py-2 mb-2 text-sm focus:outline-none focus:ring-2 focus:ring-brick/30"
+          className="w-full border border-ink/15 dark:border-dark-border rounded px-3 py-2 mb-2 text-sm focus:outline-none focus:ring-2 focus:ring-forest/30"
         />
 
         {error && (
@@ -96,7 +96,7 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-brick hover:bg-brick-dark text-white rounded py-2.5 text-sm font-medium mt-2 disabled:opacity-60"
+          className="w-full bg-ink text-paper rounded py-2.5 text-sm font-medium mt-2 disabled:opacity-60"
         >
           {loading ? t("login_loading") : t("login_button")}
         </button>

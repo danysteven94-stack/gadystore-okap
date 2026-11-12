@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { randomUUID } from "crypto";
 import { redis } from "@/lib/upstash";
-import { verifySession, hashPassword, can, type UserRole } from "@/lib/auth";
+import { verifySession, hashPassword, can, isSuperAdmin, type UserRole } from "@/lib/auth";
+import { generateTempPassword, isTrue } from "@/lib/password";
 
 async function getSession(req: NextRequest) {
   const token = req.cookies.get("session")?.value;
@@ -11,16 +12,21 @@ async function getSession(req: NextRequest) {
 
 const createUserSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(6),
+  fullName: z.string().trim().min(2).max(80),
   role: z.enum(["admin", "gestionnaire", "caissier"]).default("gestionnaire"),
 });
 
 interface UserSummary {
   id: string;
   email: string;
+  fullName: string;
   role: UserRole;
   createdAt: string;
+  lastLoginAt: string;
+  mustChangePassword: boolean;
+  disabled: boolean;
   businessCount: number;
+  createdBy: string;
 }
 
 export async function GET(req: NextRequest) {
@@ -30,6 +36,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Sèl Administrateur ka jere itilizatè." }, { status: 403 });
   }
 
+  // Sèl kont prensipal la wè TOUT kont yo. Lòt administratè yo wè SÈLMAN
+  // kont segondè yo menm yo kreye (pou anplwaye yo) — pa gen lòt kont ki parèt.
+  const isSuper = isSuperAdmin(session.email);
+  const me = session.email.toLowerCase();
   const emails = await redis.smembers("users:all");
   const users: UserSummary[] = emails.length
     ? (
@@ -37,6 +47,8 @@ export async function GET(req: NextRequest) {
           emails.map(async (email) => {
             const record = await redis.hgetall<Record<string, unknown>>(`user:${email}`);
             if (!record || !record.id) return null;
+            const createdBy = record.createdBy ? String(record.createdBy).toLowerCase() : "";
+            if (!isSuper && createdBy !== me) return null;
             const rawIds = record.businessIds as string | string[] | undefined;
             const businessIds: string[] = Array.isArray(rawIds)
               ? rawIds
@@ -44,9 +56,14 @@ export async function GET(req: NextRequest) {
             return {
               id: record.id as string,
               email: record.email as string,
+              fullName: record.fullName ? String(record.fullName) : "",
               role: record.role as UserRole,
               createdAt: (record.createdAt as string) ?? "",
+              lastLoginAt: record.lastLoginAt ? String(record.lastLoginAt) : "",
+              mustChangePassword: isTrue(record.mustChangePassword),
+              disabled: isTrue(record.disabled),
               businessCount: businessIds.length,
+              createdBy,
             };
           })
         )
@@ -66,10 +83,10 @@ export async function POST(req: NextRequest) {
   const body = await req.json();
   const parsed = createUserSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: "Antre yon imèl valid ak yon mo de pas (6+ karaktè)." }, { status: 400 });
+    return NextResponse.json({ error: "Antre non konplè a ak yon imèl valid." }, { status: 400 });
   }
 
-  const { password, role } = parsed.data;
+  const { role, fullName } = parsed.data;
   const email = parsed.data.email.trim().toLowerCase();
 
   const existing = await redis.hgetall<Record<string, unknown>>(`user:${email}`);
@@ -77,11 +94,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Yon itilizatè deja itilize imèl sa a." }, { status: 409 });
   }
 
-  const passwordHash = await hashPassword(password);
+  // Modpas tanporè jenere pa sèvè a. Li parèt YON SÈL FWA nan repons sa a,
+  // epi itilizatè a dwe chanje l nan premye koneksyon an.
+  const temporaryPassword = generateTempPassword();
+  const passwordHash = await hashPassword(temporaryPassword);
   const user = {
     id: randomUUID(),
     email,
+    fullName,
     passwordHash,
+    mustChangePassword: true,
+    createdBy: session.email,
     role,
     // Chak nouvo itilizatè kòmanse ak pwòp done pa yo — pa gen okenn
     // antrepriz pataje ak lòt kont otomatikman.
@@ -93,7 +116,7 @@ export async function POST(req: NextRequest) {
   await redis.sadd("users:all", email);
 
   return NextResponse.json(
-    { user: { id: user.id, email: user.email, role: user.role } },
+    { user: { id: user.id, email: user.email, fullName, role: user.role }, temporaryPassword },
     { status: 201 }
   );
 }

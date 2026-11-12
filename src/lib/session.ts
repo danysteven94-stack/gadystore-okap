@@ -1,4 +1,5 @@
 import { SignJWT, jwtVerify } from "jose";
+import { redis } from "@/lib/upstash"; // @upstash/redis = REST/fetch, konpatib Edge
 
 // Modil sa a itilize sèlman `jose`, ki konpatib ak Edge Runtime — kontrèman
 // ak bcryptjs, ki bezwen Node.js. `middleware.ts` DWE enpòte de la a, jamè
@@ -8,6 +9,15 @@ import { SignJWT, jwtVerify } from "jose";
 const secret = new TextEncoder().encode(
   process.env.JWT_SECRET || "changeme-in-production"
 );
+
+// Kont prensipal la (pwopriyetè app la). Se SÈL kont ki ka wè TOUT lòt kont yo.
+export const SUPER_ADMIN_EMAIL = (
+  process.env.SUPER_ADMIN_EMAIL || "danystevenj@gmail.com"
+).toLowerCase();
+
+export function isSuperAdmin(email: string | undefined | null): boolean {
+  return (email ?? "").trim().toLowerCase() === SUPER_ADMIN_EMAIL;
+}
 
 export type UserRole = "admin" | "gestionnaire" | "caissier";
 
@@ -31,6 +41,11 @@ export async function verifySession(
 ): Promise<SessionPayload | null> {
   try {
     const { payload } = await jwtVerify(token, secret);
+    // Yon token "pwchange" pa ka janm sèvi kòm yon sesyon konplè.
+    if (payload.purpose) return null;
+    // Kont dezaktive: sesyon an invalid imedyatman (pa bezwen tann 7 jou JWT la fini).
+    const email = String((payload as { email?: string }).email ?? "").toLowerCase();
+    if (!email || (await redis.sismember("users:disabled", email))) return null;
     return payload as unknown as SessionPayload;
   } catch {
     return null;
@@ -47,4 +62,26 @@ export const permissions: Record<UserRole, string[]> = {
 export function can(role: UserRole, action: string): boolean {
   const allowed = permissions[role];
   return allowed.includes("*") || allowed.includes(action);
+}
+
+/**
+ * Token kout (15 min) bay APRE yon bon modpas tanporè, SÈLMAN pou chanje modpas la.
+ * Pa gen sesyon konplè (cookie "session") anvan modpas la chanje.
+ */
+export async function signPwChangeToken(email: string): Promise<string> {
+  return new SignJWT({ email, purpose: "pwchange" })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime("15m")
+    .sign(secret);
+}
+
+export async function verifyPwChangeToken(token: string): Promise<string | null> {
+  try {
+    const { payload } = await jwtVerify(token, secret);
+    if (payload.purpose !== "pwchange" || typeof payload.email !== "string") return null;
+    return payload.email;
+  } catch {
+    return null;
+  }
 }
