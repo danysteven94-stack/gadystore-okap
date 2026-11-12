@@ -1,0 +1,93 @@
+import { SignJWT, jwtVerify } from "jose";
+import { redis } from "@/lib/upstash"; // @upstash/redis = REST/fetch, konpatib Edge
+
+// Modil sa a itilize sèlman `jose`, ki konpatib ak Edge Runtime — kontrèman
+// ak bcryptjs, ki bezwen Node.js. `middleware.ts` DWE enpòte de la a, jamè
+// de `auth.ts` (ki gen bcryptjs), otreman build la ka echwe oswa kraze sou
+// Edge Runtime Vercel la.
+
+// Sekrè a li LÈ YO BEZWEN L (pa pandan build la), pou build Vercel pa echwe.
+// An pwodiksyon, si JWT_SECRET manke, login/sesyon refize mache (pa gen valè default danjere).
+function getSecret(): Uint8Array {
+  const v = process.env.JWT_SECRET;
+  if (!v && process.env.NODE_ENV === "production") {
+    throw new Error("JWT_SECRET manke nan varyab anviwònman yo.");
+  }
+  return new TextEncoder().encode(v || "dev-only-secret");
+}
+
+// Kont prensipal la (pwopriyetè app la). Se SÈL kont ki ka wè TOUT lòt kont yo.
+export const SUPER_ADMIN_EMAIL = (
+  process.env.SUPER_ADMIN_EMAIL || "danystevenj@gmail.com"
+).toLowerCase();
+
+export function isSuperAdmin(email: string | undefined | null): boolean {
+  return (email ?? "").trim().toLowerCase() === SUPER_ADMIN_EMAIL;
+}
+
+export type UserRole = "admin" | "gestionnaire" | "caissier";
+
+export interface SessionPayload {
+  userId: string;
+  email: string;
+  role: UserRole;
+  businessIds: string[];
+}
+
+export async function signSession(payload: SessionPayload): Promise<string> {
+  return new SignJWT({ ...payload })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime("7d")
+    .sign(getSecret());
+}
+
+export async function verifySession(
+  token: string
+): Promise<SessionPayload | null> {
+  try {
+    const { payload } = await jwtVerify(token, getSecret());
+    // Yon token "pwchange" pa ka janm sèvi kòm yon sesyon konplè.
+    if (payload.purpose) return null;
+    // Kont dezaktive: sesyon an invalid imedyatman (pa bezwen tann 7 jou JWT la fini).
+    const email = String((payload as { email?: string }).email ?? "").toLowerCase();
+    if (!email || (await redis.sismember("users:disabled", email))) return null;
+    return payload as unknown as SessionPayload;
+  } catch {
+    return null;
+  }
+}
+
+/** Contrôle d'accès basé sur les rôles (RBAC) */
+export const permissions: Record<UserRole, string[]> = {
+  admin: ["*"],
+  gestionnaire: ["sales:write", "stock:read", "invoices:write", "reports:read"],
+  caissier: ["sales:write", "invoices:print"],
+};
+
+export function can(role: UserRole, action: string): boolean {
+  const allowed = permissions[role];
+  return allowed.includes("*") || allowed.includes(action);
+}
+
+/**
+ * Token kout (15 min) bay APRE yon bon modpas tanporè, SÈLMAN pou chanje modpas la.
+ * Pa gen sesyon konplè (cookie "session") anvan modpas la chanje.
+ */
+export async function signPwChangeToken(email: string): Promise<string> {
+  return new SignJWT({ email, purpose: "pwchange" })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime("15m")
+    .sign(getSecret());
+}
+
+export async function verifyPwChangeToken(token: string): Promise<string | null> {
+  try {
+    const { payload } = await jwtVerify(token, getSecret());
+    if (payload.purpose !== "pwchange" || typeof payload.email !== "string") return null;
+    return payload.email;
+  } catch {
+    return null;
+  }
+}

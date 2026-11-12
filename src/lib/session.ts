@@ -6,12 +6,15 @@ import { redis } from "@/lib/upstash"; // @upstash/redis = REST/fetch, konpatib 
 // de `auth.ts` (ki gen bcryptjs), otreman build la ka echwe oswa kraze sou
 // Edge Runtime Vercel la.
 
-if (!process.env.JWT_SECRET && process.env.NODE_ENV === "production") {
-  throw new Error("JWT_SECRET manke nan varyab anviwònman yo.");
+// Sekrè a li LÈ YO BEZWEN L (pa pandan build la), pou build Vercel pa echwe.
+// An pwodiksyon, si JWT_SECRET manke, login/sesyon refize mache (pa gen valè default danjere).
+function getSecret(): Uint8Array {
+  const v = process.env.JWT_SECRET;
+  if (!v && process.env.NODE_ENV === "production") {
+    throw new Error("JWT_SECRET manke nan varyab anviwònman yo.");
+  }
+  return new TextEncoder().encode(v || "dev-only-secret");
 }
-const secret = new TextEncoder().encode(
-  process.env.JWT_SECRET || "dev-only-secret"
-);
 
 // Kont prensipal la (pwopriyetè app la). Se SÈL kont ki ka wè TOUT lòt kont yo.
 export const SUPER_ADMIN_EMAIL = (
@@ -36,14 +39,14 @@ export async function signSession(payload: SessionPayload): Promise<string> {
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("7d")
-    .sign(secret);
+    .sign(getSecret());
 }
 
 export async function verifySession(
   token: string
 ): Promise<SessionPayload | null> {
   try {
-    const { payload } = await jwtVerify(token, secret);
+    const { payload } = await jwtVerify(token, getSecret());
     // Yon token "pwchange" pa ka janm sèvi kòm yon sesyon konplè.
     if (payload.purpose) return null;
     // Kont dezaktive: sesyon an invalid imedyatman (pa bezwen tann 7 jou JWT la fini).
@@ -76,12 +79,12 @@ export async function signPwChangeToken(email: string): Promise<string> {
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("15m")
-    .sign(secret);
+    .sign(getSecret());
 }
 
 export async function verifyPwChangeToken(token: string): Promise<string | null> {
   try {
-    const { payload } = await jwtVerify(token, secret);
+    const { payload } = await jwtVerify(token, getSecret());
     if (payload.purpose !== "pwchange" || typeof payload.email !== "string") return null;
     return payload.email;
   } catch {
