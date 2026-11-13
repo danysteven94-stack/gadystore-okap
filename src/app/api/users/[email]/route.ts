@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { redis } from "@/lib/upstash";
 import { verifySession, hashPassword, can, SUPER_ADMIN_EMAIL, isSuperAdmin } from "@/lib/auth";
 import { generateTempPassword } from "@/lib/password";
+import { userOwnsBusiness } from "@/lib/shop";
 
 async function getSession(req: NextRequest) {
   const token = req.cookies.get("session")?.value;
@@ -58,13 +59,37 @@ export async function PATCH(
 
   const body = await req.json().catch(() => ({}));
   const action = body.action as string;
-  if (!["reset_password", "deactivate", "activate"].includes(action)) {
+  if (!["reset_password", "deactivate", "activate", "set_businesses"].includes(action)) {
     return NextResponse.json({ error: "Aksyon envalid." }, { status: 400 });
   }
 
   const { email: rawEmail } = await params;
   const email = decodeURIComponent(rawEmail).trim().toLowerCase();
   const isSuperCaller = isSuperAdmin(session.email);
+
+  // Asiyen antrepriz bay yon anplwaye (jesyonè/kesye) ou menm ou te kreye.
+  // Ou pa ka bay aksè a yon antrepriz ki pa pa ou, ni asiyen yon lòt administratè.
+  if (action === "set_businesses") {
+    const ids: unknown = body.businessIds;
+    if (!Array.isArray(ids) || ids.length > 50 || ids.some((x) => typeof x !== "string")) {
+      return NextResponse.json({ error: "Lis antrepriz envalid." }, { status: 400 });
+    }
+    const target = await redis.hgetall<Record<string, unknown>>(`user:${email}`);
+    if (!target || !target.id || String(target.createdBy ?? "").toLowerCase() !== session.email.toLowerCase()) {
+      return NextResponse.json({ error: "Itilizatè pa jwenn." }, { status: 404 });
+    }
+    if (target.role === "admin" || email === SUPER_ADMIN_EMAIL) {
+      return NextResponse.json({ error: "Asiyasyon antrepriz fèt sèlman pou jesyonè ak kesye." }, { status: 400 });
+    }
+    const unique = [...new Set(ids as string[])];
+    for (const id of unique) {
+      if (!(await userOwnsBusiness(session.email, id))) {
+        return NextResponse.json({ error: "Aksè refize." }, { status: 403 });
+      }
+    }
+    await redis.hset(`user:${email}`, { businessIds: JSON.stringify(unique) });
+    return NextResponse.json({ ok: true, businessIds: unique });
+  }
 
   // Dezaktive / reaktive: SÈL kont prensipal la gen dwa sa a.
   if (action === "deactivate" || action === "activate") {

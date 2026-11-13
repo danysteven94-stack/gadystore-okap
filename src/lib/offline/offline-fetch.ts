@@ -46,7 +46,7 @@ export const setOnline = (online: boolean) => state.online !== online && setStat
 
 const QUEUEABLE = new Set(["/api/sales", "/api/expenses", "/api/purchases", "/api/customers"]);
 const BYPASS =
-  /^\/api\/(auth\/(login|logout|change-password|delete-account)|invoices|backup|img|users|user-billing|shop\/(?!settings))/;
+  /^\/api\/(auth\/(login|logout|change-password|delete-account)|invoices|backup|img|users|user-billing|push|shop\/(?!settings))/;
 
 let realFetch: typeof fetch;
 let installed = false;
@@ -96,7 +96,7 @@ async function handleGet(url: URL, input: RequestInfo | URL, init?: RequestInit)
     return res;
   } catch {
     to.done();
-    setOnline(false);
+    setOnline(navigator.onLine);
     const hit = await idbGet<{ body: string }>("cache", key).catch(() => undefined);
     if (hit) return new Response(hit.body, { status: 200, headers: { "Content-Type": "application/json", "X-Offline-Cache": "1" } });
     return json({ error: "Pa gen koneksyon, e done sa a poko sove sou telefòn nan." }, 503);
@@ -180,7 +180,7 @@ async function handleMutation(url: URL, method: string, input: RequestInfo | URL
       setOnline(true);
       return res;
     } catch {
-      setOnline(false);
+      setOnline(navigator.onLine);
       return json({ error: "Fonksyon sa a mande entènèt. Konekte epi eseye ankò." }, 503);
     }
   }
@@ -198,7 +198,7 @@ async function handleMutation(url: URL, method: string, input: RequestInfo | URL
     return res;
   } catch {
     to.done();
-    setOnline(false);
+    setOnline(navigator.onLine);
     return enqueueAndFake(url.pathname, body, id);
   }
 }

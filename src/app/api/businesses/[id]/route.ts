@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { userOwnsBusiness } from "@/lib/shop";
 import { redis } from "@/lib/upstash";
 import { verifySession } from "@/lib/auth";
 import type { Business } from "@/types";
@@ -16,6 +17,9 @@ export async function PATCH(
   if (!session) return NextResponse.json({ error: "Pa otorize." }, { status: 401 });
 
   const { id } = await params;
+  if (!(await userOwnsBusiness(session.email, id))) {
+    return NextResponse.json({ error: "Aksè refize." }, { status: 403 });
+  }
   const existing = await redis.hgetall<Business>(`business:${id}`);
   if (!existing) return NextResponse.json({ error: "Antrepriz pa jwenn." }, { status: 404 });
 
@@ -41,7 +45,13 @@ export async function DELETE(
   const session = await getSession(req);
   if (!session) return NextResponse.json({ error: "Pa otorize." }, { status: 401 });
 
+  if (session.role !== "admin") {
+    return NextResponse.json({ error: "Aksè refize." }, { status: 403 });
+  }
   const { id } = await params;
+  if (!(await userOwnsBusiness(session.email, id))) {
+    return NextResponse.json({ error: "Aksè refize." }, { status: 403 });
+  }
   const existing = await redis.hgetall<Business>(`business:${id}`);
   if (!existing) return NextResponse.json({ error: "Antrepriz pa jwenn." }, { status: 404 });
 

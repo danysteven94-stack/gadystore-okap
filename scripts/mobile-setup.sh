@@ -19,6 +19,15 @@ if ! grep -q "android.permission.CAMERA" "$MANIFEST"; then
   sed -i 's#<uses-permission android:name="android.permission.INTERNET" />#&\n    <uses-permission android:name="android.permission.CAMERA" />\n    <uses-feature android:name="android.hardware.camera" android:required="false" />#' "$MANIFEST"
 fi
 
+# Android 13+: pèmisyon notifikasyon
+if ! grep -q "POST_NOTIFICATIONS" "$MANIFEST"; then
+  sed -i 's#<uses-permission android:name="android.permission.INTERNET" />#&\n    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />#' "$MANIFEST"
+fi
+
+# Android: obfuscation/minify (R8) nan release + pa kite backup ADB
+sed -i 's/minifyEnabled false/minifyEnabled true\n            shrinkResources true/' android/app/build.gradle || true
+sed -i 's/android:allowBackup="true"/android:allowBackup="false"/' "$MANIFEST" || true
+
 # iOS: tèks pèmisyon kamera (obligatwa, sinon Apple rejte)
 PLIST=ios/App/App/Info.plist
 if [[ -f "$PLIST" ]]; then

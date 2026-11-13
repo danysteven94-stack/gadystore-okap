@@ -37,7 +37,11 @@
     "@capacitor/status-bar": "^7.0.0",
     "@capacitor/splash-screen": "^7.0.0",
     "@capacitor/browser": "^7.0.0",
-    "@capacitor/share": "^7.0.0"
+    "@capacitor/share": "^7.0.0",
+    "web-push": "^3.6.7",
+    "firebase-admin": "^13.0.0",
+    "firebase": "^11.0.0",
+    "@capacitor-firebase/messaging": "^7.0.0"
   },
   "devDependencies": {
     "typescript": "^5.6.3",
@@ -54,6 +58,7 @@
     "dotenv": "^16.4.5",
     "tsx": "^4.19.2",
     "@capacitor/cli": "^7.0.0",
-    "@capacitor/assets": "^3.0.5"
+    "@capacitor/assets": "^3.0.5",
+    "@types/web-push": "^3.6.4"
   }
 }

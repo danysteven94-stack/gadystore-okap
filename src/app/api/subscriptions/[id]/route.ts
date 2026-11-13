@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { userOwnsBusiness } from "@/lib/shop";
 import { redis } from "@/lib/upstash";
 import { verifySession } from "@/lib/auth";
 import type { Subscription } from "@/app/api/subscriptions/route";
@@ -18,6 +19,9 @@ export async function PATCH(
   const { id } = await params;
   const sub = await redis.hgetall<Subscription>(`subscription:${id}`);
   if (!sub) return NextResponse.json({ error: "Abònman pa jwenn." }, { status: 404 });
+  if (!(await userOwnsBusiness(session.email, sub.businessId))) {
+    return NextResponse.json({ error: "Aksè refize." }, { status: 403 });
+  }
 
   const body = await req.json();
   if (body.status !== "cancelled" && body.status !== "active") {
@@ -38,6 +42,9 @@ export async function DELETE(
   const { id } = await params;
   const sub = await redis.hgetall<Subscription>(`subscription:${id}`);
   if (!sub) return NextResponse.json({ error: "Abònman pa jwenn." }, { status: 404 });
+  if (!(await userOwnsBusiness(session.email, sub.businessId))) {
+    return NextResponse.json({ error: "Aksè refize." }, { status: 403 });
+  }
 
   await redis.del(`subscription:${id}`);
   await redis.srem(`business:${sub.businessId}:subscriptions`, id);

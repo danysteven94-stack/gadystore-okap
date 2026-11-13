@@ -3,6 +3,7 @@ import { z } from "zod";
 import { redis } from "@/lib/upstash";
 import { verifyPassword, signSession, signPwChangeToken, type SessionPayload } from "@/lib/auth";
 import { isTrue } from "@/lib/password";
+import { rateLimit } from "@/lib/shop";
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -11,6 +12,10 @@ const loginSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
+    // Pwoteksyon kont fòs brit: 20 eseye/15 min pa IP, 8 pa imèl
+    if (!(await rateLimit(req, "login", 20, 900))) {
+      return NextResponse.json({ error: "Twòp eseye. Tann 15 minit epi eseye ankò." }, { status: 429 });
+    }
     const body = await req.json();
     const parsed = loginSchema.safeParse(body);
 
@@ -23,6 +28,12 @@ export async function POST(req: NextRequest) {
 
     const email = parsed.data.email.trim().toLowerCase();
     const { password } = parsed.data;
+    const emailKey = `rl:login-email:${email}`;
+    const attempts = await redis.incr(emailKey);
+    if (attempts === 1) await redis.expire(emailKey, 900);
+    if (attempts > 8) {
+      return NextResponse.json({ error: "Twòp eseye pou kont sa a. Tann 15 minit." }, { status: 429 });
+    }
     const user = await redis.hgetall<Record<string, string>>(`user:${email}`);
 
     if (!user || !user.passwordHash) {
@@ -40,6 +51,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    await redis.del(emailKey);
     if (await redis.sismember("users:disabled", email)) {
       return NextResponse.json(
         { error: "Kont sa a dezaktive. Kontakte administratè prensipal la." },

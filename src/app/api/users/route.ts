@@ -26,6 +26,7 @@ interface UserSummary {
   mustChangePassword: boolean;
   disabled: boolean;
   businessCount: number;
+  businessIds: string[];
   createdBy: string;
 }
 
@@ -63,6 +64,7 @@ export async function GET(req: NextRequest) {
               mustChangePassword: isTrue(record.mustChangePassword),
               disabled: isTrue(record.disabled),
               businessCount: businessIds.length,
+              businessIds,
               createdBy,
             };
           })

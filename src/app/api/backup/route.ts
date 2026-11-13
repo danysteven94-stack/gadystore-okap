@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { userOwnsBusiness } from "@/lib/shop";
 import { redis } from "@/lib/upstash";
 import { verifySession } from "@/lib/auth";
 import type { Business, Customer, Product, Sale } from "@/types";
@@ -15,6 +16,9 @@ export async function POST(req: NextRequest) {
   const { businessId } = await req.json();
   if (!businessId) {
     return NextResponse.json({ error: "businessId obligatwa." }, { status: 400 });
+  }
+  if (!(await userOwnsBusiness(session.email, businessId))) {
+    return NextResponse.json({ error: "Aksè refize." }, { status: 403 });
   }
 
   const business = await redis.hgetall<Business>(`business:${businessId}`);
@@ -66,6 +70,9 @@ export async function GET(req: NextRequest) {
   const businessId = req.nextUrl.searchParams.get("businessId");
   if (!businessId) {
     return NextResponse.json({ error: "businessId obligatwa." }, { status: 400 });
+  }
+  if (!(await userOwnsBusiness(session.email, businessId))) {
+    return NextResponse.json({ error: "Aksè refize." }, { status: 403 });
   }
 
   const backupIds = await redis.lrange(`business:${businessId}:backups`, 0, -1);

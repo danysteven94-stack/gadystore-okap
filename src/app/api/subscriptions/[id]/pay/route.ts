@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { userOwnsBusiness } from "@/lib/shop";
 import { redis } from "@/lib/upstash";
 import { verifySession } from "@/lib/auth";
 import { recordSubscriptionSale } from "@/lib/subscription-sale";
@@ -25,6 +26,9 @@ export async function POST(
   const { id } = await params;
   const sub = await redis.hgetall<Subscription>(`subscription:${id}`);
   if (!sub) return NextResponse.json({ error: "Abònman pa jwenn." }, { status: 404 });
+  if (!(await userOwnsBusiness(session.email, sub.businessId))) {
+    return NextResponse.json({ error: "Aksè refize." }, { status: 403 });
+  }
 
   const nextPaymentDate = addOneMonth(sub.nextPaymentDate);
   const updates = { status: "active" as const, nextPaymentDate };

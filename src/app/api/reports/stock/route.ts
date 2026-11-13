@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { userOwnsBusiness } from "@/lib/shop";
 import { redis } from "@/lib/upstash";
 import { verifySession } from "@/lib/auth";
 import type { Product } from "@/types";
@@ -9,6 +10,9 @@ export async function GET(req: NextRequest) {
   if (!session) return NextResponse.json({ error: "Pa otorize." }, { status: 401 });
 
   const businessId = req.nextUrl.searchParams.get("businessId");
+  if (businessId && !(await userOwnsBusiness(session.email, businessId))) {
+    return NextResponse.json({ error: "Aksè refize." }, { status: 403 });
+  }
   if (!businessId) {
     return NextResponse.json({ error: "businessId obligatwa." }, { status: 400 });
   }

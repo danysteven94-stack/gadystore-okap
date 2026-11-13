@@ -16,6 +16,7 @@ interface UserSummary {
   mustChangePassword: boolean;
   disabled: boolean;
   businessCount: number;
+  businessIds?: string[];
   createdBy: string;
 }
 
@@ -59,6 +60,10 @@ export default function UsersPage() {
   const [forbidden, setForbidden] = useState(false);
   const [cred, setCred] = useState<Credentials | null>(null);
   const [copied, setCopied] = useState(false);
+  const [assignFor, setAssignFor] = useState<UserSummary | null>(null);
+  const [myBusinesses, setMyBusinesses] = useState<{ id: string; name: string }[]>([]);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [assignSaving, setAssignSaving] = useState(false);
 
   async function load() {
     try {
@@ -154,6 +159,37 @@ export default function UsersPage() {
       setError("Erè rezo — eseye ankò.");
     }
     setBusyEmail(null);
+  }
+
+  async function openAssign(u: UserSummary) {
+    setError(null);
+    try {
+      const res = await fetch("/api/businesses");
+      const data = await res.json();
+      setMyBusinesses((data.businesses ?? []).map((b: { id: string; name: string }) => ({ id: b.id, name: b.name })));
+    } catch {
+      setMyBusinesses([]);
+    }
+    setSelected(new Set(u.businessIds ?? []));
+    setAssignFor(u);
+  }
+
+  async function saveAssign() {
+    if (!assignFor) return;
+    setAssignSaving(true);
+    try {
+      const res = await fetch(`/api/users/${encodeURIComponent(assignFor.email)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "set_businesses", businessIds: [...selected] }),
+      });
+      const data = await res.json();
+      if (!res.ok) setError(data.error || "Erè — eseye ankò.");
+      else { setAssignFor(null); await load(); }
+    } catch {
+      setError("Erè rezo — eseye ankò.");
+    }
+    setAssignSaving(false);
   }
 
   async function handleDelete(targetEmail: string) {
@@ -329,6 +365,7 @@ export default function UsersPage() {
         <div className="space-y-3">
           {users.map((u) => {
             const isSuper = u.email.toLowerCase() === SUPER_ADMIN_EMAIL;
+            const canAssign = u.role !== "admin" && !isSuper && u.createdBy.toLowerCase() === (currentEmail ?? "").toLowerCase();
             const canReset = !isSuper && !u.disabled && (u.role !== "admin" || isSuperAdmin);
             return (
               <div
@@ -361,8 +398,13 @@ export default function UsersPage() {
                   {isSuperAdmin && u.createdBy && <> · par {u.createdBy}</>}
                 </p>
 
-                {(canReset || (isSuperAdmin && !isSuper)) && (
+                {(canReset || canAssign || (isSuperAdmin && !isSuper)) && (
                   <div className="flex items-center gap-5 mt-3 pt-3 border-t border-ink/8 dark:border-dark-border/60">
+                    {canAssign && (
+                      <button onClick={() => openAssign(u)} className="text-sm font-semibold">
+                        {t("users_assign")}
+                      </button>
+                    )}
                     {canReset && (
                       <button
                         onClick={() => handleReset(u)}
@@ -395,6 +437,44 @@ export default function UsersPage() {
               </div>
             );
           })}
+        </div>
+      )}
+      {assignFor && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={() => setAssignFor(null)}>
+          <div
+            className="w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl bg-white dark:bg-dark-surface p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] max-h-[80vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="font-semibold mb-1">{assignFor.fullName || assignFor.email}</p>
+            <p className="text-xs text-ink/60 dark:text-paper/60 mb-4">{t("users_assign_title")}</p>
+            {myBusinesses.length === 0 ? (
+              <p className="text-sm text-ink/50 mb-4">{t("users_assign_none")}</p>
+            ) : (
+              <div className="space-y-2 mb-4">
+                {myBusinesses.map((b) => (
+                  <label key={b.id} className="flex items-center gap-3 rounded-xl border border-ink/10 dark:border-dark-border px-3 py-3 text-sm">
+                    <input
+                      type="checkbox"
+                      className="w-5 h-5"
+                      checked={selected.has(b.id)}
+                      onChange={(e) => {
+                        const next = new Set(selected);
+                        if (e.target.checked) next.add(b.id); else next.delete(b.id);
+                        setSelected(next);
+                      }}
+                    />
+                    {b.name}
+                  </label>
+                ))}
+              </div>
+            )}
+            <div className="flex items-center gap-3">
+              <button onClick={saveAssign} disabled={assignSaving} className="bg-ink text-paper rounded-xl px-5 py-3 text-sm font-semibold disabled:opacity-50">
+                {assignSaving ? "…" : t("users_assign_save")}
+              </button>
+              <button onClick={() => setAssignFor(null)} className="text-sm text-ink/60 dark:text-paper/60">✕</button>
+            </div>
+          </div>
         </div>
       )}
     </main>

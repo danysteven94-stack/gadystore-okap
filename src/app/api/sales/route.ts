@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { userOwnsBusiness } from "@/lib/shop";
 import { withIdempotency } from "@/lib/idempotency";
 import { z } from "zod";
 import { randomUUID } from "crypto";
@@ -37,6 +38,9 @@ async function postHandler(req: NextRequest) {
 
     const body = await req.json();
     const parsed = saleSchema.safeParse(body);
+  if (parsed.success && !(await userOwnsBusiness(session.email, parsed.data.businessId))) {
+    return NextResponse.json({ error: "Aksè refize." }, { status: 403 });
+  }
     if (!parsed.success) {
       return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
     }
@@ -104,7 +108,7 @@ async function postHandler(req: NextRequest) {
       }
     }
 
-    await notifyNewSale(businessId, sale.total);
+    await notifyNewSale(businessId, sale.total, session.email);
 
     return NextResponse.json({ sale }, { status: 201 });
   } catch (err) {

@@ -65,3 +65,6 @@ App la kounye a mache san entènèt apre yon premye koneksyon:
   Done yo sove san chifreman sou telefòn nan (nan sandbox app la).
 - **iOS:** service worker bezwen `WKAppBoundDomains` (script la ajoute l). Teste ke lyen WhatsApp (wa.me) louvri toujou.
 - Teste: mete telefòn nan mòd avyon → louvri app la → fè yon vant → dezaktive mòd avyon → verifye vant lan parèt nan Rapò.
+
+## 6. Notifikasyon push
+Gade `NOTIFICATIONS.md` (Web Push pou laptop/navigatè, Firebase pou app natif).

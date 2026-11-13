@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { userOwnsBusiness } from "@/lib/shop";
 import { z } from "zod";
 import { redis } from "@/lib/upstash";
 import { verifySession } from "@/lib/auth";
@@ -26,6 +27,9 @@ export async function PATCH(
   const { id } = await params;
   const existing = await redis.hgetall<Customer>(`customer:${id}`);
   if (!existing) return NextResponse.json({ error: "Kliyan pa jwenn." }, { status: 404 });
+  if (!(await userOwnsBusiness(session.email, existing.businessId))) {
+    return NextResponse.json({ error: "Aksè refize." }, { status: 403 });
+  }
 
   const body = await req.json();
   const parsed = updateSchema.safeParse(body);
@@ -47,6 +51,9 @@ export async function DELETE(
   const { id } = await params;
   const existing = await redis.hgetall<Customer>(`customer:${id}`);
   if (!existing) return NextResponse.json({ error: "Kliyan pa jwenn." }, { status: 404 });
+  if (!(await userOwnsBusiness(session.email, existing.businessId))) {
+    return NextResponse.json({ error: "Aksè refize." }, { status: 403 });
+  }
 
   await redis.del(`customer:${id}`);
   await redis.srem(`business:${existing.businessId}:customers`, id);

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { WifiOff, RefreshCw, AlertTriangle, X } from "lucide-react";
 import {
-  installOfflineFetch, subscribe, getState, syncQueue, refreshCounts, warmup, discardFailed,
+  installOfflineFetch, setOnline, subscribe, getState, syncQueue, refreshCounts, warmup, discardFailed,
   type OfflineState,
 } from "@/lib/offline/offline-fetch";
 
@@ -21,20 +21,24 @@ export function OfflineProvider({ children }: { children: React.ReactNode }) {
     refreshCounts().then(() => syncQueue());
     const warm = setTimeout(() => warmup(), 3000);
 
-    const onOnline = () => { syncQueue(); setTimeout(() => warmup(), 2000); };
+    const onOnline = () => { setOnline(true); syncQueue(); setTimeout(() => warmup(), 2000); };
     const onVisible = () => { if (document.visibilityState === "visible") syncQueue(); };
     window.addEventListener("online", onOnline);
+    const onOffline = () => setOnline(false);
+    window.addEventListener("offline", onOffline);
     document.addEventListener("visibilitychange", onVisible);
     const iv = setInterval(() => { if (getState().pending > 0) syncQueue(); }, 30000);
 
     return () => {
       unsub(); clearTimeout(warm); clearInterval(iv);
       window.removeEventListener("online", onOnline);
+      window.removeEventListener("offline", onOffline);
       document.removeEventListener("visibilitychange", onVisible);
     };
   }, []);
 
-  const show = !s.online || s.pending > 0 || s.failed.length > 0;
+  // Pa montre mesaj "mòd offline" ankò — bann nan parèt sèlman si gen operasyon k ap tann oswa ki echwe.
+  const show = s.pending > 0 || s.failed.length > 0;
 
   return (
     <>
@@ -46,12 +50,11 @@ export function OfflineProvider({ children }: { children: React.ReactNode }) {
           role="status"
         >
           <div className="pointer-events-auto max-w-md mx-auto rounded-lg bg-night text-white text-xs shadow-lg border border-white/10 overflow-hidden">
-            {(!s.online || s.pending > 0) && (
+            {s.pending > 0 && (
               <div className="flex items-center gap-2 px-3 py-2">
                 {s.syncing ? <RefreshCw size={14} className="animate-spin shrink-0" /> : <WifiOff size={14} className="shrink-0" />}
                 <p>
-                  {!s.online ? "Mòd offline — done yo sove sou telefòn nan." : "Ap senkronize…"}
-                  {s.pending > 0 && ` ${s.pending} operasyon ap tann.`}
+                  {s.online ? "Ap senkronize…" : "Ap tann entènèt."} {s.pending} operasyon an atant.
                 </p>
               </div>
             )}

@@ -15,13 +15,14 @@ const config: CapacitorConfig = {
   },
   // limitsNavigationsToAppBoundDomains: nesesè pou service worker mache nan iOS (WKWebView)
   ios: { contentInset: "never", backgroundColor: "#111111", limitsNavigationsToAppBoundDomains: true },
-  android: { backgroundColor: "#111111", allowMixedContent: false },
+  android: { backgroundColor: "#111111", allowMixedContent: false, webContentsDebuggingEnabled: false },
   plugins: {
     SplashScreen: {
       launchShowDuration: 1200,
       backgroundColor: "#FFFFFF",
       showSpinner: false,
     },
+    FirebaseMessaging: { presentationOptions: ["badge", "sound", "alert"] },
     StatusBar: { style: "DARK", backgroundColor: "#FFFFFF" },
   },
 };

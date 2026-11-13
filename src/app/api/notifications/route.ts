@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { userOwnsBusiness } from "@/lib/shop";
 import { z } from "zod";
 import { redis } from "@/lib/upstash";
 import { verifySession } from "@/lib/auth";
@@ -10,6 +11,9 @@ export async function GET(req: NextRequest) {
   if (!session) return NextResponse.json({ error: "Pa otorize." }, { status: 401 });
 
   const businessId = req.nextUrl.searchParams.get("businessId");
+  if (businessId && !(await userOwnsBusiness(session.email, businessId))) {
+    return NextResponse.json({ error: "Aksè refize." }, { status: 403 });
+  }
   if (!businessId) {
     return NextResponse.json({ error: "businessId obligatwa." }, { status: 400 });
   }
@@ -37,6 +41,10 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "notificationId obligatwa." }, { status: 400 });
   }
 
+  const notif = await redis.hgetall<{ businessId?: string }>(`notification:${parsed.data.notificationId}`);
+  if (!notif?.businessId || !(await userOwnsBusiness(session.email, notif.businessId))) {
+    return NextResponse.json({ error: "Aksè refize." }, { status: 403 });
+  }
   await redis.hset(`notification:${parsed.data.notificationId}`, { read: true });
   return NextResponse.json({ ok: true });
 }

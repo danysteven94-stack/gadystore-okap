@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { userOwnsBusiness } from "@/lib/shop";
 import { z } from "zod";
 import { redis } from "@/lib/upstash";
 import { verifySession } from "@/lib/auth";
@@ -29,6 +30,9 @@ export async function POST(
   const { id } = await params;
   const order = await redis.hgetall<Order>(`order:${id}`);
   if (!order) return NextResponse.json({ error: "Kòmand pa jwenn." }, { status: 404 });
+  if (!(await userOwnsBusiness(session.email, order.businessId))) {
+    return NextResponse.json({ error: "Aksè refize." }, { status: 403 });
+  }
 
   if (order.status === "cancelled") {
     return NextResponse.json({ error: "Kòmand sa a anile." }, { status: 409 });

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { userOwnsBusiness } from "@/lib/shop";
 import { withIdempotency } from "@/lib/idempotency";
 import { z } from "zod";
 import { randomUUID } from "crypto";
@@ -25,6 +26,9 @@ export async function GET(req: NextRequest) {
   if (!session) return NextResponse.json({ error: "Pa otorize." }, { status: 401 });
 
   const businessId = req.nextUrl.searchParams.get("businessId");
+  if (businessId && !(await userOwnsBusiness(session.email, businessId))) {
+    return NextResponse.json({ error: "Aksè refize." }, { status: 403 });
+  }
   if (!businessId) {
     return NextResponse.json({ error: "businessId obligatwa." }, { status: 400 });
   }
@@ -43,6 +47,9 @@ async function postHandler(req: NextRequest) {
 
   const body = await req.json();
   const parsed = customerSchema.safeParse(body);
+  if (parsed.success && !(await userOwnsBusiness(session.email, parsed.data.businessId))) {
+    return NextResponse.json({ error: "Aksè refize." }, { status: 403 });
+  }
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }

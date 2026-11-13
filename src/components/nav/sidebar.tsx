@@ -7,6 +7,7 @@ import { useTheme } from "@/components/providers/theme-provider";
 import { useLanguage } from "@/lib/i18n/language-provider";
 import { LANGUAGES } from "@/lib/i18n/dictionary";
 import { LogoutButton } from "@/components/nav/logout-button";
+import { PushToggle } from "@/components/nav/push-toggle";
 import { NAV_ITEMS } from "@/lib/nav-items";
 import { useSuperInfo } from "@/lib/use-super-info";
 
@@ -75,6 +76,7 @@ export function Sidebar() {
             ))}
           </select>
         </div>
+        <PushToggle className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-white/60 hover:bg-white/5 hover:text-paper w-full text-left" />
         <LogoutButton className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-white/60 hover:bg-white/5 hover:text-paper w-full text-left" />
       </div>
     </aside>

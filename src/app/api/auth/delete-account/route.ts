@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { redis } from "@/lib/upstash";
+import { rateLimit } from "@/lib/shop";
 import { verifySession, verifyPassword, isSuperAdmin } from "@/lib/auth";
 
 // Efase pwòp kont itilizatè a (egzije pa Apple App Store & Google Play).
@@ -19,6 +20,9 @@ export async function DELETE(req: NextRequest) {
     );
   }
 
+  if (!(await rateLimit(req, "delete-account", 5, 900))) {
+    return NextResponse.json({ error: "Twòp eseye. Tann kèk minit." }, { status: 429 });
+  }
   const parsed = schema.safeParse(await req.json().catch(() => ({})));
   if (!parsed.success) {
     return NextResponse.json({ error: "Antre modpas ou pou konfime." }, { status: 400 });
