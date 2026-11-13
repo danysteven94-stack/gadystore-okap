@@ -17,6 +17,16 @@ export interface Business {
   shopCover?: string; // imaj kouvèti dèyè tèt boutik la
   shopTagline?: string;
   shopPaymentInfo?: string; // ekz: "MonCash: 3700-0000"
+  shopAnnouncement?: string; // bann anons anlè sit la (ekz: "Livrezon gratis pou 5,000 G+")
+  shopDeliveryEnabled?: boolean; // livrezon (default: wi)
+  shopPickupEnabled?: boolean; // ranmase nan boutik (default: wi)
+  shopDeliveryFee?: number; // frè livrezon
+  shopFreeShippingMin?: number; // livrezon gratis si total >= (0 = pa gen)
+  shopAddress?: string; // adrès piblik / kote pou ranmase
+  shopHours?: string; // orè
+  shopPolicies?: string; // politik retou / garanti
+  shopFacebook?: string;
+  shopInstagram?: string;
   currency: string; // ex: "HTG", "USD"
   taxRate: number; // pourcentage
   ownerId: string;
@@ -39,6 +49,14 @@ export interface Product {
   published?: boolean; // parèt nan boutik piblik la
   unit?: string; // ekz: "Caisse", "Sak", "Pyès"
   description?: string;
+  comparePrice?: number; // ansyen pri (bare) — montre rabè sou boutik la
+  brand?: string;
+  images?: string[]; // foto adisyonèl (galri)
+  featured?: boolean; // mete devan sou paj dakèy la
+  createdAt?: string;
+  sold?: number; // konte otomatikman sou kòmand boutik
+  ratingSum?: number;
+  ratingCount?: number;
 }
 
 export interface Sale {

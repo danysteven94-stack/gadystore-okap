@@ -18,6 +18,11 @@ export interface ProductFormValues {
   published?: boolean;
   unit?: string;
   description?: string;
+  // --- Boutik ---
+  comparePrice?: number;
+  brand?: string;
+  images?: string[];
+  featured?: boolean;
 }
 
 interface Props {
@@ -39,7 +44,27 @@ const EMPTY: ProductFormValues = {
   published: false,
   unit: "",
   description: "",
+  comparePrice: 0,
+  brand: "",
+  images: [],
+  featured: false,
 };
+
+const MAX_EXTRA = 5;
+
+function asList(v: unknown): string[] {
+  if (Array.isArray(v)) return v.filter((x): x is string => typeof x === "string");
+  if (typeof v === "string" && v.trim().startsWith("[")) {
+    try {
+      const a = JSON.parse(v);
+      return Array.isArray(a) ? a.filter((x): x is string => typeof x === "string") : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
+const isOn = (v: unknown) => v === true || v === "true";
 
 function Field({
   label,
@@ -61,7 +86,18 @@ const inputClass =
 
 export function ProductForm({ initial, onSave, onDelete, onClose }: Props) {
   const { t } = useLanguage();
-  const [values, setValues] = useState<ProductFormValues>(initial ?? EMPTY);
+  const [values, setValues] = useState<ProductFormValues>(() => {
+    const base = initial ?? EMPTY;
+    return {
+      ...base,
+      images: asList(base.images),
+      comparePrice: Number(base.comparePrice) || 0,
+      brand: base.brand ? String(base.brand) : "",
+      featured: isOn(base.featured),
+    };
+  });
+  const galleryRef = useRef<HTMLInputElement>(null);
+  const [galleryBusy, setGalleryBusy] = useState(false);
   const isEditing = !!initial?.id;
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -82,6 +118,23 @@ export function ProductForm({ initial, onSave, onDelete, onClose }: Props) {
     setUploading(false);
   }
 
+  async function handleGallery(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    e.target.value = "";
+    if (!files.length) return;
+    setGalleryBusy(true);
+    setUploadError(null);
+    try {
+      const room = MAX_EXTRA - (values.images?.length ?? 0);
+      const urls: string[] = [];
+      for (const f of files.slice(0, Math.max(0, room))) urls.push(await uploadProductImage(f));
+      setValues((v) => ({ ...v, images: [...(v.images ?? []), ...urls].slice(0, MAX_EXTRA) }));
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : "Pa ka voye foto a.");
+    }
+    setGalleryBusy(false);
+  }
+
   function update<K extends keyof ProductFormValues>(
     key: K,
     value: ProductFormValues[K]
@@ -94,6 +147,10 @@ export function ProductForm({ initial, onSave, onDelete, onClose }: Props) {
     if (!values.name.trim() || !values.category.trim() || uploading) return;
     onSave({
       ...values,
+      images: values.images ?? [],
+      comparePrice: Number(values.comparePrice) || 0,
+      brand: values.brand?.trim() || undefined,
+      featured: isOn(values.featured),
       imageUrl: values.imageUrl || undefined,
       published: values.published === true || (values.published as unknown) === "true",
     });
@@ -147,6 +204,36 @@ export function ProductForm({ initial, onSave, onDelete, onClose }: Props) {
                 {uploadError && <p className="text-brick">{uploadError}</p>}
               </div>
               <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} className="hidden" />
+            </div>
+          </Field>
+
+          <Field label="Plis foto (galri — jiska 5)">
+            <div className="flex flex-wrap gap-2">
+              {(values.images ?? []).map((u) => (
+                <div key={u} className="relative w-16 h-16 rounded-lg overflow-hidden border border-ink/15 dark:border-dark-border">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={u} alt="" className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    aria-label="Retire foto"
+                    onClick={() => update("images", (values.images ?? []).filter((x) => x !== u))}
+                    className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-black/70 text-white flex items-center justify-center"
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
+              ))}
+              {(values.images?.length ?? 0) < MAX_EXTRA && (
+                <button
+                  type="button"
+                  onClick={() => galleryRef.current?.click()}
+                  disabled={galleryBusy}
+                  className="w-16 h-16 rounded-lg border border-dashed border-ink/25 dark:border-dark-border flex items-center justify-center text-ink/50"
+                >
+                  {galleryBusy ? <Loader2 size={18} className="animate-spin" /> : <ImagePlus size={20} />}
+                </button>
+              )}
+              <input ref={galleryRef} type="file" accept="image/*" multiple onChange={handleGallery} className="hidden" />
             </div>
           </Field>
 
@@ -213,6 +300,27 @@ export function ProductForm({ initial, onSave, onDelete, onClose }: Props) {
           </div>
 
           <div className="grid grid-cols-2 gap-3">
+            <Field label="Ansyen pri (bare, opsyonèl)">
+              <input
+                type="number"
+                min={0}
+                className={inputClass}
+                value={values.comparePrice || ""}
+                onChange={(e) => update("comparePrice", Number(e.target.value))}
+                placeholder="Ekz: 1500"
+              />
+            </Field>
+            <Field label="Mak / Brand">
+              <input
+                className={inputClass}
+                value={values.brand ?? ""}
+                onChange={(e) => update("brand", e.target.value)}
+                maxLength={60}
+              />
+            </Field>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
             <Field label={t("product_form_unit")}>
               <input
                 className={inputClass}
@@ -240,6 +348,16 @@ export function ProductForm({ initial, onSave, onDelete, onClose }: Props) {
               onChange={(e) => update("description", e.target.value)}
             />
           </Field>
+
+          <label className="flex items-center gap-3 rounded-card border border-ink/15 px-3 py-2.5 mb-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={isOn(values.featured)}
+              onChange={(e) => update("featured", e.target.checked)}
+              className="w-4 h-4 accent-red-600"
+            />
+            <span className="text-sm">Mete devan sou boutik la (vedèt)</span>
+          </label>
 
           <label className="flex items-start gap-3 rounded-card border border-ink/20 bg-forest/5 px-3 py-3 mb-3 cursor-pointer">
             <input

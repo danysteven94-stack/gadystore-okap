@@ -7,6 +7,8 @@ import {
   uniqueSlug,
   slugify,
   isTrue,
+  flag,
+  toNum,
   RESERVED_SLUGS,
   cleanPhone,
 } from "@/lib/shop";
@@ -38,6 +40,17 @@ export async function GET(req: NextRequest) {
           shopCover: String(b.shopCover ?? ""),
           shopTagline: String(b.shopTagline ?? ""),
           shopPaymentInfo: String(b.shopPaymentInfo ?? ""),
+          shopAnnouncement: String(b.shopAnnouncement ?? ""),
+          shopDeliveryEnabled: flag(b.shopDeliveryEnabled, true),
+          shopPickupEnabled: flag(b.shopPickupEnabled, true),
+          shopDeliveryFee: toNum(b.shopDeliveryFee),
+          shopFreeShippingMin: toNum(b.shopFreeShippingMin),
+          shopAddress: String(b.shopAddress ?? ""),
+          shopHours: String(b.shopHours ?? ""),
+          shopPolicies: String(b.shopPolicies ?? ""),
+          shopFacebook: String(b.shopFacebook ?? ""),
+          shopInstagram: String(b.shopInstagram ?? ""),
+          currency: b.currency || "HTG",
           productCount: valid.length,
           publishedCount: valid.filter((p) => isTrue(p.published)).length,
         };
@@ -57,6 +70,16 @@ const patchSchema = z.object({
   shopCover: z.string().refine((v) => v === "" || v.startsWith("/api/img/")).optional(),
   shopTagline: z.string().max(60).optional(),
   shopPaymentInfo: z.string().max(300).optional(),
+  shopAnnouncement: z.string().max(140).optional(),
+  shopDeliveryEnabled: z.boolean().optional(),
+  shopPickupEnabled: z.boolean().optional(),
+  shopDeliveryFee: z.number().nonnegative().max(1e9).optional(),
+  shopFreeShippingMin: z.number().nonnegative().max(1e9).optional(),
+  shopAddress: z.string().max(200).optional(),
+  shopHours: z.string().max(120).optional(),
+  shopPolicies: z.string().max(1000).optional(),
+  shopFacebook: z.string().max(120).optional(),
+  shopInstagram: z.string().max(120).optional(),
 });
 
 export async function PATCH(req: NextRequest) {
@@ -81,6 +104,16 @@ export async function PATCH(req: NextRequest) {
   if (rest.shopCover !== undefined) updates.shopCover = rest.shopCover;
   if (rest.shopTagline !== undefined) updates.shopTagline = rest.shopTagline.trim();
   if (rest.shopPaymentInfo !== undefined) updates.shopPaymentInfo = rest.shopPaymentInfo.trim();
+  if (rest.shopAnnouncement !== undefined) updates.shopAnnouncement = rest.shopAnnouncement.trim();
+  if (rest.shopDeliveryEnabled !== undefined) updates.shopDeliveryEnabled = rest.shopDeliveryEnabled;
+  if (rest.shopPickupEnabled !== undefined) updates.shopPickupEnabled = rest.shopPickupEnabled;
+  if (rest.shopDeliveryFee !== undefined) updates.shopDeliveryFee = rest.shopDeliveryFee;
+  if (rest.shopFreeShippingMin !== undefined) updates.shopFreeShippingMin = rest.shopFreeShippingMin;
+  if (rest.shopAddress !== undefined) updates.shopAddress = rest.shopAddress.trim();
+  if (rest.shopHours !== undefined) updates.shopHours = rest.shopHours.trim();
+  if (rest.shopPolicies !== undefined) updates.shopPolicies = rest.shopPolicies.trim();
+  if (rest.shopFacebook !== undefined) updates.shopFacebook = rest.shopFacebook.trim();
+  if (rest.shopInstagram !== undefined) updates.shopInstagram = rest.shopInstagram.trim();
 
   // Slug: kreye otomatikman premye fwa a, oswa chanje si moun nan mande
   let nextSlug = business.slug as string | undefined;

@@ -177,6 +177,7 @@ Voir les commentaires dans `src/lib/upstash.ts` pour la convention de clés
 - [x] **Navigation en bas** (`BottomNav`) reliant Tableau de bord / Kès / Pwodwi
       / Kontak — masquée sur `/login` et `/verify`
 
+- [x] **Boutik e-commerce konplè** (gade `SHOP.md`: paj pwodwi, panye, checkout, koupon, swivi kòmand, avi, favori)
 - [x] **Boutik piblik (`/boutik/[slug]`)** — chak antrepriz gen pwòp lyen li. Kliyan an
       wè katalòg la (foto, pri, stok, "Pa disponib" + "Notifye m"), ajoute nan panye,
       epi voye kòmand lan (non, telefòn, adrès, mòd peman) — pa bezwen kont.

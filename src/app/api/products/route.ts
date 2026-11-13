@@ -16,6 +16,10 @@ const productSchema = z.object({
   minStock: z.number().nonnegative(),
   imageUrl: z.string().refine((v) => v.startsWith("/api/img/") || /^https?:\/\//.test(v), "URL foto pa valid").optional(),
   published: z.boolean().optional(),
+  images: z.array(z.string().refine((v) => v.startsWith("/api/img/") || /^https?:\/\//.test(v), "URL foto pa valid")).max(6).optional(),
+  comparePrice: z.number().nonnegative().optional(),
+  brand: z.string().max(60).optional(),
+  featured: z.boolean().optional(),
   unit: z.string().max(20).optional(),
   description: z.string().max(500).optional(),
   barcode: z.string().optional(),
@@ -63,7 +67,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Aksè refize." }, { status: 403 });
   }
 
-  const product: Product = { id: randomUUID(), ...parsed.data };
+  const product: Product = { id: randomUUID(), ...parsed.data, createdAt: new Date().toISOString() };
 
   await hsetClean(`product:${product.id}`, product as unknown as Record<string, unknown>);
   await redis.sadd(`business:${product.businessId}:products`, product.id);
