@@ -342,9 +342,6 @@ function Settings({ base }: { base: string }) {
   return (
     <div className="space-y-6">
       <Section title="App la">
-        <p className="text-sm mb-3" style={{ color: C.muted }}>
-          Mete {shop.name} sou ekran telefòn ou ak pwòp logo li, pou louvri l tankou yon vrè app.
-        </p>
         <InstallButton />
       </Section>
 
