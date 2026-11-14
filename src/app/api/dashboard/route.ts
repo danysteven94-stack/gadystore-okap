@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { userOwnsBusiness } from "@/lib/shop";
 import { redis } from "@/lib/upstash";
 import { verifySession } from "@/lib/auth";
+import { recordOrderSaleIfReady } from "@/lib/order-sale";
 import type { Expense, Product, Sale } from "@/types";
 
 interface ReturnRecordLite {
@@ -34,6 +35,28 @@ export async function GET(req: NextRequest) {
   if (!businessId) {
     return NextResponse.json({ error: "businessId obligatwa." }, { status: 400 });
   }
+
+  // Kòmand boutik + rattrapage: yon kòmand ki livre e peye men ki poko nan vant yo antre kounye a
+  const orderIds = await redis.lrange(`business:${businessId}:orders`, 0, -1);
+  const orderRows = orderIds.length
+    ? await Promise.all(
+        orderIds.map((id) =>
+          redis.hgetall<{ status?: string; source?: string; fulfillment?: string; saleId?: string }>(`order:${id}`)
+        )
+      )
+    : [];
+  await Promise.all(
+    orderIds.map(async (id, i) => {
+      const o = orderRows[i];
+      if (o && o.source === "shop" && String(o.status) === "paid" && String(o.fulfillment) === "delivered" && !o.saleId) {
+        try {
+          await recordOrderSaleIfReady(id, session.userId);
+        } catch (e) {
+          console.error("order sale backfill", e);
+        }
+      }
+    })
+  );
 
   const today = new Date().toISOString().slice(0, 10);
   const currentMonth = today.slice(0, 7); // YYYY-MM
@@ -94,10 +117,6 @@ export async function GET(req: NextRequest) {
   const monthProfit = monthRevenue - monthExpenses;
 
   // Kòmand (boutik an liy + manyèl)
-  const orderIds = await redis.lrange(`business:${businessId}:orders`, 0, -1);
-  const orderRows = orderIds.length
-    ? await Promise.all(orderIds.map((id) => redis.hgetall<{ status?: string; source?: string; fulfillment?: string }>(`order:${id}`)))
-    : [];
   const activeOrders = orderRows.filter((o) => !!o && o.status !== "cancelled");
   const ordersCount = activeOrders.length;
   const newOrdersCount = activeOrders.filter((o) => o!.source === "shop" && (o!.fulfillment ?? "new") === "new").length;

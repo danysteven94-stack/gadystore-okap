@@ -5,6 +5,7 @@ import { randomUUID } from "crypto";
 import { redis, hsetClean } from "@/lib/upstash";
 import { verifySession } from "@/lib/auth";
 import { pushNotification } from "@/lib/notifications";
+import { recordOrderSaleIfReady } from "@/lib/order-sale";
 
 export interface Order {
   [key: string]: unknown;
@@ -88,6 +89,13 @@ export async function GET(req: NextRequest) {
       fixed.balance = Number(o.balance) || 0;
       return fixed;
     });
+  // Rattrapage: kòmand livre + peye ki poko nan vant yo antre kounye a
+  await Promise.all(
+    validOrders
+      .filter((o) => o.source === "shop" && String(o.status) === "paid" && String(o.fulfillment) === "delivered" && !o.saleId)
+      .map((o) => recordOrderSaleIfReady(o.id, session.userId, session.email).catch(() => null))
+  );
+
   // Foto pwodwi yo: nou chèche yo kounye a (pou menm vye kòmand yo parèt ak foto)
   const productIds = Array.from(
     new Set(
