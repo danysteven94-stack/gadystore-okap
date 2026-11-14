@@ -2,105 +2,75 @@
 
 import { useEffect } from "react";
 import { Star, X } from "lucide-react";
-import type { PublicProduct } from "@/lib/shop";
 
-// Palèt: blan, nwa ak rouj
+// Palèt: blan, nwa ak rouj (menm jan ak rès aplikasyon an)
 export const C = {
   ink: "#111111",
-  soft: "#F5F5F5",
   red: "#C8102E",
   redDark: "#9E0C24",
+  soft: "#F5F5F5",
   line: "#E5E5E5",
   muted: "#6B6B6B",
-  ok: "#15803D",
   star: "#F59E0B",
-} as const;
+  ok: "#0F7B3F",
+};
 
-export const clamp2 = {
+export const clamp2: React.CSSProperties = {
   display: "-webkit-box",
   WebkitLineClamp: 2,
   WebkitBoxOrient: "vertical",
   overflow: "hidden",
-} as const;
-
-export function discountPct(p: Pick<PublicProduct, "price" | "comparePrice">) {
-  return p.comparePrice && p.comparePrice > p.price ? Math.round((1 - p.price / p.comparePrice) * 100) : 0;
-}
-
-export function isNew(p: Pick<PublicProduct, "createdAt">) {
-  if (!p.createdAt) return false;
-  const t = new Date(p.createdAt).getTime();
-  return Number.isFinite(t) && Date.now() - t < 14 * 86400000;
-}
+};
 
 export function Stars({ value, size = 14 }: { value: number; size?: number }) {
-  return (
-    <span className="inline-flex items-center" aria-label={`${value} sou 5`}>
-      {[1, 2, 3, 4, 5].map((i) => {
-        const fill = Math.max(0, Math.min(1, value - (i - 1)));
-        return (
-          <span key={i} className="relative inline-block" style={{ width: size, height: size }}>
-            <Star size={size} color={C.star} className="absolute inset-0" />
-            <span className="absolute inset-0 overflow-hidden" style={{ width: `${fill * 100}%` }}>
-              <Star size={size} color={C.star} fill={C.star} />
-            </span>
-          </span>
-        );
-      })}
+  const pct = Math.max(0, Math.min(100, (value / 5) * 100));
+  const row = (color: string, fill: boolean) => (
+    <span className="flex">
+      {[0, 1, 2, 3, 4].map((i) => (
+        <Star key={i} size={size} color={color} fill={fill ? color : "none"} strokeWidth={1.5} />
+      ))}
     </span>
   );
-}
-
-export function Price({
-  p,
-  money,
-  big,
-}: {
-  p: Pick<PublicProduct, "price" | "comparePrice">;
-  money: (n: number) => string;
-  big?: boolean;
-}) {
-  const pct = discountPct(p);
   return (
-    <span className="inline-flex items-baseline flex-wrap gap-x-2">
-      <span className={`font-bold tabular-nums ${big ? "text-3xl" : "text-[17px]"}`} style={{ color: pct ? C.red : C.ink }}>
-        {money(p.price)}
+    <span className="relative inline-flex" role="img" aria-label={`${value} sou 5`}>
+      {row("#D4D4D4", false)}
+      <span className="absolute inset-y-0 left-0 overflow-hidden" style={{ width: `${pct}%` }}>
+        {row(C.star, true)}
       </span>
-      {pct > 0 && p.comparePrice && (
-        <span className={`line-through tabular-nums ${big ? "text-base" : "text-xs"}`} style={{ color: C.muted }}>
-          {money(p.comparePrice)}
-        </span>
-      )}
     </span>
   );
 }
 
-export function StockLine({ p }: { p: PublicProduct }) {
-  const out = p.stock <= 0;
-  const low = !out && p.stock <= 5;
-  const color = out ? C.red : low ? "#B45309" : C.ok;
-  const text = out
-    ? "Fini pou kounye a"
-    : low
-    ? `Sèlman ${p.stock}${p.unit ? " " + p.unit : ""} rete`
-    : `${p.stock.toLocaleString("fr-FR")}${p.unit ? " " + p.unit : ""} disponib`;
+export function StarInput({ value, onChange }: { value: number; onChange: (n: number) => void }) {
   return (
-    <p className="flex items-center gap-1.5 text-xs font-medium" style={{ color }}>
-      <span className="w-1.5 h-1.5 rounded-full" style={{ background: color }} />
-      {text}
-    </p>
+    <div className="flex gap-1" role="radiogroup" aria-label="Nòt">
+      {[1, 2, 3, 4, 5].map((n) => (
+        <button
+          key={n}
+          type="button"
+          role="radio"
+          aria-checked={value === n}
+          aria-label={`${n} etwal`}
+          onClick={() => onChange(n)}
+          className="p-0.5"
+        >
+          <Star size={28} color={n <= value ? C.star : "#D4D4D4"} fill={n <= value ? C.star : "none"} strokeWidth={1.5} />
+        </button>
+      ))}
+    </div>
   );
 }
 
+/** Fenèt modal (bottom sheet sou telefòn) */
 export function Sheet({
   children,
   onClose,
-  flush,
+  title,
   side,
 }: {
   children: React.ReactNode;
   onClose: () => void;
-  flush?: boolean;
+  title?: string;
   side?: "right";
 }) {
   useEffect(() => {
@@ -114,53 +84,57 @@ export function Sheet({
     };
   }, [onClose]);
 
-  if (side === "right") {
-    return (
-      <div className="fixed inset-0 z-[60] flex justify-end bg-black/55" onClick={onClose}>
-        <div
-          onClick={(e) => e.stopPropagation()}
-          className="w-full max-w-md h-full bg-white flex flex-col"
-          style={{ animation: "slideIn .22s ease-out both" }}
-        >
-          {children}
-        </div>
-      </div>
-    );
-  }
+  const panel =
+    side === "right"
+      ? "ml-auto h-full w-full max-w-md"
+      : "w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl max-h-[92vh] sm:my-auto";
   return (
-    <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/55" onClick={onClose}>
-      <div
-        onClick={(e) => e.stopPropagation()}
-        className={`w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl max-h-[92vh] overflow-y-auto bg-white ${
-          flush ? "" : "p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]"
-        }`}
-      >
-        {children}
+    <div
+      className={`fixed inset-0 z-[60] bg-black/55 flex ${side === "right" ? "" : "items-end sm:items-center justify-center"}`}
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label={title}
+    >
+      <div onClick={(e) => e.stopPropagation()} className={`bg-white flex flex-col overflow-hidden ${panel}`}>
+        {title && (
+          <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: C.line }}>
+            <h2 className="text-lg font-bold">{title}</h2>
+            <button onClick={onClose} aria-label="Fèmen" className="p-1">
+              <X size={22} />
+            </button>
+          </div>
+        )}
+        <div className="overflow-y-auto flex-1">{children}</div>
       </div>
     </div>
   );
 }
 
-export function SheetHeader({ title, onClose }: { title: string; onClose: () => void }) {
+export function PriceBlock({
+  price,
+  oldPrice,
+  money,
+  big,
+}: {
+  price: number;
+  oldPrice: number | null;
+  money: (n: number) => string;
+  big?: boolean;
+}) {
   return (
-    <div className="flex items-center justify-between mb-3">
-      <h3 className="text-xl font-semibold pr-6">{title}</h3>
-      <button onClick={onClose} aria-label="Fèmen" className="p-1">
-        <X size={22} />
-      </button>
-    </div>
+    <span className="flex items-baseline flex-wrap gap-x-2">
+      <span className={`${big ? "text-3xl" : "text-lg"} font-bold tabular-nums`} style={{ color: oldPrice ? C.red : C.ink }}>
+        {money(price)}
+      </span>
+      {oldPrice && (
+        <span className={`${big ? "text-base" : "text-xs"} line-through tabular-nums`} style={{ color: C.muted }}>
+          {money(oldPrice)}
+        </span>
+      )}
+    </span>
   );
 }
 
-export const fieldClass =
-  "w-full rounded-xl border bg-white px-4 py-3.5 text-[15px] focus:outline-none focus:ring-2 focus:ring-black/20";
-export const fieldStyle = { borderColor: C.line } as const;
-
-/** Etap livrezon yo, nan lòd. */
-export const FULFILLMENT_STEPS = [
-  { id: "new", label: "Kòmand resevwa" },
-  { id: "confirmed", label: "Konfime" },
-  { id: "preparing", label: "Ap prepare" },
-  { id: "shipped", label: "Nan wout", labelPickup: "Pare pou ranmase" },
-  { id: "delivered", label: "Livre", labelPickup: "Ranmase" },
-] as const;
+export const field =
+  "w-full rounded-lg border bg-white px-3.5 py-3 text-[15px] focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-black";

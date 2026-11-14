@@ -17,16 +17,13 @@ export interface Business {
   shopCover?: string; // imaj kouvèti dèyè tèt boutik la
   shopTagline?: string;
   shopPaymentInfo?: string; // ekz: "MonCash: 3700-0000"
-  shopAnnouncement?: string; // bann anons anlè sit la (ekz: "Livrezon gratis pou 5,000 G+")
-  shopDeliveryEnabled?: boolean; // livrezon (default: wi)
-  shopPickupEnabled?: boolean; // ranmase nan boutik (default: wi)
-  shopDeliveryFee?: number; // frè livrezon
-  shopFreeShippingMin?: number; // livrezon gratis si total >= (0 = pa gen)
-  shopAddress?: string; // adrès piblik / kote pou ranmase
-  shopHours?: string; // orè
-  shopPolicies?: string; // politik retou / garanti
-  shopFacebook?: string;
-  shopInstagram?: string;
+  shopAnnouncement?: string; // bann anlè sit la (ekz: "Livrezon gratis pou kòmand 5,000 G+")
+  shopAbout?: string; // ti tèks "Sou nou" nan footer
+  shopReturns?: string; // règ retou / garanti
+  shopAddress?: string; // adrès piblik boutik la (pou ranmase)
+  shopDeliveryFee?: number; // frè livrezon fiks
+  shopFreeDeliveryMin?: number; // livrezon gratis si sou-total >= valè sa (0 = pa gen)
+  shopPickup?: boolean; // kliyan ka vini ranmase kòmand lan
   currency: string; // ex: "HTG", "USD"
   taxRate: number; // pourcentage
   ownerId: string;
@@ -49,13 +46,13 @@ export interface Product {
   published?: boolean; // parèt nan boutik piblik la
   unit?: string; // ekz: "Caisse", "Sak", "Pyès"
   description?: string;
-  comparePrice?: number; // ansyen pri (bare) — montre rabè sou boutik la
+  oldPrice?: number; // pri anvan rabè (pou montre "-20%")
   brand?: string;
-  images?: string[]; // foto adisyonèl (galri)
-  featured?: boolean; // mete devan sou paj dakèy la
+  gallery?: string[]; // lòt foto (anplis imageUrl)
+  sizes?: string; // "S, M, L, XL" — separe ak vigil
+  colors?: string; // "Wouj, Nwa" — separe ak vigil
   createdAt?: string;
-  sold?: number; // konte otomatikman sou kòmand boutik
-  ratingSum?: number;
+  ratingSum?: number; // total etwal avi kliyan yo
   ratingCount?: number;
 }
 

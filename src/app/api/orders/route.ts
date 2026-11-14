@@ -25,15 +25,11 @@ export interface Order {
   customerAddress?: string;
   note?: string;
   paymentMethod?: string;
-  items?: { productId: string; name: string; qty: number; unitPrice: number; unit?: string }[];
-  paymentRef?: string; // nimewo tranzaksyon MonCash/NatCash kliyan an bay
-  deliveryMethod?: "delivery" | "pickup";
-  fulfillment?: "new" | "confirmed" | "preparing" | "shipped" | "delivered" | "cancelled";
-  fulfillmentNote?: string; // mesaj pou kliyan an wè nan swivi kòmand lan
+  items?: { productId: string; name: string; qty: number; unitPrice: number; unit?: string; variant?: string }[];
   subtotal?: number;
-  discount?: number;
-  shippingFee?: number;
-  couponCode?: string;
+  deliveryFee?: number;
+  deliveryMethod?: "delivery" | "pickup";
+  fulfillment?: "new" | "preparing" | "shipped" | "delivered"; // eta livrezon (kòmand boutik)
 }
 
 const orderSchema = z.object({

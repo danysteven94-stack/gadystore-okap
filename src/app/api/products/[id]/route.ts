@@ -6,6 +6,8 @@ import { notifyLowStock } from "@/lib/notifications";
 import { userOwnsBusiness } from "@/lib/shop";
 import type { Product } from "@/types";
 
+const imageUrlSchema = z.string().refine((v) => v.startsWith("/api/img/") || /^https?:\/\//.test(v), "URL foto pa valid");
+
 const updateSchema = z.object({
   name: z.string().min(1).optional(),
   category: z.string().min(1).optional(),
@@ -13,15 +15,16 @@ const updateSchema = z.object({
   sellPrice: z.number().nonnegative().optional(),
   stock: z.number().nonnegative().optional(),
   minStock: z.number().nonnegative().optional(),
-  imageUrl: z.string().refine((v) => v.startsWith("/api/img/") || /^https?:\/\//.test(v), "URL foto pa valid").optional(),
+  imageUrl: imageUrlSchema.optional(),
   published: z.boolean().optional(),
-  images: z.array(z.string().refine((v) => v.startsWith("/api/img/") || /^https?:\/\//.test(v), "URL foto pa valid")).max(6).optional(),
-  comparePrice: z.number().nonnegative().optional(),
-  brand: z.string().max(60).optional(),
-  featured: z.boolean().optional(),
   unit: z.string().max(20).optional(),
   description: z.string().max(500).optional(),
   barcode: z.string().optional(),
+  oldPrice: z.number().nonnegative().optional(),
+  brand: z.string().max(60).optional(),
+  gallery: z.array(imageUrlSchema).max(7).optional(),
+  sizes: z.string().max(200).optional(),
+  colors: z.string().max(200).optional(),
 });
 
 async function requireSession(req: NextRequest) {

@@ -1,7 +1,9 @@
+import { cache } from "react";
 import type { NextRequest } from "next/server";
 import { redis } from "@/lib/upstash";
 import { verifySession } from "@/lib/auth";
 import type { Business, Product } from "@/types";
+import type { Order } from "@/app/api/orders/route";
 
 export function slugify(input: string): string {
   return (
@@ -60,50 +62,21 @@ export async function getBusinessBySlug(slug: string): Promise<Business | null> 
   return business;
 }
 
-export function isTrue(v: unknown) {
-  return v === true || v === "true";
-}
-
-/** Yon chan boolean ki ka manke: si pa gen valè, itilize `fallback`. */
-export function flag(v: unknown, fallback: boolean) {
-  if (v === undefined || v === null || v === "") return fallback;
-  return isTrue(v);
-}
-
-export function toNum(v: unknown, d = 0) {
-  const n = Number(v);
-  return Number.isFinite(n) ? n : d;
-}
-
-/** Upstash ka retounen yon tablo oswa yon string JSON — nou aksepte tou de. */
-export function toArr(v: unknown): string[] {
-  if (Array.isArray(v)) return v.filter((x): x is string => typeof x === "string");
-  if (typeof v === "string" && v.trim().startsWith("[")) {
-    try {
-      const a = JSON.parse(v);
-      return Array.isArray(a) ? a.filter((x): x is string => typeof x === "string") : [];
-    } catch {
-      return [];
-    }
-  }
-  return [];
-}
-
 export interface PublicProduct {
   id: string;
   name: string;
   category: string;
-  brand: string;
   price: number;
-  comparePrice: number | null; // ansyen pri si gen rabè
+  oldPrice: number | null;
   stock: number;
   unit: string;
   imageUrl: string | null;
-  images: string[]; // tout foto yo (premye a = imageUrl)
+  images: string[]; // tout foto yo (imageUrl an premye)
   description: string | null;
-  featured: boolean;
+  brand: string | null;
+  sizes: string[];
+  colors: string[];
   createdAt: string | null;
-  sold: number;
   rating: number; // mwayèn 0-5
   ratingCount: number;
 }
@@ -118,60 +91,34 @@ export interface PublicShop {
   whatsapp: string | null;
   paymentInfo: string | null;
   announcement: string | null;
-  deliveryEnabled: boolean;
-  pickupEnabled: boolean;
-  deliveryFee: number;
-  freeShippingMin: number;
+  about: string | null;
+  returns: string | null;
   address: string | null;
-  hours: string | null;
-  policies: string | null;
-  facebook: string | null;
-  instagram: string | null;
+  deliveryFee: number;
+  freeDeliveryMin: number;
+  pickup: boolean;
   products: PublicProduct[];
 }
 
-function socialUrl(kind: "facebook" | "instagram", v: unknown): string | null {
-  const raw = String(v ?? "").trim();
-  if (!raw) return null;
-  if (/^https?:\/\//i.test(raw)) return raw;
-  const handle = raw.replace(/^@/, "").replace(/[^A-Za-z0-9._-]/g, "");
-  if (!handle) return null;
-  return kind === "facebook" ? `https://facebook.com/${handle}` : `https://instagram.com/${handle}`;
+/** Tou sa ki ka vin kòm lis: tablo, "a,b,c" oswa yon sèl chif. */
+export function toList(v: unknown): string[] {
+  if (Array.isArray(v)) return v.map((x) => String(x).trim()).filter(Boolean);
+  if (typeof v === "number") return [String(v)];
+  if (typeof v !== "string" || !v.trim()) return [];
+  const s = v.trim();
+  if (s.startsWith("[")) {
+    try {
+      const a = JSON.parse(s);
+      if (Array.isArray(a)) return a.map((x) => String(x).trim()).filter(Boolean);
+    } catch {
+      /* tonbe sou split */
+    }
+  }
+  return s.split(",").map((x) => x.trim()).filter(Boolean);
 }
 
-/** Fòma piblik yon pwodwi — JAMÈ pri acha, stok minimòm, kòd ba, elt. */
-export function toPublicProduct(p: Product): PublicProduct {
-  const main = p.imageUrl ? String(p.imageUrl) : "";
-  const images = [main, ...toArr(p.images)].filter((x, i, a) => !!x && a.indexOf(x) === i);
-  const price = toNum(p.sellPrice);
-  const compare = toNum(p.comparePrice);
-  const ratingCount = Math.max(0, toNum(p.ratingCount));
-  const ratingSum = Math.max(0, toNum(p.ratingSum));
-  return {
-    id: String(p.id),
-    name: String(p.name),
-    category: String(p.category),
-    brand: p.brand ? String(p.brand) : "",
-    price,
-    comparePrice: compare > price ? compare : null,
-    stock: Math.max(0, toNum(p.stock)),
-    unit: p.unit ? String(p.unit) : "",
-    imageUrl: images[0] ?? null,
-    images,
-    description: p.description ? String(p.description) : null,
-    featured: isTrue(p.featured),
-    createdAt: p.createdAt ? String(p.createdAt) : null,
-    sold: Math.max(0, toNum(p.sold)),
-    rating: ratingCount > 0 ? Math.round((ratingSum / ratingCount) * 10) / 10 : 0,
-    ratingCount,
-  };
-}
-
-export function shopDisplayName(business: Business) {
-  return String(business.shopName ?? "").trim() || String(business.name);
-}
-
-export async function getPublicShop(slug: string): Promise<PublicShop | null> {
+/** Voye sèlman sa kliyan an dwe wè — JAMÈ pri acha, stok minimòm, kòd ba, elt. */
+export const getPublicShop = cache(async (slug: string): Promise<PublicShop | null> => {
   const business = await getBusinessBySlug(slug);
   if (!business) return null;
 
@@ -182,219 +129,57 @@ export async function getPublicShop(slug: string): Promise<PublicShop | null> {
 
   const products: PublicProduct[] = rows
     .filter((p): p is Product => !!p && !!p.id && isTrue(p.published))
-    .map(toPublicProduct)
-    // pwodwi vedèt anvan, disponib anvan, apre alfabetik
-    .sort(
-      (a, b) =>
-        Number(b.featured) - Number(a.featured) ||
-        Number(b.stock > 0) - Number(a.stock > 0) ||
-        a.name.localeCompare(b.name)
-    );
-
-  const str = (v: unknown) => (v ? String(v).trim() || null : null);
+    .map((p) => {
+      const price = Number(p.sellPrice) || 0;
+      const old = Number(p.oldPrice) || 0;
+      const main = (p.imageUrl as string) || null;
+      const images = [...new Set([...(main ? [main] : []), ...toList(p.gallery)])].slice(0, 8);
+      const count = Math.max(0, Number(p.ratingCount) || 0);
+      const sum = Math.max(0, Number(p.ratingSum) || 0);
+      return {
+        id: p.id,
+        name: String(p.name),
+        category: String(p.category),
+        price,
+        oldPrice: old > price ? old : null,
+        stock: Math.max(0, Number(p.stock) || 0),
+        unit: p.unit ? String(p.unit) : "",
+        imageUrl: main || images[0] || null,
+        images,
+        description: p.description ? String(p.description) : null,
+        brand: p.brand ? String(p.brand) : null,
+        sizes: toList(p.sizes),
+        colors: toList(p.colors),
+        createdAt: p.createdAt ? String(p.createdAt) : null,
+        rating: count ? Math.round((sum / count) * 10) / 10 : 0,
+        ratingCount: count,
+      };
+    })
+    // disponib anvan, apre alfabetik
+    .sort((a, b) => Number(b.stock > 0) - Number(a.stock > 0) || a.name.localeCompare(b.name));
 
   return {
     slug: business.slug || slug,
-    name: shopDisplayName(business),
-    logoUrl: str(business.shopLogo),
-    coverUrl: str(business.shopCover),
+    name: String(business.shopName ?? "").trim() || String(business.name),
+    logoUrl: business.shopLogo ? String(business.shopLogo) : null,
+    coverUrl: business.shopCover ? String(business.shopCover) : null,
     tagline: String(business.shopTagline || "Katalòg & Kòmand"),
     currency: business.currency || "HTG",
     whatsapp: business.whatsapp ? String(business.whatsapp).replace(/\D/g, "") : null,
-    paymentInfo: str(business.shopPaymentInfo),
-    announcement: str(business.shopAnnouncement),
-    deliveryEnabled: flag(business.shopDeliveryEnabled, true),
-    pickupEnabled: flag(business.shopPickupEnabled, true),
-    deliveryFee: Math.max(0, toNum(business.shopDeliveryFee)),
-    freeShippingMin: Math.max(0, toNum(business.shopFreeShippingMin)),
-    address: str(business.shopAddress),
-    hours: str(business.shopHours),
-    policies: str(business.shopPolicies),
-    facebook: socialUrl("facebook", business.shopFacebook),
-    instagram: socialUrl("instagram", business.shopInstagram),
+    paymentInfo: business.shopPaymentInfo ? String(business.shopPaymentInfo) : null,
+    announcement: business.shopAnnouncement ? String(business.shopAnnouncement) : null,
+    about: business.shopAbout ? String(business.shopAbout) : null,
+    returns: business.shopReturns ? String(business.shopReturns) : null,
+    address: business.shopAddress ? String(business.shopAddress) : null,
+    deliveryFee: Math.max(0, Number(business.shopDeliveryFee) || 0),
+    freeDeliveryMin: Math.max(0, Number(business.shopFreeDeliveryMin) || 0),
+    pickup: isTrue(business.shopPickup),
     products,
   };
-}
+});
 
-/** Yon sèl pwodwi (pou paj pwodwi a: SEO/metadata) — pa chaje tout katalòg la. */
-export async function getPublicProduct(slug: string, id: string) {
-  if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
-  const business = await getBusinessBySlug(slug);
-  if (!business) return null;
-  const p = await redis.hgetall<Product>(`product:${id}`);
-  if (!p || !p.id || p.businessId !== business.id || !isTrue(p.published)) return null;
-  return {
-    shopName: shopDisplayName(business),
-    currency: business.currency || "HTG",
-    product: toPublicProduct(p),
-  };
-}
-
-/* ------------------------------ Koupon ------------------------------ */
-
-export interface Coupon {
-  code: string;
-  type: "percent" | "fixed";
-  value: number;
-  minOrder: number;
-  maxUses: number; // 0 = san limit
-  uses: number;
-  expiresAt: string; // YYYY-MM-DD oswa ""
-  active: boolean;
-}
-
-export function normCode(s: string) {
-  return s.trim().toUpperCase().replace(/[^A-Z0-9_-]/g, "").slice(0, 20);
-}
-
-export async function getCoupon(businessId: string, code: string): Promise<Coupon | null> {
-  const c = normCode(code);
-  if (!c) return null;
-  const raw = await redis.hgetall<Record<string, unknown>>(`coupon:${businessId}:${c}`);
-  if (!raw || !raw.code) return null;
-  return {
-    code: String(raw.code),
-    type: raw.type === "fixed" ? "fixed" : "percent",
-    value: toNum(raw.value),
-    minOrder: toNum(raw.minOrder),
-    maxUses: toNum(raw.maxUses),
-    uses: toNum(raw.uses),
-    expiresAt: raw.expiresAt ? String(raw.expiresAt) : "",
-    active: flag(raw.active, true),
-  };
-}
-
-export function couponProblem(c: Coupon, subtotal: number): string | null {
-  if (!c.active) return "Kòd promosyon sa a pa aktif.";
-  if (c.expiresAt) {
-    const end = new Date(c.expiresAt.length === 10 ? `${c.expiresAt}T23:59:59` : c.expiresAt).getTime();
-    if (Number.isFinite(end) && end < Date.now()) return "Kòd promosyon sa a ekspire.";
-  }
-  if (c.maxUses > 0 && c.uses >= c.maxUses) return "Kòd promosyon sa a rive nan limit li.";
-  if (c.minOrder > 0 && subtotal < c.minOrder) {
-    return `Kòd sa a mande omwen ${c.minOrder.toLocaleString("en-US")} nan kòmand lan.`;
-  }
-  return null;
-}
-
-export function couponDiscount(c: Coupon, subtotal: number) {
-  const raw = c.type === "percent" ? (subtotal * Math.min(c.value, 100)) / 100 : c.value;
-  return Math.min(Math.round(raw * 100) / 100, subtotal);
-}
-
-/* ------------------------------ Pri panye (sèvè a toujou deside) ------------------------------ */
-
-export type DeliveryMethod = "delivery" | "pickup";
-
-export interface PricedLine {
-  productId: string;
-  name: string;
-  qty: number;
-  unitPrice: number;
-  unit: string;
-}
-
-export type PriceResult =
-  | {
-      ok: true;
-      lines: PricedLine[];
-      subtotal: number;
-      discount: number;
-      shipping: number;
-      total: number;
-      freeShipping: boolean;
-      couponCode: string | null;
-      couponError: string | null;
-    }
-  | { ok: false; status: number; error: string };
-
-export async function priceCart(
-  business: Business,
-  items: { productId: string; qty: number }[],
-  method: DeliveryMethod,
-  couponCode?: string
-): Promise<PriceResult> {
-  const deliveryOn = flag(business.shopDeliveryEnabled, true);
-  const pickupOn = flag(business.shopPickupEnabled, true);
-  if (method === "delivery" && !deliveryOn) return { ok: false, status: 400, error: "Boutik la pa fè livrezon." };
-  if (method === "pickup" && !pickupOn) return { ok: false, status: 400, error: "Ranmase nan boutik la pa disponib." };
-
-  const wanted = new Map<string, number>();
-  for (const it of items) wanted.set(it.productId, (wanted.get(it.productId) ?? 0) + it.qty);
-
-  const lines: PricedLine[] = [];
-  for (const [productId, qty] of wanted) {
-    const p = await redis.hgetall<Product>(`product:${productId}`);
-    if (!p || p.businessId !== business.id || !isTrue(p.published)) {
-      return { ok: false, status: 404, error: "Yon pwodwi pa disponib ankò. Rafrechi paj la." };
-    }
-    lines.push({ productId, name: String(p.name), qty, unitPrice: toNum(p.sellPrice), unit: p.unit ? String(p.unit) : "" });
-  }
-
-  const subtotal = lines.reduce((s, l) => s + l.qty * l.unitPrice, 0);
-  if (subtotal <= 0) return { ok: false, status: 400, error: "Pwodwi sa yo pa gen pri. Kontakte biznis la." };
-
-  let discount = 0;
-  let appliedCode: string | null = null;
-  let couponError: string | null = null;
-  if (couponCode && normCode(couponCode)) {
-    const c = await getCoupon(business.id, couponCode);
-    if (!c) couponError = "Kòd promosyon sa a pa egziste.";
-    else {
-      couponError = couponProblem(c, subtotal);
-      if (!couponError) {
-        discount = couponDiscount(c, subtotal);
-        appliedCode = c.code;
-      }
-    }
-  }
-
-  const afterDiscount = subtotal - discount;
-  const fee = Math.max(0, toNum(business.shopDeliveryFee));
-  const freeMin = Math.max(0, toNum(business.shopFreeShippingMin));
-  const freeShipping = method === "delivery" && freeMin > 0 && afterDiscount >= freeMin;
-  const shipping = method === "delivery" && !freeShipping ? fee : 0;
-
-  return {
-    ok: true,
-    lines,
-    subtotal,
-    discount,
-    shipping,
-    total: Math.round((afterDiscount + shipping) * 100) / 100,
-    freeShipping,
-    couponCode: appliedCode,
-    couponError,
-  };
-}
-
-/* ------------------------------ Kòmand: kòd + telefòn ------------------------------ */
-
-/** Konpare 2 nimewo telefòn sou 8 dènye chif yo (kòd peyi/espas pa konte). */
-export function samePhone(a: string, b: string) {
-  const x = String(a).replace(/\D/g, "").slice(-8);
-  const y = String(b).replace(/\D/g, "").slice(-8);
-  return x.length >= 7 && x === y;
-}
-
-export async function findOrderByCode(businessId: string, code: string) {
-  const c = code.trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
-  if (c.length < 4) return null;
-  let id = await redis.get<string>(`shop:ordercode:${businessId}:${c}`);
-  if (!id) {
-    // ansyen kòmand (anvan endèks la): chèche nan 300 dènye yo
-    const ids = await redis.lrange(`business:${businessId}:orders`, 0, 299);
-    for (const oid of ids) {
-      if (String(oid).slice(0, 6).toUpperCase() === c) {
-        id = String(oid);
-        break;
-      }
-    }
-  }
-  if (!id) return null;
-  const order = await redis.hgetall<Record<string, unknown>>(`order:${id}`);
-  if (!order || order.businessId !== businessId) return null;
-  return order;
+export function isTrue(v: unknown) {
+  return v === true || v === "true";
 }
 
 /** Limit senp pa IP (Redis INCR + EXPIRE). Retounen true si rete nan limit la. */
@@ -408,4 +193,22 @@ export async function rateLimit(req: NextRequest, bucket: string, max: number, w
 
 export function cleanPhone(v: string) {
   return v.replace(/[^\d+]/g, "");
+}
+
+/** Jwenn yon kòmand pa kòd kout li (#ABC123). */
+export async function findOrderByCode(businessId: string, rawCode: string): Promise<Order | null> {
+  const code = rawCode.trim().toUpperCase().replace(/^#/, "");
+  if (!/^[A-Z0-9]{4,10}$/.test(code)) return null;
+  let id = await redis.get<string>(`ordercode:${businessId}:${code}`);
+  if (!id) {
+    // Ansyen kòmand (anvan endèks la): chèche nan 200 dènye yo
+    const ids = await redis.lrange(`business:${businessId}:orders`, 0, 199);
+    for (const oid of ids) {
+      const o = await redis.hgetall<Order>(`order:${oid}`);
+      if (o && String(o.code ?? "").toUpperCase() === code) return o;
+    }
+    return null;
+  }
+  const o = await redis.hgetall<Order>(`order:${id}`);
+  return o && o.id ? o : null;
 }

@@ -1,24 +1,20 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
 import { getPublicShop } from "@/lib/shop";
-import { ShopProvider } from "@/components/shop/shop-context";
-import { ShopShell } from "@/components/shop/shop-shell";
-
-export const dynamic = "force-dynamic";
+import { ShopProvider } from "@/components/shop/shop-provider";
+import { ShopChrome } from "@/components/shop/shop-chrome";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const shop = await getPublicShop(slug);
   if (!shop) return { title: "Boutik pa jwenn" };
   return {
-    title: { default: `${shop.name} — Boutik`, template: `%s · ${shop.name}` },
-    description: `${shop.tagline}. Gade pwodwi yo epi kòmande sou entènèt.`,
-    openGraph: { title: shop.name, description: `${shop.tagline}. Kòmande sou entènèt.`, type: "website" },
+    title: { default: `${shop.name} — ${shop.tagline}`, template: `%s | ${shop.name}` },
+    description: shop.about || shop.tagline,
+    openGraph: { title: shop.name, description: shop.tagline, images: shop.coverUrl || shop.logoUrl ? [shop.coverUrl || shop.logoUrl!] : undefined },
   };
 }
 
-// Layout la chaje boutik la yon sèl fwa; li rete menm lè kliyan an navige ant paj yo (panye a pa pèdi).
-export default async function BoutikLayout({
+export default async function ShopLayout({
   children,
   params,
 }: {
@@ -27,10 +23,11 @@ export default async function BoutikLayout({
 }) {
   const { slug } = await params;
   const shop = await getPublicShop(slug);
-  if (!shop) notFound();
+  // Si boutik la pa egziste, paj yo rele notFound() epi not-found.tsx la afiche
+  if (!shop) return <>{children}</>;
   return (
     <ShopProvider initial={shop}>
-      <ShopShell>{children}</ShopShell>
+      <ShopChrome>{children}</ShopChrome>
     </ShopProvider>
   );
 }
