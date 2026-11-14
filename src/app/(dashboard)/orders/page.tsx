@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { ClipboardList, Plus, Loader2, X } from "lucide-react";
+import { ClipboardList, Plus, Loader2, X, Package } from "lucide-react";
 import { BusinessSwitcher } from "@/components/dashboard/business-switcher";
 import { useLanguage } from "@/lib/i18n/language-provider";
 import type { Business } from "@/types";
@@ -339,6 +339,29 @@ export default function OrdersPage() {
                   {STATUS_LABEL[o.status]}
                 </span>
               </div>
+              {Array.isArray(o.items) && o.items.length > 0 && (
+                <div className="mb-3 space-y-2">
+                  {o.items.map((it, idx) => (
+                    <div key={`${it.productId}-${idx}`} className="flex items-center gap-3">
+                      {it.imageUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={it.imageUrl} alt={String(it.name)} className="w-14 h-14 rounded-lg object-cover shrink-0 border border-ink/10 dark:border-dark-border" />
+                      ) : (
+                        <span className="w-14 h-14 rounded-lg shrink-0 bg-ink/5 dark:bg-white/10 flex items-center justify-center text-ink/30">
+                          <Package size={20} />
+                        </span>
+                      )}
+                      <div className="min-w-0 text-xs">
+                        <p className="text-sm font-medium truncate">{String(it.name)}</p>
+                        {it.variant && <p className="text-ink/50 dark:text-white/50">{String(it.variant)}</p>}
+                        <p className="text-ink/60 dark:text-white/60">
+                          {Number(it.qty)} × {fmt(Number(it.unitPrice) || 0)}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
               <div className="grid grid-cols-3 gap-2 text-xs text-ink/60 dark:text-white/60 mb-3">
                 <div>
                   <p className="text-ink/40 dark:text-white/40">{t("orders_total")}</p>

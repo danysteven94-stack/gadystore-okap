@@ -52,6 +52,8 @@ export const dictionary = {
   dashboard_month_sales: { ht: "Vant (mwa)", fr: "Ventes (mois)", en: "Sales (month)" },
   dashboard_month_expenses: { ht: "Depans (mwa)", fr: "Dépenses (mois)", en: "Expenses (month)" },
   dashboard_month_profit: { ht: "Pwofi net (mwa)", fr: "Profit net (mois)", en: "Net profit (month)" },
+  dashboard_orders_total: { ht: "Kòmand", fr: "Commandes", en: "Orders" },
+  dashboard_orders_new: { ht: "Nouvo kòmand", fr: "Nouvelles commandes", en: "New orders" },
   dashboard_out_of_stock: { ht: "Pwodwi an rupti", fr: "Produits en rupture", en: "Out of stock" },
   dashboard_low_stock_count: { ht: "Stok fèb", fr: "Stock faible", en: "Low stock" },
   dashboard_stock_value: { ht: "Valè stok", fr: "Valeur du stock", en: "Stock value" },

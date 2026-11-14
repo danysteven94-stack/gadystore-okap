@@ -25,7 +25,7 @@ export interface Order {
   customerAddress?: string;
   note?: string;
   paymentMethod?: string;
-  items?: { productId: string; name: string; qty: number; unitPrice: number; unit?: string; variant?: string }[];
+  items?: { productId: string; name: string; qty: number; unitPrice: number; unit?: string; variant?: string; imageUrl?: string }[];
   paymentRef?: string; // nimewo tranzaksyon MonCash/NatCash kliyan an bay
   deliveryMethod?: "delivery" | "pickup";
   fulfillment?: "new" | "confirmed" | "preparing" | "shipped" | "delivered" | "cancelled";
@@ -88,6 +88,28 @@ export async function GET(req: NextRequest) {
       fixed.balance = Number(o.balance) || 0;
       return fixed;
     });
+  // Foto pwodwi yo: nou chèche yo kounye a (pou menm vye kòmand yo parèt ak foto)
+  const productIds = Array.from(
+    new Set(
+      validOrders.flatMap((o) => (Array.isArray(o.items) ? o.items.map((it) => String(it.productId)) : []))
+    )
+  );
+  const imgById = new Map<string, string>();
+  if (productIds.length) {
+    const prods = await Promise.all(
+      productIds.map((id) => redis.hgetall<{ imageUrl?: string }>(`product:${id}`).catch(() => null))
+    );
+    productIds.forEach((id, i) => {
+      const u = prods[i]?.imageUrl;
+      if (u) imgById.set(id, String(u));
+    });
+  }
+  for (const o of validOrders) {
+    if (Array.isArray(o.items)) {
+      o.items = o.items.map((it) => ({ ...it, imageUrl: imgById.get(String(it.productId)) }));
+    }
+  }
+
   const totalOutstanding = validOrders
     .filter((o) => o.status !== "cancelled")
     .reduce((sum, o) => sum + o.balance, 0);

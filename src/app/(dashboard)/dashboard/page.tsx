@@ -18,6 +18,8 @@ import {
   BadgeDollarSign,
   HandCoins,
   Boxes,
+  ClipboardList,
+  BellRing,
 } from "lucide-react";
 import { DashShell } from "@/components/dashboard/dash-shell";
 import { HeroCard } from "@/components/dashboard/hero-card";
@@ -49,6 +51,8 @@ interface StatsLike {
   monthExpenses: number;
   monthProfit: number;
   outOfStockCount: number;
+  ordersCount: number;
+  newOrdersCount: number;
   lowStockCount: number;
   stockValue: number;
 }
@@ -56,6 +60,12 @@ interface StatsLike {
 function StatsGrid({ s, t }: { s: StatsLike; t: (k: any) => string }) {
   return (
     <div className="grid grid-cols-2 gap-3 mb-8">
+      <a href="/orders" className="block">
+        <StatCard icon={ClipboardList} label={t("dashboard_orders_total")} value={String(s.ordersCount)} />
+      </a>
+      <a href="/orders" className="block">
+        <StatCard icon={BellRing} tone="gold" label={t("dashboard_orders_new")} value={String(s.newOrdersCount)} />
+      </a>
       <StatCard icon={Coins} tone="gold" label={t("dashboard_today_revenue")} value={fmt(s.todayRevenue)} />
       <StatCard icon={CalendarClock} label={t("dashboard_month_revenue")} value={fmt(s.monthRevenue)} />
       <StatCard icon={TrendingUp} tone="gold" label={t("dashboard_year_revenue")} value={fmt(s.yearRevenue)} />
@@ -124,6 +134,8 @@ function DashboardInner() {
                 monthReturns: 0,
                 yearRevenue: 0,
                 outOfStockCount: 0,
+                ordersCount: 0,
+                newOrdersCount: 0,
                 stockValue: 0,
                 lowStock: [],
                 recentSales: [],
@@ -214,6 +226,8 @@ function DashboardInner() {
     monthProfit: Object.values(statsByBusiness).reduce((s, b) => s + (b?.monthProfit ?? 0), 0),
     outOfStockCount: Object.values(statsByBusiness).reduce((s, b) => s + (b?.outOfStockCount ?? 0), 0),
     lowStockCount: Object.values(statsByBusiness).reduce((s, b) => s + (b?.lowStock.length ?? 0), 0),
+    ordersCount: Object.values(statsByBusiness).reduce((s, b) => s + (b?.ordersCount ?? 0), 0),
+    newOrdersCount: Object.values(statsByBusiness).reduce((s, b) => s + (b?.newOrdersCount ?? 0), 0),
     stockValue: Object.values(statsByBusiness).reduce((s, b) => s + (b?.stockValue ?? 0), 0),
   };
 
@@ -314,7 +328,7 @@ function DashboardInner() {
         </div>
       ) : (
         <>
-          <StatsGrid s={{ ...stats, lowStockCount: stats.lowStock.length }} t={t} />
+          <StatsGrid s={{ ...stats, ordersCount: stats.ordersCount ?? 0, newOrdersCount: stats.newOrdersCount ?? 0, lowStockCount: stats.lowStock.length }} t={t} />
 
           <section className="mb-8">
             <p className="text-xs font-medium text-ink/50 dark:text-white/40 mb-2">

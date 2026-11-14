@@ -21,6 +21,8 @@ export interface Business {
   shopDeliveryEnabled?: boolean; // livrezon (default: wi)
   shopPickupEnabled?: boolean; // ranmase nan boutik (default: wi)
   shopDeliveryFee?: number; // frè livrezon
+  shopDeliveryMinDays?: number; // tan livrezon: minimòm jou (0 = pa defini)
+  shopDeliveryMaxDays?: number; // tan livrezon: maksimòm jou
   shopFreeShippingMin?: number; // livrezon gratis si total >= (0 = pa gen)
   shopAddress?: string; // adrès piblik / kote pou ranmase
   shopHours?: string; // orè
@@ -118,6 +120,8 @@ export interface DashboardStats {
   monthReturns: number;
   yearRevenue: number;
   outOfStockCount: number;
+  ordersCount?: number;
+  newOrdersCount?: number;
   stockValue: number;
   lowStock: Pick<Product, "id" | "name" | "stock" | "minStock">[];
   recentSales: Pick<Sale, "id" | "total" | "createdAt">[];

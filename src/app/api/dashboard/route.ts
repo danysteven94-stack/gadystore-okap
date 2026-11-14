@@ -93,6 +93,15 @@ export async function GET(req: NextRequest) {
   const monthRevenue = monthRevenueGross - monthReturns; // net de retou, tankou "Net des retours"
   const monthProfit = monthRevenue - monthExpenses;
 
+  // Kòmand (boutik an liy + manyèl)
+  const orderIds = await redis.lrange(`business:${businessId}:orders`, 0, -1);
+  const orderRows = orderIds.length
+    ? await Promise.all(orderIds.map((id) => redis.hgetall<{ status?: string; source?: string; fulfillment?: string }>(`order:${id}`)))
+    : [];
+  const activeOrders = orderRows.filter((o) => !!o && o.status !== "cancelled");
+  const ordersCount = activeOrders.length;
+  const newOrdersCount = activeOrders.filter((o) => o!.source === "shop" && (o!.fulfillment ?? "new") === "new").length;
+
   const productIds = await redis.smembers(`business:${businessId}:products`);
   const products = productIds.length
     ? await Promise.all(productIds.map((id) => redis.hgetall<Product>(`product:${id}`)))
@@ -118,6 +127,8 @@ export async function GET(req: NextRequest) {
     monthReturns,
     yearRevenue,
     outOfStockCount,
+    ordersCount,
+    newOrdersCount,
     stockValue,
     lowStock,
     recentSales,
