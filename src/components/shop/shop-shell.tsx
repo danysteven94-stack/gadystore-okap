@@ -5,13 +5,14 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Bell, Check, Facebook, Heart, Home, Instagram, Loader2, MapPin, MessageCircle,
-  Minus, Package, Plus, Search, ShoppingBag, Trash2, Truck, X,
+  Minus, Package, Plus, Search, ShoppingBag, Trash2, Truck, User, X,
 } from "lucide-react";
 import { useShop } from "./shop-context";
 import { C, Sheet, SheetHeader, clamp2, fieldClass, fieldStyle } from "./ui";
+import { InstallBanner } from "./install-app";
 
 export function ShopShell({ children }: { children: React.ReactNode }) {
-  const { shop, base, money, itemCount, subtotal, wish, cartOpen, setCartOpen, notifyFor, setNotifyFor, toast } = useShop();
+  const { shop, base, money, itemCount, subtotal, wish, cartOpen, setCartOpen, notifyFor, setNotifyFor, toast, account } = useShop();
   const pathname = usePathname();
 
   const categories = useMemo(() => [...new Set(shop.products.map((p) => p.category))].sort(), [shop.products]);
@@ -74,6 +75,10 @@ export function ShopShell({ children }: { children: React.ReactNode }) {
             </IconLink>
             <IconLink href={`${base}/track`} label="Swiv kòmand" className="hidden sm:flex">
               <Package size={22} />
+            </IconLink>
+            <IconLink href={`${base}/account`} label={account ? "Kont mwen" : "Konekte"} className="hidden sm:flex">
+              <User size={22} />
+              {account && <span className="absolute bottom-2 right-2 w-2.5 h-2.5 rounded-full border-2 border-white" style={{ background: C.ok }} />}
             </IconLink>
             <button
               onClick={() => setCartOpen(true)}
@@ -146,6 +151,7 @@ export function ShopShell({ children }: { children: React.ReactNode }) {
           <div>
             <p className="font-semibold mb-3">Èd</p>
             <ul className="space-y-2 text-sm opacity-80">
+              <li><Link href={`${base}/account`}>{account ? "Kont mwen" : "Konekte / Kreye kont"}</Link></li>
               <li><Link href={`${base}/track`}>Swiv kòmand mwen</Link></li>
               <li><Link href={`${base}/wishlist`}>Favori mwen</Link></li>
               <li><Link href={`${base}/about`}>Livrezon, peman ak retou</Link></li>
@@ -170,12 +176,13 @@ export function ShopShell({ children }: { children: React.ReactNode }) {
 
       {/* ---------- Bann anba (telefòn) ---------- */}
       <nav
-        className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white border-t grid grid-cols-4 pb-[env(safe-area-inset-bottom)]"
+        className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white border-t grid grid-cols-5 pb-[env(safe-area-inset-bottom)]"
         style={{ borderColor: C.line }}
       >
         <BottomLink href={base} active={pathname === base} label="Akèy"><Home size={21} /></BottomLink>
         <BottomLink href={`${base}/wishlist`} active={pathname.endsWith("/wishlist")} label="Favori" count={wish.length}><Heart size={21} /></BottomLink>
         <BottomLink href={`${base}/track`} active={pathname.endsWith("/track")} label="Kòmand"><Package size={21} /></BottomLink>
+        <BottomLink href={`${base}/account`} active={pathname.endsWith("/account")} label="Kont"><User size={21} /></BottomLink>
         <button onClick={() => setCartOpen(true)} className="relative flex flex-col items-center justify-center gap-0.5 py-2 text-[11px] font-medium">
           <span className="relative"><ShoppingBag size={21} />
             {itemCount > 0 && <span className="absolute -top-1.5 -right-2.5 min-w-4 h-4 px-1 rounded-full text-[10px] font-bold text-white flex items-center justify-center" style={{ background: C.red }}>{itemCount}</span>}
@@ -184,6 +191,7 @@ export function ShopShell({ children }: { children: React.ReactNode }) {
         </button>
       </nav>
 
+      <InstallBanner />
       {cartOpen && <CartDrawer />}
       {notifyFor && <NotifyModal onClose={() => setNotifyFor(null)} />}
 

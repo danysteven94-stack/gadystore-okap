@@ -33,6 +33,23 @@ export interface CustomerInfo {
   address: string;
 }
 
+export interface ShopAccount {
+  id: string;
+  name: string;
+  phone: string;
+  email: string;
+  address: string;
+}
+
+export interface AccountOrder {
+  code: string;
+  total: number;
+  fulfillment: string;
+  deliveryMethod: string;
+  createdAt: string;
+  phone: string;
+}
+
 interface Ctx {
   shop: PublicShop;
   base: string;
@@ -55,6 +72,12 @@ interface Ctx {
   rememberOrder: (o: PlacedRef) => void;
   customer: CustomerInfo | null;
   rememberCustomer: (c: CustomerInfo) => void;
+  account: ShopAccount | null;
+  accountReady: boolean;
+  accountOrders: AccountOrder[];
+  setAccount: (a: ShopAccount | null) => void;
+  refreshAccount: () => Promise<void>;
+  logoutAccount: () => Promise<void>;
   cartOpen: boolean;
   setCartOpen: (v: boolean) => void;
   notifyFor: PublicProduct | null;
@@ -98,6 +121,9 @@ export function ShopProvider({ initial, children }: { initial: PublicShop; child
   const [recent, setRecent] = useState<string[]>([]);
   const [orders, setOrders] = useState<PlacedRef[]>([]);
   const [customer, setCustomer] = useState<CustomerInfo | null>(null);
+  const [account, setAccountState] = useState<ShopAccount | null>(null);
+  const [accountReady, setAccountReady] = useState(false);
+  const [accountOrders, setAccountOrders] = useState<AccountOrder[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
   const [notifyFor, setNotifyFor] = useState<PublicProduct | null>(null);
   const [toast, setToast] = useState<string | null>(null);
@@ -250,6 +276,45 @@ export function ShopProvider({ initial, children }: { initial: PublicShop; child
     [slug]
   );
 
+  // Kont kliyan an (cookie httpOnly): mande sèvè a kiyès ki konekte
+  const setAccount = useCallback(
+    (a: ShopAccount | null) => {
+      setAccountState(a);
+      // Konekte = ranpli checkout la otomatikman ak enfòmasyon kont lan
+      if (a) rememberCustomer({ name: a.name, phone: a.phone, address: a.address });
+      else setAccountOrders([]);
+    },
+    [rememberCustomer]
+  );
+
+  const refreshAccount = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/shop/${slug}/account/me`, { cache: "no-store" });
+      if (res.ok) {
+        const data = await res.json();
+        setAccount(data.customer ?? null);
+        setAccountOrders(data.orders ?? []);
+      }
+    } catch {
+      /* offline: kenbe sa nou genyen */
+    } finally {
+      setAccountReady(true);
+    }
+  }, [slug, setAccount]);
+
+  const logoutAccount = useCallback(async () => {
+    try {
+      await fetch(`/api/shop/${slug}/account/logout`, { method: "POST" });
+    } catch {
+      /* ignore */
+    }
+    setAccount(null);
+  }, [slug, setAccount]);
+
+  useEffect(() => {
+    refreshAccount();
+  }, [refreshAccount]);
+
   const value: Ctx = {
     shop,
     base,
@@ -272,6 +337,12 @@ export function ShopProvider({ initial, children }: { initial: PublicShop; child
     rememberOrder,
     customer,
     rememberCustomer,
+    account,
+    accountReady,
+    accountOrders,
+    setAccount,
+    refreshAccount,
+    logoutAccount,
     cartOpen,
     setCartOpen,
     notifyFor,

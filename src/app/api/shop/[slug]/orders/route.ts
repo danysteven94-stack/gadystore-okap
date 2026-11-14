@@ -4,6 +4,7 @@ import { randomUUID, randomBytes } from "crypto";
 import { redis, hsetClean } from "@/lib/upstash";
 import { getBusinessBySlug, rateLimit, cleanPhone, priceCart, normCode } from "@/lib/shop";
 import { pushNotification, notifyLowStock } from "@/lib/notifications";
+import { getShopCustomer } from "@/lib/shop-customer";
 import type { Order } from "@/app/api/orders/route";
 import type { Product } from "@/types";
 
@@ -85,6 +86,9 @@ export async function POST(
     if (prod && left <= Number(prod.minStock)) await notifyLowStock(business.id, l.name);
   }
 
+  // Si kliyan an konekte, nou lye kòmand lan ak kont li
+  const { customer: acct } = await getShopCustomer(req, slug);
+
   const id = randomUUID();
   // Kòd kout inik (endèks pou swivi kòmand lan)
   let code = id.slice(0, 6).toUpperCase();
@@ -120,10 +124,12 @@ export async function POST(
     shippingFee: shipping,
     couponCode: priced.couponCode ?? undefined,
     items: lines,
+    shopCustomerId: acct?.id,
   };
 
   await hsetClean(`order:${id}`, order as unknown as Record<string, unknown>);
   await redis.lpush(`business:${business.id}:orders`, id);
+  if (acct) await redis.lpush(`shopcust:${acct.id}:orders`, id);
 
   // Estatistik: pi vann yo + itilizasyon koupon
   await Promise.all([

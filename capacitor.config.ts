@@ -4,12 +4,18 @@ import type { CapacitorConfig } from "@capacitor/cli";
 //   APP_URL=https://non-ou.vercel.app npx cap sync
 const APP_URL = process.env.APP_URL || "https://CHANJE-MWEN.vercel.app";
 
+// Mòd "app boutik": yon app natif ki louvri DIRÈK boutik yon sèl biznis (pwòp logo, pwòp non).
+//   SHOP_SLUG=boutik-mwen APP_ID=com.boutikmwen.app APP_NAME="Boutik Mwen" APP_URL=https://... npx cap sync
+// Gade SHOP-APP.md. San SHOP_SLUG, se app jesyon Platfomnou an ki bati (konpòtman orijinal).
+const SHOP_SLUG = process.env.SHOP_SLUG;
+const START_URL = SHOP_SLUG ? `${APP_URL.replace(/\/$/, "")}/boutik/${SHOP_SLUG}` : APP_URL;
+
 const config: CapacitorConfig = {
-  appId: "com.gadys.platfom", // PA JANM chanje apre premye piblikasyon an
-  appName: "Platfomnou",
+  appId: process.env.APP_ID || "com.gadys.platfom", // PA JANM chanje apre premye piblikasyon an
+  appName: process.env.APP_NAME || "Platfomnou",
   webDir: "www", // sèlman paj "pa gen entènèt" — vrè app la chaje depi server.url
   server: {
-    url: APP_URL,
+    url: START_URL,
     cleartext: false,
     allowNavigation: [new URL(APP_URL).hostname],
   },

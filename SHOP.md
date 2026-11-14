@@ -9,6 +9,7 @@
 | `/boutik/{slug}/checkout` | Livrezon oswa ranmase, peman (MonCash/NatCash/transfè/kach), kòd promosyon |
 | `/boutik/{slug}/track` | Swivi kòmand ak kòd + telefòn (etap: resevwa → konfime → prepare → nan wout → livre) |
 | `/boutik/{slug}/wishlist` | Favori (sove sou aparèy kliyan an) |
+| `/boutik/{slug}/account` | Kont kliyan: konekte, kreye kont, pwofil, kòmand, setting (enstale app, modpas, efase kont) |
 | `/boutik/{slug}/about` | Livrezon, peman, politik retou, kontak |
 
 ## Sa ki nan dashboard
@@ -28,4 +29,6 @@
 Chan pwodwi ajoute: `comparePrice, brand, images, featured, createdAt, sold, ratingSum, ratingCount`.
 
 ## Poko fè (pwochen etap posib)
-Peman otomatik MonCash/Stripe (kounye a peman an manyèl), kont kliyan (login), tradiksyon fr/en sou vitrin nan.
+Peman otomatik MonCash/Stripe (kounye a peman an manyèl), modpas bliye + verifikasyon imèl pou kont kliyan, tradiksyon fr/en sou vitrin nan.
+
+**Fèt:** kont kliyan (kreye/konekte/setting) + app enstalab ak pwòp logo + app natif pa boutik → gade `SHOP-APP.md`.
