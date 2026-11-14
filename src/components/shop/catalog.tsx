@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { MessageCircle, ShoppingBag, SlidersHorizontal, X } from "lucide-react";
-import { useShop } from "./shop-context";
+import { useShop, useT } from "./shop-context";
 import { ProductCard, ProductRow } from "./product-card";
 import { C, Sheet, SheetHeader, discountPct, fieldClass, fieldStyle, isNew } from "./ui";
 
@@ -21,6 +21,7 @@ const SORTS: { id: Sort; label: string }[] = [
 const PAGE = 24;
 
 export function Catalog() {
+  const t = useT();
   const { shop, base } = useShop();
   const router = useRouter();
   const sp = useSearchParams();
@@ -82,9 +83,9 @@ export function Catalog() {
   const featured = useMemo(() => shop.products.filter((p) => p.featured && p.stock > 0).slice(0, 12), [shop.products]);
 
   const activeFilters = (inStock ? 1 : 0) + (minP !== "" || maxP !== "" ? 1 : 0);
-  const title = q ? `Rezilta pou “${q}”` : cat ? cat : saleOnly ? "Promosyon" : "Tout pwodwi";
+  const title = q ? t("Rezilta pou “{q}”", { q }) : cat ? cat : saleOnly ? t("Promosyon") : t("Tout pwodwi");
   const waHello = shop.whatsapp
-    ? `https://wa.me/${shop.whatsapp}?text=${encodeURIComponent(`Bonjou ${shop.name}, mwen vle plis enfòmasyon.`)}`
+    ? `https://wa.me/${shop.whatsapp}?text=${encodeURIComponent(t("Bonjou {shop}, mwen vle plis enfòmasyon.", { shop: shop.name }))}`
     : null;
 
   return (
@@ -110,11 +111,11 @@ export function Catalog() {
               <h1 className="text-4xl sm:text-6xl font-bold leading-tight max-w-2xl">{shop.name}</h1>
               <div className="mt-6 flex flex-wrap gap-3">
                 <a href="#tout" className="rounded-full px-7 py-3.5 text-sm font-bold text-white" style={{ background: C.red }}>
-                  Achte kounye a
+                  {t("Achte kounye a")}
                 </a>
                 {waHello && (
                   <a href={waHello} target="_blank" rel="noreferrer" className="rounded-full px-6 py-3.5 text-sm font-semibold bg-white/15 backdrop-blur border border-white/30 inline-flex items-center gap-2">
-                    <MessageCircle size={16} /> Kontakte nou
+                    <MessageCircle size={16} /> {t("Kontakte nou")}
                   </a>
                 )}
               </div>
@@ -143,10 +144,10 @@ export function Catalog() {
           )}
 
           <div className="pt-6">
-            <ProductRow title="⭐ Vedèt" products={featured} />
-            <ProductRow title="🔥 Promosyon" href={`${base}?sale=1`} products={deals} />
-            <ProductRow title="🆕 Nouvo" products={fresh} />
-            <ProductRow title="🏆 Pi vann" products={best} />
+            <ProductRow title={t("⭐ Vedèt")} products={featured} />
+            <ProductRow title={t("🔥 Promosyon")} href={`${base}?sale=1`} products={deals} />
+            <ProductRow title={t("🆕 Nouvo")} products={fresh} />
+            <ProductRow title={t("🏆 Pi vann")} products={best} />
           </div>
         </>
       )}
@@ -155,11 +156,11 @@ export function Catalog() {
       <section id="tout" className="max-w-6xl mx-auto px-4 pt-6 scroll-mt-32">
         {browsing && (
           <div className="flex flex-wrap items-center gap-2 mb-3 text-sm">
-            <Link href={base} className="underline underline-offset-2" style={{ color: C.muted }}>Akèy</Link>
+            <Link href={base} className="underline underline-offset-2" style={{ color: C.muted }}>{t("Akèy")}</Link>
             <span style={{ color: C.muted }}>/</span>
             <span className="font-semibold">{title}</span>
             <button onClick={() => router.push(base)} className="ml-1 inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-semibold" style={{ borderColor: C.line }}>
-              <X size={12} /> Retire filt
+              <X size={12} /> {t("Retire filt")}
             </button>
           </div>
         )}
@@ -167,20 +168,20 @@ export function Catalog() {
         <div className="flex items-center justify-between gap-3 mb-4">
           <div>
             <h2 className="text-2xl font-bold">{title}</h2>
-            <p className="text-xs" style={{ color: C.muted }}>{list.length} rezilta</p>
+            <p className="text-xs" style={{ color: C.muted }}>{t("{n} rezilta", { n: list.length })}</p>
           </div>
           <div className="flex items-center gap-2">
             <button onClick={() => setFilterOpen(true)} className="h-10 rounded-full border px-4 text-sm font-semibold inline-flex items-center gap-2" style={{ borderColor: C.line }}>
-              <SlidersHorizontal size={16} /> Filt{activeFilters > 0 && <span className="w-5 h-5 rounded-full text-[11px] text-white flex items-center justify-center" style={{ background: C.red }}>{activeFilters}</span>}
+              <SlidersHorizontal size={16} /> {t("Filt")}{activeFilters > 0 && <span className="w-5 h-5 rounded-full text-[11px] text-white flex items-center justify-center" style={{ background: C.red }}>{activeFilters}</span>}
             </button>
             <select
               value={sort}
               onChange={(e) => setSort(e.target.value as Sort)}
-              aria-label="Triye"
+              aria-label={t("Triye")}
               className="h-10 rounded-full border bg-white px-3 text-sm font-semibold focus:outline-none"
               style={{ borderColor: C.line }}
             >
-              {SORTS.map((s) => (<option key={s.id} value={s.id}>{s.label}</option>))}
+              {SORTS.map((s) => (<option key={s.id} value={s.id}>{t(s.label)}</option>))}
             </select>
           </div>
         </div>
@@ -188,11 +189,11 @@ export function Catalog() {
         {list.length === 0 ? (
           <div className="text-center py-20">
             <p className="mb-4" style={{ color: C.muted }}>
-              {shop.products.length === 0 ? "Poko gen pwodwi nan boutik la." : "Okenn pwodwi pa matche."}
+              {shop.products.length === 0 ? t("Poko gen pwodwi nan boutik la.") : t("Okenn pwodwi pa matche.")}
             </p>
             {browsing && (
               <button onClick={() => { setInStock(false); setMinP(""); setMaxP(""); router.push(base); }} className="rounded-xl px-6 py-3 font-semibold text-white" style={{ background: C.ink }}>
-                Wè tout pwodwi yo
+                {t("Wè tout pwodwi yo")}
               </button>
             )}
           </div>
@@ -204,7 +205,7 @@ export function Catalog() {
             {list.length > limit && (
               <div className="text-center mt-8">
                 <button onClick={() => setLimit((n) => n + PAGE)} className="rounded-full border-2 px-8 py-3 font-bold" style={{ borderColor: C.ink }}>
-                  Wè plis ({list.length - limit})
+                  {t("Wè plis ({n})", { n: list.length - limit })}
                 </button>
               </div>
             )}
@@ -214,10 +215,10 @@ export function Catalog() {
 
       {filterOpen && (
         <Sheet onClose={() => setFilterOpen(false)}>
-          <SheetHeader title="Filt" onClose={() => setFilterOpen(false)} />
+          <SheetHeader title={t("Filt")} onClose={() => setFilterOpen(false)} />
           <div className="space-y-5">
             <div>
-              <p className="text-sm font-semibold mb-2">Pri ({shop.currency})</p>
+              <p className="text-sm font-semibold mb-2">{t("Pri ({currency})", { currency: shop.currency })}</p>
               <div className="flex items-center gap-2">
                 <input className={fieldClass} style={fieldStyle} inputMode="numeric" placeholder="Min" value={minP} onChange={(e) => setMinP(e.target.value.replace(/[^\d.]/g, ""))} />
                 <span>–</span>
@@ -225,12 +226,12 @@ export function Catalog() {
               </div>
             </div>
             <label className="flex items-center justify-between cursor-pointer">
-              <span className="text-sm font-semibold">Sèlman sa ki disponib</span>
+              <span className="text-sm font-semibold">{t("Sèlman sa ki disponib")}</span>
               <input type="checkbox" checked={inStock} onChange={(e) => setInStock(e.target.checked)} className="w-5 h-5 accent-red-600" />
             </label>
             {categories.length > 1 && (
               <div>
-                <p className="text-sm font-semibold mb-2">Kategori</p>
+                <p className="text-sm font-semibold mb-2">{t("Kategori")}</p>
                 <div className="flex flex-wrap gap-2">
                   {categories.map(([name]) => (
                     <button
@@ -246,8 +247,8 @@ export function Catalog() {
               </div>
             )}
             <div className="flex gap-2 pt-1">
-              <button onClick={() => { setInStock(false); setMinP(""); setMaxP(""); }} className="flex-1 min-h-[48px] rounded-xl border font-semibold" style={{ borderColor: C.line }}>Reyinisyalize</button>
-              <button onClick={() => setFilterOpen(false)} className="flex-1 min-h-[48px] rounded-xl font-bold text-white" style={{ background: C.ink }}>Wè {list.length} pwodwi</button>
+              <button onClick={() => { setInStock(false); setMinP(""); setMaxP(""); }} className="flex-1 min-h-[48px] rounded-xl border font-semibold" style={{ borderColor: C.line }}>{t("Reyinisyalize")}</button>
+              <button onClick={() => setFilterOpen(false)} className="flex-1 min-h-[48px] rounded-xl font-bold text-white" style={{ background: C.ink }}>{t("Wè {n} pwodwi", { n: list.length })}</button>
             </div>
           </div>
         </Sheet>

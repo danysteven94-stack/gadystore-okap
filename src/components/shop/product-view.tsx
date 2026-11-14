@@ -4,7 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Bell, Check, ChevronLeft, ChevronRight, Heart, Loader2, MessageCircle, Minus, Package, Plus, Share2, ShieldCheck, ShoppingBag, Star, Truck, X } from "lucide-react";
-import { useShop } from "./shop-context";
+import { useShop, useT } from "./shop-context";
+import { deliveryEta } from "@/lib/delivery-eta";
 import { ProductRow } from "./product-card";
 import { C, Price, StockLine, Stars, discountPct, fieldClass, fieldStyle } from "./ui";
 
@@ -17,6 +18,7 @@ interface Review {
 }
 
 export function ProductView({ productId }: { productId: string }) {
+  const t = useT();
   const { shop, base, money, byId, inCartOf, addToCart, wish, toggleWish, recent, pushRecent, setNotifyFor, showToast } = useShop();
   const router = useRouter();
   const p = byId.get(productId);
@@ -52,8 +54,8 @@ export function ProductView({ productId }: { productId: string }) {
   if (!p) {
     return (
       <main className="max-w-xl mx-auto px-4 py-24 text-center">
-        <p className="mb-6" style={{ color: C.muted }}>Pwodwi sa a pa disponib ankò.</p>
-        <Link href={base} className="rounded-xl px-7 py-3.5 font-semibold text-white inline-block" style={{ background: C.ink }}>Retounen nan boutik la</Link>
+        <p className="mb-6" style={{ color: C.muted }}>{t("Pwodwi sa a pa disponib ankò.")}</p>
+        <Link href={base} className="rounded-xl px-7 py-3.5 font-semibold text-white inline-block" style={{ background: C.ink }}>{t("Retounen nan boutik la")}</Link>
       </main>
     );
   }
@@ -95,13 +97,13 @@ export function ProductView({ productId }: { productId: string }) {
   }
 
   const waAsk = shop.whatsapp
-    ? `https://wa.me/${shop.whatsapp}?text=${encodeURIComponent(`Bonjou, mwen enterese nan "${p.name}" (${shareUrl}).`)}`
+    ? `https://wa.me/${shop.whatsapp}?text=${encodeURIComponent(t("Bonjou, mwen enterese nan \"{name}\" ({url}).", { name: p.name, url: shareUrl }))}`
     : null;
 
   return (
     <main className="max-w-6xl mx-auto px-4 pt-4 pb-28 md:pb-10">
       <nav className="text-xs mb-4 flex flex-wrap items-center gap-1.5" style={{ color: C.muted }}>
-        <Link href={base} className="underline underline-offset-2">Akèy</Link>/
+        <Link href={base} className="underline underline-offset-2">{t("Akèy")}</Link>/
         <Link href={`${base}?cat=${encodeURIComponent(p.category)}`} className="underline underline-offset-2">{p.category}</Link>/
         <span className="truncate max-w-[50vw]" style={{ color: C.ink }}>{p.name}</span>
       </nav>
@@ -124,15 +126,15 @@ export function ProductView({ productId }: { productId: string }) {
             {pct > 0 && !out && <span className="absolute top-3 left-3 rounded-md px-2.5 py-1 text-xs font-bold text-white" style={{ background: C.red }}>-{pct}%</span>}
             {imgs.length > 1 && (
               <>
-                <button aria-label="Anvan" onClick={() => setIdx((i) => (i - 1 + imgs.length) % imgs.length)} className="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 shadow flex items-center justify-center"><ChevronLeft size={20} /></button>
-                <button aria-label="Apre" onClick={() => setIdx((i) => (i + 1) % imgs.length)} className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 shadow flex items-center justify-center"><ChevronRight size={20} /></button>
+                <button aria-label={t("Anvan")} onClick={() => setIdx((i) => (i - 1 + imgs.length) % imgs.length)} className="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 shadow flex items-center justify-center"><ChevronLeft size={20} /></button>
+                <button aria-label={t("Apre")} onClick={() => setIdx((i) => (i + 1) % imgs.length)} className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 shadow flex items-center justify-center"><ChevronRight size={20} /></button>
               </>
             )}
           </div>
           {imgs.length > 1 && (
             <div className="flex gap-2 mt-3 overflow-x-auto [scrollbar-width:none]">
               {imgs.map((u, i) => (
-                <button key={u} onClick={() => setIdx(i)} className="w-16 h-16 shrink-0 rounded-xl overflow-hidden border-2" style={{ borderColor: i === idx ? C.ink : C.line }} aria-label={`Foto ${i + 1}`}>
+                <button key={u} onClick={() => setIdx(i)} className="w-16 h-16 shrink-0 rounded-xl overflow-hidden border-2" style={{ borderColor: i === idx ? C.ink : C.line }} aria-label={t("Foto {n}", { n: i + 1 })}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={u} alt="" className="w-full h-full object-cover" />
                 </button>
@@ -147,24 +149,24 @@ export function ProductView({ productId }: { productId: string }) {
           <h1 className="text-2xl sm:text-3xl font-bold leading-tight">{p.name}</h1>
 
           <a href="#avi" className="mt-2 inline-flex items-center gap-2 text-sm">
-            {p.ratingCount > 0 ? (<><Stars value={p.rating} /> <b>{p.rating}</b> <span style={{ color: C.muted }}>({p.ratingCount} avi)</span></>) : (<span style={{ color: C.muted }}>Poko gen avi</span>)}
-            {p.sold > 0 && <span style={{ color: C.muted }}>· {p.sold.toLocaleString("fr-FR")} vann</span>}
+            {p.ratingCount > 0 ? (<><Stars value={p.rating} /> <b>{p.rating}</b> <span style={{ color: C.muted }}>{t("({n} avi)", { n: p.ratingCount })}</span></>) : (<span style={{ color: C.muted }}>{t("Poko gen avi")}</span>)}
+            {p.sold > 0 && <span style={{ color: C.muted }}>{"· "}{t("{n} vann", { n: p.sold.toLocaleString("fr-FR") })}</span>}
           </a>
 
           <div className="mt-4"><Price p={p} money={money} big /></div>
-          {pct > 0 && p.comparePrice && <p className="text-sm font-semibold mt-1" style={{ color: C.red }}>Ou ekonomize {money(p.comparePrice - p.price)} ({pct}%)</p>}
+          {pct > 0 && p.comparePrice && <p className="text-sm font-semibold mt-1" style={{ color: C.red }}>{t("Ou ekonomize")} {money(p.comparePrice - p.price)} ({pct}%)</p>}
           <div className="mt-2"><StockLine p={p} /></div>
 
-          {!out && p.colors.length > 0 && <OptionPicker label="Koulè" value={color} options={p.colors} onPick={setColor} />}
-          {!out && p.sizes.length > 0 && <OptionPicker label="Gwosè" value={size} options={p.sizes} onPick={setSize} />}
+          {!out && p.colors.length > 0 && <OptionPicker label={t("Koulè")} value={color} options={p.colors} onPick={setColor} />}
+          {!out && p.sizes.length > 0 && <OptionPicker label={t("Gwosè")} value={size} options={p.sizes} onPick={setSize} />}
 
           {!out && (
             <div className="mt-5 flex items-center gap-3">
-              <span className="text-sm font-semibold">Kantite</span>
+              <span className="text-sm font-semibold">{t("Kantite")}</span>
               <div className="flex items-center rounded-xl border h-12" style={{ borderColor: C.line }}>
-                <button aria-label="Mwens" onClick={() => setQ((n) => Math.max(1, n - 1))} className="w-11 h-full flex items-center justify-center"><Minus size={16} /></button>
+                <button aria-label={t("Mwens")} onClick={() => setQ((n) => Math.max(1, n - 1))} className="w-11 h-full flex items-center justify-center"><Minus size={16} /></button>
                 <span className="w-10 text-center font-bold tabular-nums">{qty}</span>
-                <button aria-label="Plis" onClick={() => setQ((n) => Math.min(p.stock, n + 1))} disabled={qty >= p.stock} className="w-11 h-full flex items-center justify-center disabled:opacity-30"><Plus size={16} /></button>
+                <button aria-label={t("Plis")} onClick={() => setQ((n) => Math.min(p.stock, n + 1))} disabled={qty >= p.stock} className="w-11 h-full flex items-center justify-center disabled:opacity-30"><Plus size={16} /></button>
               </div>
               {p.unit && <span className="text-sm" style={{ color: C.muted }}>{p.unit}</span>}
             </div>
@@ -172,44 +174,45 @@ export function ProductView({ productId }: { productId: string }) {
 
           <div className="mt-5 hidden md:flex gap-3">
             {out ? (
-              <button onClick={() => setNotifyFor(p)} className="flex-1 min-h-[52px] rounded-xl border-2 font-bold flex items-center justify-center gap-2" style={{ borderColor: C.ink }}><Bell size={18} /> Notifye m lè l disponib</button>
+              <button onClick={() => setNotifyFor(p)} className="flex-1 min-h-[52px] rounded-xl border-2 font-bold flex items-center justify-center gap-2" style={{ borderColor: C.ink }}><Bell size={18} /> {t("Notifye m lè l disponib")}</button>
             ) : (
               <>
-                <button onClick={tryAdd} className="flex-1 min-h-[52px] rounded-xl border-2 font-bold flex items-center justify-center gap-2" style={{ borderColor: C.ink }}><ShoppingBag size={18} /> {inCart ? `Ajoute ankò (${inCart})` : "Ajoute nan panye"}</button>
-                <button onClick={buyNow} className="flex-1 min-h-[52px] rounded-xl font-bold text-white" style={{ background: C.red }}>Achte kounye a</button>
+                <button onClick={tryAdd} className="flex-1 min-h-[52px] rounded-xl border-2 font-bold flex items-center justify-center gap-2" style={{ borderColor: C.ink }}><ShoppingBag size={18} /> {inCart ? t("Ajoute ankò ({n})", { n: inCart }) : t("Ajoute nan panye")}</button>
+                <button onClick={buyNow} className="flex-1 min-h-[52px] rounded-xl font-bold text-white" style={{ background: C.red }}>{t("Achte kounye a")}</button>
               </>
             )}
-            <button onClick={() => toggleWish(p.id)} aria-label="Favori" aria-pressed={liked} className="w-[52px] h-[52px] rounded-xl border-2 flex items-center justify-center" style={{ borderColor: C.line }}>
+            <button onClick={() => toggleWish(p.id)} aria-label={t("Favori")} aria-pressed={liked} className="w-[52px] h-[52px] rounded-xl border-2 flex items-center justify-center" style={{ borderColor: C.line }}>
               <Heart size={22} color={liked ? C.red : C.ink} fill={liked ? C.red : "none"} />
             </button>
           </div>
 
           <div className="mt-4 flex flex-wrap gap-4 text-sm font-semibold">
-            <button onClick={share} className="inline-flex items-center gap-1.5 underline underline-offset-2"><Share2 size={16} /> Pataje</button>
-            {waAsk && <a href={waAsk} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 underline underline-offset-2"><MessageCircle size={16} /> Poze yon kesyon</a>}
+            <button onClick={share} className="inline-flex items-center gap-1.5 underline underline-offset-2"><Share2 size={16} /> {t("Pataje")}</button>
+            {waAsk && <a href={waAsk} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 underline underline-offset-2"><MessageCircle size={16} /> {t("Poze yon kesyon")}</a>}
           </div>
 
           <div className="mt-6 rounded-2xl border divide-y text-sm" style={{ borderColor: C.line }}>
             {shop.deliveryEnabled && (
-              <Info icon={<Truck size={18} />} title="Livrezon">
-                {shop.deliveryFee > 0 ? `${money(shop.deliveryFee)}` : "Gratis"}
-                {shop.freeShippingMin > 0 && shop.deliveryFee > 0 ? ` · gratis pou ${money(shop.freeShippingMin)}+` : ""}
+              <Info icon={<Truck size={18} />} title={t("Livrezon")}>
+                {shop.deliveryFee > 0 ? `${money(shop.deliveryFee)}` : t("Gratis")}
+                {shop.freeShippingMin > 0 && shop.deliveryFee > 0 ? t(" · gratis pou {amount}+", { amount: money(shop.freeShippingMin) }) : ""}
+                {deliveryEta(shop.deliveryMinDays, shop.deliveryMaxDays, t) ? ` · ${deliveryEta(shop.deliveryMinDays, shop.deliveryMaxDays, t)}` : ""}
               </Info>
             )}
-            {shop.pickupEnabled && <Info icon={<Package size={18} />} title="Ranmase nan boutik">Gratis{shop.address ? ` · ${shop.address}` : ""}</Info>}
-            <Info icon={<ShieldCheck size={18} />} title="Peman">MonCash, NatCash, transfè bank oswa kach lè w resevwa</Info>
+            {shop.pickupEnabled && <Info icon={<Package size={18} />} title={t("Ranmase nan boutik")}>{t("Gratis")}{shop.address ? ` · ${shop.address}` : ""}</Info>}
+            <Info icon={<ShieldCheck size={18} />} title={t("Peman")}>{t("MonCash, NatCash, transfè bank oswa kach lè w resevwa")}</Info>
           </div>
 
           {p.description && (
             <div className="mt-6">
-              <h2 className="font-bold mb-2">Deskripsyon</h2>
+              <h2 className="font-bold mb-2">{t("Deskripsyon")}</h2>
               <p className="text-[15px] leading-relaxed whitespace-pre-line" style={{ color: "#3A3A3A" }}>{p.description}</p>
             </div>
           )}
           <dl className="mt-5 grid grid-cols-[auto_1fr] gap-x-6 gap-y-1.5 text-sm">
-            <dt style={{ color: C.muted }}>Kategori</dt><dd>{p.category}</dd>
-            {p.brand && (<><dt style={{ color: C.muted }}>Mak</dt><dd>{p.brand}</dd></>)}
-            {p.unit && (<><dt style={{ color: C.muted }}>Inite</dt><dd>{p.unit}</dd></>)}
+            <dt style={{ color: C.muted }}>{t("Kategori")}</dt><dd>{p.category}</dd>
+            {p.brand && (<><dt style={{ color: C.muted }}>{t("Mak")}</dt><dd>{p.brand}</dd></>)}
+            {p.unit && (<><dt style={{ color: C.muted }}>{t("Inite")}</dt><dd>{p.unit}</dd></>)}
           </dl>
         </div>
       </div>
@@ -217,28 +220,28 @@ export function ProductView({ productId }: { productId: string }) {
       <Reviews productId={p.id} />
 
       <div className="-mx-4 mt-10">
-        <ProductRow title="Ou ka renmen tou" products={related} />
-        <ProductRow title="Ou fèk gade" products={seen} />
+        <ProductRow title={t("Ou ka renmen tou")} products={related} />
+        <ProductRow title={t("Ou fèk gade")} products={seen} />
       </div>
 
       {/* Bar achte fiks (telefòn) */}
       <div className="md:hidden fixed inset-x-0 z-30 bg-white border-t px-3 py-2.5 flex gap-2" style={{ borderColor: C.line, bottom: "calc(3.6rem + env(safe-area-inset-bottom))" }}>
-        <button onClick={() => toggleWish(p.id)} aria-label="Favori" className="w-12 h-12 rounded-xl border flex items-center justify-center shrink-0" style={{ borderColor: C.line }}>
+        <button onClick={() => toggleWish(p.id)} aria-label={t("Favori")} className="w-12 h-12 rounded-xl border flex items-center justify-center shrink-0" style={{ borderColor: C.line }}>
           <Heart size={20} color={liked ? C.red : C.ink} fill={liked ? C.red : "none"} />
         </button>
         {out ? (
-          <button onClick={() => setNotifyFor(p)} className="flex-1 h-12 rounded-xl border-2 font-bold flex items-center justify-center gap-2" style={{ borderColor: C.ink }}><Bell size={16} /> Notifye m</button>
+          <button onClick={() => setNotifyFor(p)} className="flex-1 h-12 rounded-xl border-2 font-bold flex items-center justify-center gap-2" style={{ borderColor: C.ink }}><Bell size={16} /> {t("Notifye m")}</button>
         ) : (
           <>
-            <button onClick={tryAdd} className="flex-1 h-12 rounded-xl border-2 font-bold text-sm" style={{ borderColor: C.ink }}>Ajoute</button>
-            <button onClick={buyNow} className="flex-1 h-12 rounded-xl font-bold text-white text-sm" style={{ background: C.red }}>Achte kounye a</button>
+            <button onClick={tryAdd} className="flex-1 h-12 rounded-xl border-2 font-bold text-sm" style={{ borderColor: C.ink }}>{t("Ajoute")}</button>
+            <button onClick={buyNow} className="flex-1 h-12 rounded-xl font-bold text-white text-sm" style={{ background: C.red }}>{t("Achte kounye a")}</button>
           </>
         )}
       </div>
 
       {zoom && imgs.length > 0 && (
         <div className="fixed inset-0 z-[80] bg-black/90 flex items-center justify-center p-4" onClick={() => setZoom(false)}>
-          <button aria-label="Fèmen" className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/15 text-white flex items-center justify-center" onClick={() => setZoom(false)}><X size={22} /></button>
+          <button aria-label={t("Fèmen")} className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/15 text-white flex items-center justify-center" onClick={() => setZoom(false)}><X size={22} /></button>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={imgs[idx]} alt={p.name} className="max-w-full max-h-full object-contain" />
         </div>
@@ -248,10 +251,11 @@ export function ProductView({ productId }: { productId: string }) {
 }
 
 function OptionPicker({ label, value, options, onPick }: { label: string; value: string; options: string[]; onPick: (v: string) => void }) {
+  const t = useT();
   return (
     <div className="mt-5">
       <p className="text-sm font-semibold mb-2">
-        {label}: <span className="font-normal" style={{ color: value ? C.ink : C.muted }}>{value || "chwazi youn"}</span>
+        {label}: <span className="font-normal" style={{ color: value ? C.ink : C.muted }}>{value || t("chwazi youn")}</span>
       </p>
       <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={label}>
         {options.map((o) => {
@@ -287,6 +291,7 @@ function Info({ icon, title, children }: { icon: React.ReactNode; title: string;
 /* ------------------------------ Avi kliyan ------------------------------ */
 
 function Reviews({ productId }: { productId: string }) {
+  const t = useT();
   const { shop } = useShop();
   const sp = useSearchParams();
   const [data, setData] = useState<{ reviews: Review[]; avg: number; count: number } | null>(null);
@@ -315,8 +320,8 @@ function Reviews({ productId }: { productId: string }) {
   return (
     <section id="avi" className="mt-12 scroll-mt-32">
       <div className="flex items-center justify-between mb-4 gap-3">
-        <h2 className="text-xl font-bold">Avi kliyan</h2>
-        {!open && <button onClick={() => setOpen(true)} className="rounded-full border-2 px-5 py-2 text-sm font-bold" style={{ borderColor: C.ink }}>Ekri yon avi</button>}
+        <h2 className="text-xl font-bold">{t("Avi kliyan")}</h2>
+        {!open && <button onClick={() => setOpen(true)} className="rounded-full border-2 px-5 py-2 text-sm font-bold" style={{ borderColor: C.ink }}>{t("Ekri yon avi")}</button>}
       </div>
 
       {data && data.count > 0 && (
@@ -324,7 +329,7 @@ function Reviews({ productId }: { productId: string }) {
           <div className="text-center sm:pr-6 sm:border-r" style={{ borderColor: C.line }}>
             <p className="text-5xl font-bold tabular-nums">{data.avg}</p>
             <Stars value={data.avg} size={18} />
-            <p className="text-xs mt-1" style={{ color: C.muted }}>{data.count} avi</p>
+            <p className="text-xs mt-1" style={{ color: C.muted }}>{t("{n} avi", { n: data.count })}</p>
           </div>
           <div className="flex-1 w-full max-w-sm space-y-1">
             {[5, 4, 3, 2, 1].map((n) => {
@@ -345,13 +350,13 @@ function Reviews({ productId }: { productId: string }) {
       {!data ? (
         <Loader2 className="animate-spin" size={20} />
       ) : data.reviews.length === 0 ? (
-        <p className="text-sm" style={{ color: C.muted }}>Poko gen avi. Se ou ki ka premye a — sèlman kliyan ki achte pwodwi a ka bay yon avi.</p>
+        <p className="text-sm" style={{ color: C.muted }}>{t("Poko gen avi. Se ou ki ka premye a — sèlman kliyan ki achte pwodwi a ka bay yon avi.")}</p>
       ) : (
         <ul className="divide-y" style={{ borderColor: C.line }}>
           {data.reviews.map((r) => (
             <li key={r.id} className="py-4" style={{ borderColor: C.line }}>
               <div className="flex items-center gap-2 mb-1"><Stars value={r.rating} /><span className="text-sm font-semibold">{r.name}</span>
-                <span className="inline-flex items-center gap-1 text-[11px] font-semibold" style={{ color: C.ok }}><Check size={12} /> Achte verifye</span></div>
+                <span className="inline-flex items-center gap-1 text-[11px] font-semibold" style={{ color: C.ok }}><Check size={12} /> {t("Achte verifye")}</span></div>
               {r.comment && <p className="text-sm leading-relaxed">{r.comment}</p>}
               <p className="text-xs mt-1" style={{ color: C.muted }}>{new Date(r.createdAt).toLocaleDateString("fr-FR")}</p>
             </li>
@@ -363,6 +368,7 @@ function Reviews({ productId }: { productId: string }) {
 }
 
 function ReviewForm({ productId, onDone, onCancel }: { productId: string; onDone: () => void; onCancel: () => void }) {
+  const t = useT();
   const { shop, orders, customer } = useShop();
   const sp = useSearchParams();
   const [rating, setRating] = useState(0);
@@ -375,7 +381,7 @@ function ReviewForm({ productId, onDone, onCancel }: { productId: string; onDone
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!rating) return setError("Chwazi yon nòt (1 a 5 etwal).");
+    if (!rating) return setError(t("Chwazi yon nòt (1 a 5 etwal)."));
     setBusy(true);
     setError(null);
     try {
@@ -385,33 +391,33 @@ function ReviewForm({ productId, onDone, onCancel }: { productId: string; onDone
         body: JSON.stringify({ productId, rating, name, comment, orderCode: code, phone }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) setError(data.error || "Pa ka voye avi a.");
+      if (!res.ok) setError(data.error ? t(data.error) : t("Pa ka voye avi a."));
       else return onDone();
     } catch {
-      setError("Erè rezo — eseye ankò.");
+      setError(t("Erè rezo — eseye ankò."));
     }
     setBusy(false);
   }
 
   return (
     <form onSubmit={submit} className="rounded-2xl border p-4 mb-6 space-y-3" style={{ borderColor: C.line }}>
-      <p className="text-sm" style={{ color: C.muted }}>Pou evite fo avi, antre kòd kòmand ou ak telefòn ou itilize a.</p>
-      <div className="flex gap-1" role="radiogroup" aria-label="Nòt">
+      <p className="text-sm" style={{ color: C.muted }}>{t("Pou evite fo avi, antre kòd kòmand ou ak telefòn ou itilize a.")}</p>
+      <div className="flex gap-1" role="radiogroup" aria-label={t("Nòt")}>
         {[1, 2, 3, 4, 5].map((n) => (
-          <button type="button" key={n} onClick={() => setRating(n)} aria-label={`${n} etwal`} className="p-1">
+          <button type="button" key={n} onClick={() => setRating(n)} aria-label={t("{n} etwal", { n })} className="p-1">
             <Star size={30} color={C.star} fill={n <= rating ? C.star : "none"} />
           </button>
         ))}
       </div>
-      <input className={fieldClass} style={fieldStyle} placeholder="Non ou *" value={name} onChange={(e) => setName(e.target.value)} required minLength={2} maxLength={40} />
-      <textarea className={fieldClass} style={fieldStyle} placeholder="Kòmantè (opsyonèl)" rows={3} maxLength={500} value={comment} onChange={(e) => setComment(e.target.value)} />
+      <input className={fieldClass} style={fieldStyle} placeholder={t("Non ou *")} value={name} onChange={(e) => setName(e.target.value)} required minLength={2} maxLength={40} />
+      <textarea className={fieldClass} style={fieldStyle} placeholder={t("Kòmantè (opsyonèl)")} rows={3} maxLength={500} value={comment} onChange={(e) => setComment(e.target.value)} />
       <div className="grid grid-cols-2 gap-2">
-        <input className={fieldClass} style={fieldStyle} placeholder="Kòd kòmand *" value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} required />
-        <input className={fieldClass} style={fieldStyle} placeholder="Telefòn *" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required />
+        <input className={fieldClass} style={fieldStyle} placeholder={t("Kòd kòmand *")} value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} required />
+        <input className={fieldClass} style={fieldStyle} placeholder={t("Telefòn *")} inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required />
       </div>
       <div className="flex gap-2">
-        <button type="button" onClick={onCancel} className="flex-1 min-h-[48px] rounded-xl border font-semibold" style={{ borderColor: C.line }}>Anile</button>
-        <button disabled={busy} className="flex-1 min-h-[48px] rounded-xl font-bold text-white disabled:opacity-60 flex items-center justify-center" style={{ background: C.ink }}>{busy ? <Loader2 size={18} className="animate-spin" /> : "Pibliye avi a"}</button>
+        <button type="button" onClick={onCancel} className="flex-1 min-h-[48px] rounded-xl border font-semibold" style={{ borderColor: C.line }}>{t("Anile")}</button>
+        <button disabled={busy} className="flex-1 min-h-[48px] rounded-xl font-bold text-white disabled:opacity-60 flex items-center justify-center" style={{ background: C.ink }}>{busy ? <Loader2 size={18} className="animate-spin" /> : t("Pibliye avi a")}</button>
       </div>
       {error && <p className="text-sm text-center font-medium" style={{ color: C.red }}>{error}</p>}
     </form>

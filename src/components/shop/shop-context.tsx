@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { PublicProduct, PublicShop } from "@/lib/shop";
+import { SHOP_LANG_KEY, translateShop, type ShopLang } from "@/lib/shop-i18n";
 
 export interface CartLine {
   key: string; // pwodwi oswa pwodwi|gwosè|koulè
@@ -85,9 +86,17 @@ interface Ctx {
   toast: string | null;
   showToast: (msg: string) => void;
   refresh: () => Promise<void>;
+  lang: ShopLang;
+  setLang: (l: ShopLang) => void;
+  t: (key: string, vars?: Record<string, string | number>) => string;
 }
 
 const ShopCtx = createContext<Ctx | null>(null);
+
+/** Tradiksyon boutik la: t("Tèks kreyòl", { valè }) → tèks nan lang kliyan an chwazi. */
+export function useT() {
+  return useShop().t;
+}
 
 export function useShop() {
   const c = useContext(ShopCtx);
@@ -128,6 +137,29 @@ export function ShopProvider({ initial, children }: { initial: PublicShop; child
   const [notifyFor, setNotifyFor] = useState<PublicProduct | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Lang kliyan an (sove sou aparèy la, pou tout boutik)
+  const [lang, setLangState] = useState<ShopLang>("ht");
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(SHOP_LANG_KEY);
+      if (saved === "ht" || saved === "fr" || saved === "en") setLangState(saved);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+  useEffect(() => {
+    document.documentElement.lang = lang;
+  }, [lang]);
+  const setLang = useCallback((l: ShopLang) => {
+    setLangState(l);
+    try {
+      localStorage.setItem(SHOP_LANG_KEY, l);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+  const t = useCallback((key: string, vars?: Record<string, string | number>) => translateShop(lang, key, vars), [lang]);
 
   // Chaje sa ki sove sou aparèy la (apre premye rann pou evite erè idratasyon)
   useEffect(() => {
@@ -350,6 +382,9 @@ export function ShopProvider({ initial, children }: { initial: PublicShop; child
     toast,
     showToast,
     refresh,
+    lang,
+    setLang,
+    t,
   };
 
   return <ShopCtx.Provider value={value}>{children}</ShopCtx.Provider>;

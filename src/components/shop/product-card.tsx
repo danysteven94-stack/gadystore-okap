@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { Bell, Heart, Plus, ShoppingBag } from "lucide-react";
 import type { PublicProduct } from "@/lib/shop";
-import { useShop } from "./shop-context";
+import { useShop, useT } from "./shop-context";
 import { C, Price, Stars, clamp2, discountPct, isNew } from "./ui";
 
 export function ProductCard({ p, index = 0 }: { p: PublicProduct; index?: number }) {
+  const t = useT();
   const { base, money, inCartOf, addToCart, wish, toggleWish, setNotifyFor } = useShop();
   const out = p.stock <= 0;
   const pct = discountPct(p);
@@ -34,16 +35,16 @@ export function ProductCard({ p, index = 0 }: { p: PublicProduct; index?: number
           </div>
         )}
         <div className="absolute top-2 left-2 flex flex-col gap-1 items-start">
-          {out && <Badge bg={C.ink}>FINI</Badge>}
+          {out && <Badge bg={C.ink}>{t("FINI")}</Badge>}
           {!out && pct > 0 && <Badge bg={C.red}>-{pct}%</Badge>}
-          {!out && p.stock <= 5 && <Badge bg="#B45309">BALEN</Badge>}
-          {!out && isNew(p) && <Badge bg={C.ink}>NOUVO</Badge>}
+          {!out && p.stock <= 5 && <Badge bg="#B45309">{t("BALEN")}</Badge>}
+          {!out && isNew(p) && <Badge bg={C.ink}>{t("NOUVO")}</Badge>}
         </div>
       </Link>
 
       <button
         onClick={() => toggleWish(p.id)}
-        aria-label={liked ? "Retire nan favori" : "Ajoute nan favori"}
+        aria-label={liked ? t("Retire nan favori") : t("Ajoute nan favori")}
         aria-pressed={liked}
         className="absolute top-2 right-2 w-9 h-9 rounded-full bg-white/95 shadow flex items-center justify-center"
       >
@@ -75,7 +76,7 @@ export function ProductCard({ p, index = 0 }: { p: PublicProduct; index?: number
         </div>
         {p.sold > 0 && (
           <p className="text-[11px] mt-0.5" style={{ color: C.muted }}>
-            {p.sold.toLocaleString("fr-FR")} vann
+            {t("{n} vann", { n: p.sold.toLocaleString("fr-FR") })}
           </p>
         )}
 
@@ -86,7 +87,7 @@ export function ProductCard({ p, index = 0 }: { p: PublicProduct; index?: number
               className="w-full h-10 rounded-xl border text-sm font-semibold flex items-center justify-center gap-2"
               style={{ borderColor: C.ink }}
             >
-              <Bell size={15} /> Notifye m
+              <Bell size={15} /> {t("Notifye m")}
             </button>
           ) : hasOptions ? (
             <Link
@@ -94,7 +95,7 @@ export function ProductCard({ p, index = 0 }: { p: PublicProduct; index?: number
               className="w-full h-10 rounded-xl border-2 text-sm font-semibold flex items-center justify-center"
               style={{ borderColor: C.ink }}
             >
-              Chwazi opsyon
+              {t("Chwazi opsyon")}
             </Link>
           ) : (
             <button
@@ -102,7 +103,7 @@ export function ProductCard({ p, index = 0 }: { p: PublicProduct; index?: number
               className="w-full h-10 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-1.5 active:scale-[.98] transition-transform"
               style={{ background: C.ink }}
             >
-              <Plus size={16} /> {qty > 0 ? `Nan panye (${qty})` : "Ajoute"}
+              <Plus size={16} /> {qty > 0 ? t("Nan panye ({n})", { n: qty }) : t("Ajoute")}
             </button>
           )}
         </div>
@@ -121,6 +122,7 @@ function Badge({ bg, children }: { bg: string; children: React.ReactNode }) {
 
 /** Ranje orizontal ak defilman (Shein/Amazon style). */
 export function ProductRow({ title, href, products }: { title: string; href?: string; products: PublicProduct[] }) {
+  const t = useT();
   if (products.length === 0) return null;
   return (
     <section className="mb-8">
@@ -128,7 +130,7 @@ export function ProductRow({ title, href, products }: { title: string; href?: st
         <h2 className="text-xl font-semibold">{title}</h2>
         {href && (
           <Link href={href} className="text-sm font-semibold underline underline-offset-2" style={{ color: C.red }}>
-            Wè tout
+            {t("Wè tout")}
           </Link>
         )}
       </div>

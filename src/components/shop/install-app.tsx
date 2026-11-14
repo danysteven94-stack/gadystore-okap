@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Download, Share, SquarePlus, X } from "lucide-react";
-import { useShop } from "./shop-context";
+import { useShop, useT } from "./shop-context";
 import { C, Sheet } from "./ui";
 
 // "beforeinstallprompt" ka tire trè bonè, avan konpozan an monte: nou kenbe l nan yon varyab modil.
@@ -63,28 +63,29 @@ export function useInstall() {
 
 /** Eksplikasyon pou iPhone/iPad (Safari pa gen bouton enstale otomatik) ak lòt navigatè. */
 function HowToSheet({ onClose, ios }: { onClose: () => void; ios: boolean }) {
+  const t = useT();
   const { shop } = useShop();
   return (
     <Sheet onClose={onClose}>
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-xl font-semibold pr-6">Mete {shop.name} sou ekran an</h3>
-        <button onClick={onClose} aria-label="Fèmen" className="p-1"><X size={22} /></button>
+        <h3 className="text-xl font-semibold pr-6">{t("Mete {name} sou ekran an", { name: shop.name })}</h3>
+        <button onClick={onClose} aria-label={t("Fèmen")} className="p-1"><X size={22} /></button>
       </div>
       {ios ? (
         <ol className="space-y-4 text-[15px]">
-          <li className="flex gap-3"><span className="font-bold">1.</span><span>Louvri paj sa a nan <b>Safari</b>, epi peze bouton <b>Pataje</b> <Share size={16} className="inline -mt-1" /> anba a.</span></li>
-          <li className="flex gap-3"><span className="font-bold">2.</span><span>Chwazi <b>« Sou ekran dakèy » / « Add to Home Screen »</b> <SquarePlus size={16} className="inline -mt-1" />.</span></li>
-          <li className="flex gap-3"><span className="font-bold">3.</span><span>Peze <b>Ajoute</b>. Logo {shop.name} ap parèt sou telefòn ou kou yon vrè app.</span></li>
+          <li className="flex gap-3"><span className="font-bold">1.</span><span>{t("Louvri paj sa a nan Safari, epi peze bouton Pataje anba a.")} <Share size={16} className="inline -mt-1" /></span></li>
+          <li className="flex gap-3"><span className="font-bold">2.</span><span>{t("Chwazi « Sou ekran dakèy » / « Add to Home Screen »")} <SquarePlus size={16} className="inline -mt-1" /></span></li>
+          <li className="flex gap-3"><span className="font-bold">3.</span><span>{t("Peze Ajoute. Logo {name} ap parèt sou telefòn ou kou yon vrè app.", { name: shop.name })}</span></li>
         </ol>
       ) : (
         <ol className="space-y-4 text-[15px]">
-          <li className="flex gap-3"><span className="font-bold">1.</span><span>Louvri meni navigatè a (<b>⋮</b> nan Chrome).</span></li>
-          <li className="flex gap-3"><span className="font-bold">2.</span><span>Chwazi <b>« Enstale app »</b> oswa <b>« Ajoute sou ekran dakèy »</b>.</span></li>
-          <li className="flex gap-3"><span className="font-bold">3.</span><span>Konfime. Logo {shop.name} ap parèt sou telefòn ou.</span></li>
+          <li className="flex gap-3"><span className="font-bold">1.</span><span>{t("Louvri meni navigatè a (⋮ nan Chrome).")}</span></li>
+          <li className="flex gap-3"><span className="font-bold">2.</span><span>{t("Chwazi « Enstale app » oswa « Ajoute sou ekran dakèy »")}</span></li>
+          <li className="flex gap-3"><span className="font-bold">3.</span><span>{t("Konfime. Logo {name} ap parèt sou telefòn ou.", { name: shop.name })}</span></li>
         </ol>
       )}
       <button onClick={onClose} className="mt-6 w-full rounded-full py-3.5 font-semibold text-white" style={{ background: C.ink }}>
-        Konprann
+        {t("Konprann")}
       </button>
     </Sheet>
   );
@@ -92,12 +93,13 @@ function HowToSheet({ onClose, ios }: { onClose: () => void; ios: boolean }) {
 
 /** Bouton "Enstale app la" (pou paj Setting). Kache si app la deja enstale. */
 export function InstallButton({ className = "" }: { className?: string }) {
+  const t = useT();
   const { shop } = useShop();
   const { installed, canPrompt, ios, prompt } = useInstall();
   const [help, setHelp] = useState(false);
 
   if (installed) {
-    return <p className="text-sm font-medium" style={{ color: C.ok }}>✓ App la deja enstale sou aparèy sa a.</p>;
+    return <p className="text-sm font-medium" style={{ color: C.ok }}>{t("✓ App la deja enstale sou aparèy sa a.")}</p>;
   }
   return (
     <>
@@ -106,7 +108,7 @@ export function InstallButton({ className = "" }: { className?: string }) {
         className={`inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 font-semibold text-white ${className}`}
         style={{ background: C.ink }}
       >
-        <Download size={18} /> Enstale app {shop.name}
+        <Download size={18} /> {t("Enstale app")} {shop.name}
       </button>
       {help && <HowToSheet ios={ios} onClose={() => setHelp(false)} />}
     </>
@@ -115,6 +117,7 @@ export function InstallButton({ className = "" }: { className?: string }) {
 
 /** Ti bann ki pwopoze enstale app la (yon fwa chak 14 jou si kliyan an fèmen l). */
 export function InstallBanner() {
+  const t = useT();
   const { shop } = useShop();
   const { installed, canPrompt, ios, prompt } = useInstall();
   const [hidden, setHidden] = useState(true);
@@ -157,8 +160,8 @@ export function InstallBanner() {
           )}
         </span>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-bold truncate">Enstale app {shop.name}</p>
-          <p className="text-xs" style={{ color: C.muted }}>Mete l sou ekran telefòn ou, ouvri l tousuit.</p>
+          <p className="text-sm font-bold truncate">{t("Enstale app")} {shop.name}</p>
+          <p className="text-xs" style={{ color: C.muted }}>{t("Mete l sou ekran telefòn ou, ouvri l tousuit.")}</p>
         </div>
         <button
           onClick={async () => {
@@ -169,9 +172,9 @@ export function InstallBanner() {
           className="rounded-full px-4 py-2 text-sm font-semibold text-white shrink-0"
           style={{ background: C.ink }}
         >
-          Enstale
+          {t("Enstale")}
         </button>
-        <button onClick={dismiss} aria-label="Fèmen" className="p-1 shrink-0"><X size={18} /></button>
+        <button onClick={dismiss} aria-label={t("Fèmen")} className="p-1 shrink-0"><X size={18} /></button>
       </div>
       {help && <HowToSheet ios={ios} onClose={() => { setHelp(false); dismiss(); }} />}
     </>

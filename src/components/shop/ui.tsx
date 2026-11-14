@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "./shop-context";
 import { useEffect } from "react";
 import { Star, X } from "lucide-react";
 import type { PublicProduct } from "@/lib/shop";
@@ -34,8 +35,9 @@ export function isNew(p: Pick<PublicProduct, "createdAt">) {
 }
 
 export function Stars({ value, size = 14 }: { value: number; size?: number }) {
+  const t = useT();
   return (
-    <span className="inline-flex items-center" aria-label={`${value} sou 5`}>
+    <span className="inline-flex items-center" aria-label={t("{n} sou 5", { n: value })}>
       {[1, 2, 3, 4, 5].map((i) => {
         const fill = Math.max(0, Math.min(1, value - (i - 1)));
         return (
@@ -76,14 +78,15 @@ export function Price({
 }
 
 export function StockLine({ p }: { p: PublicProduct }) {
+  const t = useT();
   const out = p.stock <= 0;
   const low = !out && p.stock <= 5;
   const color = out ? C.red : low ? "#B45309" : C.ok;
   const text = out
-    ? "Fini pou kounye a"
+    ? t("Fini pou kounye a")
     : low
-    ? `Sèlman ${p.stock}${p.unit ? " " + p.unit : ""} rete`
-    : `${p.stock.toLocaleString("fr-FR")}${p.unit ? " " + p.unit : ""} disponib`;
+    ? t("Sèlman {n} rete", { n: `${p.stock}${p.unit ? " " + p.unit : ""}` })
+    : t("{n} disponib", { n: `${p.stock.toLocaleString("fr-FR")}${p.unit ? " " + p.unit : ""}` });
   return (
     <p className="flex items-center gap-1.5 text-xs font-medium" style={{ color }}>
       <span className="w-1.5 h-1.5 rounded-full" style={{ background: color }} />
@@ -142,10 +145,11 @@ export function Sheet({
 }
 
 export function SheetHeader({ title, onClose }: { title: string; onClose: () => void }) {
+  const t = useT();
   return (
     <div className="flex items-center justify-between mb-3">
       <h3 className="text-xl font-semibold pr-6">{title}</h3>
-      <button onClick={onClose} aria-label="Fèmen" className="p-1">
+      <button onClick={onClose} aria-label={t("Fèmen")} className="p-1">
         <X size={22} />
       </button>
     </div>
@@ -162,5 +166,5 @@ export const FULFILLMENT_STEPS = [
   { id: "confirmed", label: "Konfime" },
   { id: "preparing", label: "Ap prepare" },
   { id: "shipped", label: "Nan wout", labelPickup: "Pare pou ranmase" },
-  { id: "delivered", label: "Livre", labelPickup: "Ranmase" },
+  { id: "delivered", label: "Livre", labelPickup: "Ranmase||status" },
 ] as const;

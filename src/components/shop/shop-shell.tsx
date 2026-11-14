@@ -7,11 +7,14 @@ import {
   Bell, Check, Facebook, Heart, Home, Instagram, Loader2, MapPin, MessageCircle,
   Minus, Package, Plus, Search, ShoppingBag, Trash2, Truck, User, X,
 } from "lucide-react";
-import { useShop } from "./shop-context";
+import { useShop, useT } from "./shop-context";
 import { C, Sheet, SheetHeader, clamp2, fieldClass, fieldStyle } from "./ui";
 import { InstallBanner } from "./install-app";
+import { deliveryEta } from "@/lib/delivery-eta";
+import { SHOP_LANGS, type ShopLang } from "@/lib/shop-i18n";
 
 export function ShopShell({ children }: { children: React.ReactNode }) {
+  const t = useT();
   const { shop, base, money, itemCount, subtotal, wish, cartOpen, setCartOpen, notifyFor, setNotifyFor, toast, account } = useShop();
   const pathname = usePathname();
 
@@ -20,10 +23,10 @@ export function ShopShell({ children }: { children: React.ReactNode }) {
   const initialLetter = shop.name.trim().charAt(0).toUpperCase() || "B";
   const announcement =
     shop.announcement ||
-    (shop.deliveryEnabled && shop.freeShippingMin > 0 ? `Livrezon gratis pou kòmand ${money(shop.freeShippingMin)} oswa plis` : null);
+    (shop.deliveryEnabled && shop.freeShippingMin > 0 ? t("Livrezon gratis pou kòmand {amount} oswa plis", { amount: money(shop.freeShippingMin) }) : null);
 
   const waHello = shop.whatsapp
-    ? `https://wa.me/${shop.whatsapp}?text=${encodeURIComponent(`Bonjou ${shop.name}, mwen vle plis enfòmasyon.`)}`
+    ? `https://wa.me/${shop.whatsapp}?text=${encodeURIComponent(t("Bonjou {shop}, mwen vle plis enfòmasyon.", { shop: shop.name }))}`
     : null;
 
   // Fèmen panye a lè nou chanje paj
@@ -70,24 +73,25 @@ export function ShopShell({ children }: { children: React.ReactNode }) {
           </div>
 
           <nav className="ml-auto flex items-center gap-1 sm:gap-2">
-            <IconLink href={`${base}/wishlist`} label="Favori" count={wish.length} className="hidden sm:flex">
+            <LangSwitch />
+            <IconLink href={`${base}/wishlist`} label={t("Favori")} count={wish.length} className="hidden sm:flex">
               <Heart size={22} />
             </IconLink>
-            <IconLink href={`${base}/track`} label="Swiv kòmand" className="hidden sm:flex">
+            <IconLink href={`${base}/track`} label={t("Swiv kòmand")} className="hidden sm:flex">
               <Package size={22} />
             </IconLink>
-            <IconLink href={`${base}/account`} label={account ? "Kont mwen" : "Konekte"} className="hidden sm:flex">
+            <IconLink href={`${base}/account`} label={account ? t("Kont mwen") : t("Konekte")} className="hidden sm:flex">
               <User size={22} />
               {account && <span className="absolute bottom-2 right-2 w-2.5 h-2.5 rounded-full border-2 border-white" style={{ background: C.ok }} />}
             </IconLink>
             <button
               onClick={() => setCartOpen(true)}
-              aria-label="Panye"
+              aria-label={t("Panye")}
               className="relative flex items-center gap-2 rounded-full px-3 h-11 text-white font-semibold"
               style={{ background: C.ink }}
             >
               <ShoppingBag size={20} />
-              <span className="hidden sm:inline text-sm tabular-nums">{itemCount > 0 ? money(subtotal) : "Panye"}</span>
+              <span className="hidden sm:inline text-sm tabular-nums">{itemCount > 0 ? money(subtotal) : t("Panye")}</span>
               {itemCount > 0 && (
                 <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1.5 rounded-full text-[11px] font-bold flex items-center justify-center text-white" style={{ background: C.red }}>
                   {itemCount}
@@ -106,10 +110,10 @@ export function ShopShell({ children }: { children: React.ReactNode }) {
         {(categories.length > 1 || hasSale) && (
           <div className="border-t" style={{ borderColor: C.line }}>
             <div className="max-w-6xl mx-auto px-4 flex gap-1 overflow-x-auto [scrollbar-width:none]">
-              <Link href={base} className="whitespace-nowrap px-3 py-2.5 text-sm font-semibold">Tout</Link>
+              <Link href={base} className="whitespace-nowrap px-3 py-2.5 text-sm font-semibold">{t("Tout")}</Link>
               {hasSale && (
                 <Link href={`${base}?sale=1`} className="whitespace-nowrap px-3 py-2.5 text-sm font-bold" style={{ color: C.red }}>
-                  Promosyon
+                  {t("Promosyon")}
                 </Link>
               )}
               {categories.map((c) => (
@@ -149,23 +153,23 @@ export function ShopShell({ children }: { children: React.ReactNode }) {
             </div>
           </div>
           <div>
-            <p className="font-semibold mb-3">Èd</p>
+            <p className="font-semibold mb-3">{t("Èd")}</p>
             <ul className="space-y-2 text-sm opacity-80">
-              <li><Link href={`${base}/account`}>{account ? "Kont mwen" : "Konekte / Kreye kont"}</Link></li>
-              <li><Link href={`${base}/track`}>Swiv kòmand mwen</Link></li>
-              <li><Link href={`${base}/wishlist`}>Favori mwen</Link></li>
-              <li><Link href={`${base}/about`}>Livrezon, peman ak retou</Link></li>
-              {waHello && <li><a href={waHello} target="_blank" rel="noreferrer">Kontakte nou sou WhatsApp</a></li>}
+              <li><Link href={`${base}/account`}>{account ? t("Kont mwen") : t("Konekte / Kreye kont")}</Link></li>
+              <li><Link href={`${base}/track`}>{t("Swiv kòmand mwen")}</Link></li>
+              <li><Link href={`${base}/wishlist`}>{t("Favori mwen")}</Link></li>
+              <li><Link href={`${base}/about`}>{t("Livrezon, peman ak retou")}</Link></li>
+              {waHello && <li><a href={waHello} target="_blank" rel="noreferrer">{t("Kontakte nou sou WhatsApp")}</a></li>}
             </ul>
           </div>
           <div className="text-sm opacity-80 space-y-2">
-            <p className="font-semibold opacity-100 mb-3">Enfòmasyon</p>
+            <p className="font-semibold opacity-100 mb-3">{t("Enfòmasyon")}</p>
             {shop.address && (
               <p className="flex gap-2"><MapPin size={16} className="shrink-0 mt-0.5" /> {shop.address}</p>
             )}
             {shop.hours && <p>🕘 {shop.hours}</p>}
             {shop.deliveryEnabled && (
-              <p className="flex gap-2"><Truck size={16} className="shrink-0 mt-0.5" /> {shop.deliveryFee > 0 ? `Livrezon: ${money(shop.deliveryFee)}` : "Livrezon gratis"}</p>
+              <p className="flex gap-2"><Truck size={16} className="shrink-0 mt-0.5" /> {shop.deliveryFee > 0 ? t("Livrezon: {fee}", { fee: money(shop.deliveryFee) }) : t("Livrezon gratis")}{deliveryEta(shop.deliveryMinDays, shop.deliveryMaxDays, t) ? ` · ${deliveryEta(shop.deliveryMinDays, shop.deliveryMaxDays, t)}` : ""}</p>
             )}
           </div>
         </div>
@@ -179,15 +183,15 @@ export function ShopShell({ children }: { children: React.ReactNode }) {
         className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white border-t grid grid-cols-5 pb-[env(safe-area-inset-bottom)]"
         style={{ borderColor: C.line }}
       >
-        <BottomLink href={base} active={pathname === base} label="Akèy"><Home size={21} /></BottomLink>
-        <BottomLink href={`${base}/wishlist`} active={pathname.endsWith("/wishlist")} label="Favori" count={wish.length}><Heart size={21} /></BottomLink>
-        <BottomLink href={`${base}/track`} active={pathname.endsWith("/track")} label="Kòmand"><Package size={21} /></BottomLink>
-        <BottomLink href={`${base}/account`} active={pathname.endsWith("/account")} label="Kont"><User size={21} /></BottomLink>
+        <BottomLink href={base} active={pathname === base} label={t("Akèy")}><Home size={21} /></BottomLink>
+        <BottomLink href={`${base}/wishlist`} active={pathname.endsWith("/wishlist")} label={t("Favori")} count={wish.length}><Heart size={21} /></BottomLink>
+        <BottomLink href={`${base}/track`} active={pathname.endsWith("/track")} label={t("Kòmand")}><Package size={21} /></BottomLink>
+        <BottomLink href={`${base}/account`} active={pathname.endsWith("/account")} label={t("Kont")}><User size={21} /></BottomLink>
         <button onClick={() => setCartOpen(true)} className="relative flex flex-col items-center justify-center gap-0.5 py-2 text-[11px] font-medium">
           <span className="relative"><ShoppingBag size={21} />
             {itemCount > 0 && <span className="absolute -top-1.5 -right-2.5 min-w-4 h-4 px-1 rounded-full text-[10px] font-bold text-white flex items-center justify-center" style={{ background: C.red }}>{itemCount}</span>}
           </span>
-          Panye
+          {t("Panye")}
         </button>
       </nav>
 
@@ -201,10 +205,29 @@ export function ShopShell({ children }: { children: React.ReactNode }) {
           className="fixed left-1/2 bottom-24 md:bottom-8 z-[70] rounded-full px-5 py-3 text-sm font-semibold text-white shadow-2xl"
           style={{ background: C.ink, animation: "pop .2s ease-out both" }}
         >
-          {toast}
+          {t(toast)}
         </div>
       )}
     </div>
+  );
+}
+
+/** Chwa lang boutik la (Kreyòl / Français / English). Sove sou aparèy kliyan an. */
+function LangSwitch() {
+  const { lang, setLang, t } = useShop();
+  return (
+    <select
+      value={lang}
+      onChange={(e) => setLang(e.target.value as ShopLang)}
+      aria-label={t("Langue")}
+      title={t("Langue")}
+      className="h-9 rounded-full border bg-white px-2 text-xs font-bold cursor-pointer"
+      style={{ borderColor: C.line }}
+    >
+      {SHOP_LANGS.map((l) => (
+        <option key={l.code} value={l.code}>{l.short}</option>
+      ))}
+    </select>
   );
 }
 
@@ -236,6 +259,7 @@ function BottomLink({ href, active, label, count, children }: { href: string; ac
 /* ------------------------------ Rechèch ak sijesyon ------------------------------ */
 
 function SearchBox() {
+  const t = useT();
   const { shop, base, money } = useShop();
   const router = useRouter();
   const sp = useSearchParams();
@@ -274,13 +298,13 @@ function SearchBox() {
           value={q}
           onChange={(e) => setQ(e.target.value)}
           onFocus={() => setFocus(true)}
-          placeholder="Chèche yon pwodwi, yon mak..."
+          placeholder={t("Chèche yon pwodwi, yon mak...")}
           enterKeyHint="search"
           className="w-full rounded-full border bg-[#F5F5F5] pl-11 pr-10 h-11 text-[15px] focus:outline-none focus:bg-white focus:ring-2 focus:ring-black/20"
           style={{ borderColor: C.line }}
         />
         {q && (
-          <button type="button" onClick={() => { setQ(""); router.push(base); }} aria-label="Efase" className="absolute right-3 top-1/2 -translate-y-1/2 p-1">
+          <button type="button" onClick={() => { setQ(""); router.push(base); }} aria-label={t("Efase")} className="absolute right-3 top-1/2 -translate-y-1/2 p-1">
             <X size={16} />
           </button>
         )}
@@ -310,6 +334,7 @@ function SearchBox() {
 /* ------------------------------ Panye ------------------------------ */
 
 function CartDrawer() {
+  const t = useT();
   const { shop, base, money, cartLines, subtotal, itemCount, setLine, setCartOpen } = useShop();
   const close = () => setCartOpen(false);
   const min = shop.freeShippingMin;
@@ -320,13 +345,13 @@ function CartDrawer() {
     <Sheet onClose={close} side="right">
       <div className="px-5 pt-[max(1.25rem,env(safe-area-inset-top))] pb-3 border-b" style={{ borderColor: C.line }}>
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold">Panye ({itemCount})</h2>
-          <button onClick={close} aria-label="Fèmen" className="p-1"><X size={22} /></button>
+          <h2 className="text-xl font-bold">{t("Panye ({n})", { n: itemCount })}</h2>
+          <button onClick={close} aria-label={t("Fèmen")} className="p-1"><X size={22} /></button>
         </div>
         {showFree && (
           <div className="mt-3">
             <p className="text-xs font-medium mb-1.5">
-              {remaining > 0 ? <>Ajoute <b>{money(remaining)}</b> pou livrezon gratis</> : <span style={{ color: C.ok }}>✓ Ou gen livrezon gratis!</span>}
+              {remaining > 0 ? <>{t("Ajoute {amount} pou livrezon gratis", { amount: money(remaining) })}</> : <span style={{ color: C.ok }}>{t("✓ Ou gen livrezon gratis!")}</span>}
             </p>
             <div className="h-1.5 rounded-full overflow-hidden" style={{ background: C.line }}>
               <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(100, (subtotal / min) * 100)}%`, background: remaining > 0 ? C.red : C.ok }} />
@@ -338,8 +363,8 @@ function CartDrawer() {
       {cartLines.length === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center text-center px-6">
           <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ background: C.soft }}><ShoppingBag size={28} /></div>
-          <p className="mb-5" style={{ color: C.muted }}>Panye ou vid.</p>
-          <button onClick={close} className="rounded-xl px-7 py-3.5 font-semibold text-white" style={{ background: C.ink }}>Kontinye achte</button>
+          <p className="mb-5" style={{ color: C.muted }}>{t("Panye ou vid.")}</p>
+          <button onClick={close} className="rounded-xl px-7 py-3.5 font-semibold text-white" style={{ background: C.ink }}>{t("Kontinye achte")}</button>
         </div>
       ) : (
         <>
@@ -359,20 +384,20 @@ function CartDrawer() {
                   {(size || color) && <p className="text-xs" style={{ color: C.muted }}>{[size, color].filter(Boolean).join(" / ")}</p>}
                   <p className="text-sm font-bold tabular-nums mt-0.5">{money(p.price * qty)}</p>
                   <div className="flex items-center gap-1 mt-1.5">
-                    <button aria-label="Mwens" onClick={() => setLine(key, qty - 1)} className="w-8 h-8 rounded-lg border flex items-center justify-center" style={{ borderColor: C.line }}><Minus size={14} /></button>
+                    <button aria-label={t("Mwens")} onClick={() => setLine(key, qty - 1)} className="w-8 h-8 rounded-lg border flex items-center justify-center" style={{ borderColor: C.line }}><Minus size={14} /></button>
                     <span className="w-9 text-center font-bold tabular-nums">{qty}</span>
-                    <button aria-label="Plis" onClick={() => setLine(key, qty + 1)} disabled={qty >= p.stock} className="w-8 h-8 rounded-lg border flex items-center justify-center disabled:opacity-30" style={{ borderColor: C.line }}><Plus size={14} /></button>
+                    <button aria-label={t("Plis")} onClick={() => setLine(key, qty + 1)} disabled={qty >= p.stock} className="w-8 h-8 rounded-lg border flex items-center justify-center disabled:opacity-30" style={{ borderColor: C.line }}><Plus size={14} /></button>
                   </div>
                 </div>
-                <button aria-label="Retire" onClick={() => setLine(key, 0)} className="p-2" style={{ color: C.muted }}><Trash2 size={18} /></button>
+                <button aria-label={t("Retire")} onClick={() => setLine(key, 0)} className="p-2" style={{ color: C.muted }}><Trash2 size={18} /></button>
               </div>
             ))}
           </div>
           <div className="px-5 pt-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] border-t" style={{ borderColor: C.line }}>
-            <div className="flex justify-between text-lg font-bold mb-1"><span>Sou-total</span><span className="tabular-nums">{money(subtotal)}</span></div>
-            <p className="text-xs mb-3" style={{ color: C.muted }}>Livrezon ak koupon kalkile nan pwochen etap la.</p>
+            <div className="flex justify-between text-lg font-bold mb-1"><span>{t("Sou-total")}</span><span className="tabular-nums">{money(subtotal)}</span></div>
+            <p className="text-xs mb-3" style={{ color: C.muted }}>{t("Livrezon ak koupon kalkile nan pwochen etap la.")}</p>
             <Link href={`${base}/checkout`} onClick={close} className="w-full min-h-[54px] rounded-xl text-base font-bold text-white flex items-center justify-center" style={{ background: C.red }}>
-              Pase kòmand lan
+              {t("Pase kòmand lan")}
             </Link>
           </div>
         </>
@@ -384,6 +409,7 @@ function CartDrawer() {
 /* ------------------------------ "Notifye m" ------------------------------ */
 
 function NotifyModal({ onClose }: { onClose: () => void }) {
+  const t = useT();
   const { shop, notifyFor: product } = useShop();
   const [phone, setPhone] = useState("");
   const [state, setState] = useState<"idle" | "busy" | "done" | "error">("idle");
@@ -406,17 +432,17 @@ function NotifyModal({ onClose }: { onClose: () => void }) {
 
   return (
     <Sheet onClose={onClose}>
-      <SheetHeader title="Notifye m lè l disponib" onClose={onClose} />
+      <SheetHeader title={t("Notifye m lè l disponib")} onClose={onClose} />
       {state === "done" ? (
-        <p className="flex items-center gap-2 font-medium"><Check size={20} /> Nou anrejistre nimewo ou. Boutik la ap kontakte w.</p>
+        <p className="flex items-center gap-2 font-medium"><Check size={20} /> {t("Nou anrejistre nimewo ou. Boutik la ap kontakte w.")}</p>
       ) : (
         <form onSubmit={submit} className="space-y-3">
           <p className="text-sm font-semibold flex items-center gap-2"><Bell size={16} /> {product.name}</p>
-          <input className={fieldClass} style={fieldStyle} placeholder="Telefòn / WhatsApp" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required minLength={7} autoFocus />
+          <input className={fieldClass} style={fieldStyle} placeholder={t("Telefòn / WhatsApp")} inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required minLength={7} autoFocus />
           <button disabled={state === "busy"} className="w-full min-h-[50px] rounded-xl font-bold text-white disabled:opacity-60 flex items-center justify-center gap-2" style={{ background: C.ink }}>
-            {state === "busy" ? <Loader2 size={18} className="animate-spin" /> : "Voye"}
+            {state === "busy" ? <Loader2 size={18} className="animate-spin" /> : t("Voye")}
           </button>
-          {state === "error" && <p className="text-sm text-center" style={{ color: C.red }}>Pa ka anrejistre. Eseye ankò.</p>}
+          {state === "error" && <p className="text-sm text-center" style={{ color: C.red }}>{t("Pa ka anrejistre. Eseye ankò.")}</p>}
         </form>
       )}
     </Sheet>

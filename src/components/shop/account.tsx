@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Heart, KeyRound, Loader2, LogOut, MapPin, MessageCircle, Package, Trash2, User } from "lucide-react";
-import { useShop } from "./shop-context";
+import { useShop, useT } from "./shop-context";
 import { InstallButton } from "./install-app";
 import { C, fieldClass, fieldStyle } from "./ui";
 
@@ -16,7 +16,7 @@ const FULFILL_LABEL: Record<string, string> = {
   preparing: "Ap prepare",
   shipped: "Nan wout",
   delivered: "Livre",
-  cancelled: "Anile",
+  cancelled: "Anile||status",
 };
 
 async function call(url: string, method: string, body?: unknown) {
@@ -60,6 +60,7 @@ function Submit({ busy, children }: { busy: boolean; children: React.ReactNode }
 }
 
 export function AccountPage() {
+  const t = useT();
   const { shop, base, account, accountReady, accountOrders } = useShop();
   const sp = useSearchParams();
   const [picked, setPicked] = useState<Tab | null>(null);
@@ -76,14 +77,14 @@ export function AccountPage() {
 
   const tabs: { id: Tab; label: string }[] = account
     ? [
-        { id: "profile", label: "Pwofil" },
-        { id: "orders", label: `Kòmand${accountOrders.length ? ` (${accountOrders.length})` : ""}` },
-        { id: "settings", label: "Setting" },
+        { id: "profile", label: t("Pwofil") },
+        { id: "orders", label: accountOrders.length ? t("Kòmand ({n})", { n: accountOrders.length }) : t("Kòmand") },
+        { id: "settings", label: t("Setting") },
       ]
     : [
-        { id: "login", label: "Konekte" },
-        { id: "register", label: "Kreye kont" },
-        { id: "settings", label: "Setting" },
+        { id: "login", label: t("Konekte") },
+        { id: "register", label: t("Kreye kont") },
+        { id: "settings", label: t("Setting") },
       ];
 
   return (
@@ -93,9 +94,9 @@ export function AccountPage() {
           <User size={22} />
         </span>
         <div className="min-w-0">
-          <h1 className="text-2xl font-bold leading-tight truncate">{account ? account.name : "Kont mwen"}</h1>
+          <h1 className="text-2xl font-bold leading-tight truncate">{account ? account.name : t("Kont mwen")}</h1>
           <p className="text-sm truncate" style={{ color: C.muted }}>
-            {account ? account.email : `Konekte oswa kreye yon kont sou ${shop.name}`}
+            {account ? account.email : t("Konekte oswa kreye yon kont sou {shop}", { shop: shop.name })}
           </p>
         </div>
       </div>
@@ -133,6 +134,7 @@ export function AccountPage() {
 /* ------------------------------ Koneksyon ------------------------------ */
 
 function LoginForm({ goRegister }: { goRegister: () => void }) {
+  const t = useT();
   const { shop, setAccount, refreshAccount, showToast } = useShop();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -146,14 +148,14 @@ function LoginForm({ goRegister }: { goRegister: () => void }) {
     try {
       const { ok, data } = await call(`/api/shop/${shop.slug}/account/login`, "POST", { email, password });
       if (!ok) {
-        setError(data.error || "Pa ka konekte. Eseye ankò.");
+        setError(data.error ? t(data.error) : t("Pa ka konekte. Eseye ankò."));
         return;
       }
       setAccount(data.customer);
       await refreshAccount();
       showToast("Ou konekte ✓");
     } catch {
-      setError("Erè rezo — verifye entènèt ou.");
+      setError(t("Erè rezo — verifye entènèt ou."));
     } finally {
       setBusy(false);
     }
@@ -161,18 +163,18 @@ function LoginForm({ goRegister }: { goRegister: () => void }) {
 
   return (
     <form onSubmit={submit} className="space-y-4">
-      <Label text="Imèl">
+      <Label text={t("Imèl")}>
         <input className={fieldClass} style={fieldStyle} type="email" autoComplete="email" inputMode="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
       </Label>
-      <Label text="Modpas">
+      <Label text={t("Modpas")}>
         <input className={fieldClass} style={fieldStyle} type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required />
       </Label>
       <ErrorLine msg={error} />
-      <Submit busy={busy}>Konekte</Submit>
+      <Submit busy={busy}>{t("Konekte")}</Submit>
       <p className="text-center text-sm" style={{ color: C.muted }}>
-        Poko gen kont?{" "}
+        {t("Poko gen kont?")}{" "}
         <button type="button" onClick={goRegister} className="font-semibold underline" style={{ color: C.ink }}>
-          Kreye youn
+          {t("Kreye youn")}
         </button>
       </p>
     </form>
@@ -182,6 +184,7 @@ function LoginForm({ goRegister }: { goRegister: () => void }) {
 /* ------------------------------ Kreye kont ------------------------------ */
 
 function RegisterForm({ goLogin }: { goLogin: () => void }) {
+  const t = useT();
   const { shop, setAccount, refreshAccount, showToast } = useShop();
   const [f, setF] = useState({ name: "", phone: "", email: "", address: "", password: "" });
   const [busy, setBusy] = useState(false);
@@ -191,7 +194,7 @@ function RegisterForm({ goLogin }: { goLogin: () => void }) {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (f.password.length < 8) {
-      setError("Modpas la dwe gen omwen 8 karaktè.");
+      setError(t("Modpas la dwe gen omwen 8 karaktè."));
       return;
     }
     setBusy(true);
@@ -199,14 +202,14 @@ function RegisterForm({ goLogin }: { goLogin: () => void }) {
     try {
       const { ok, data } = await call(`/api/shop/${shop.slug}/account/register`, "POST", f);
       if (!ok) {
-        setError(data.error || "Pa ka kreye kont lan. Eseye ankò.");
+        setError(data.error ? t(data.error) : t("Pa ka kreye kont lan. Eseye ankò."));
         return;
       }
       setAccount(data.customer);
       await refreshAccount();
       showToast("Kont kreye ✓");
     } catch {
-      setError("Erè rezo — verifye entènèt ou.");
+      setError(t("Erè rezo — verifye entènèt ou."));
     } finally {
       setBusy(false);
     }
@@ -214,31 +217,39 @@ function RegisterForm({ goLogin }: { goLogin: () => void }) {
 
   return (
     <form onSubmit={submit} className="space-y-4">
-      <Label text="Non konplè">
+      <Label text={t("Non konplè")}>
         <input className={fieldClass} style={fieldStyle} autoComplete="name" value={f.name} onChange={set("name")} required minLength={2} maxLength={80} />
       </Label>
-      <Label text="Nimewo telefòn">
+      <Label text={t("Nimewo telefòn")}>
         <input className={fieldClass} style={fieldStyle} type="tel" autoComplete="tel" inputMode="tel" placeholder="+509 ..." value={f.phone} onChange={set("phone")} required />
       </Label>
-      <Label text="Imèl">
+      <Label text={t("Imèl")}>
         <input className={fieldClass} style={fieldStyle} type="email" autoComplete="email" inputMode="email" value={f.email} onChange={set("email")} required />
       </Label>
-      <Label text="Adrès (pou livrezon)">
-        <textarea className={fieldClass} style={fieldStyle} rows={2} autoComplete="street-address" maxLength={200} value={f.address} onChange={set("address")} placeholder="Katye, ri, vil..." />
+      <Label text={t("Adrès (pou livrezon)")}>
+        <textarea className={fieldClass} style={fieldStyle} rows={2} autoComplete="street-address" maxLength={200} value={f.address} onChange={set("address")} placeholder={t("Katye, ri, vil...")} />
       </Label>
-      <Label text="Modpas (omwen 8 karaktè)">
+      <Label text={t("Modpas (omwen 8 karaktè)")}>
         <input className={fieldClass} style={fieldStyle} type="password" autoComplete="new-password" minLength={8} value={f.password} onChange={set("password")} required />
       </Label>
       <ErrorLine msg={error} />
-      <Submit busy={busy}>Kreye kont mwen</Submit>
+      <Submit busy={busy}>{t("Kreye kont mwen")}</Submit>
       <p className="text-center text-xs" style={{ color: C.muted }}>
-        Nou itilize enfòmasyon sa yo sèlman pou trete kòmand ou yo. Gade{" "}
-        <Link href="/privacy" className="underline">politik konfidansyalite</Link>.
+        {(() => {
+          const [pre, post] = t("Nou itilize enfòmasyon sa yo sèlman pou trete kòmand ou yo. Gade {link}.", { link: "\u0000" }).split("\u0000");
+          return (
+            <>
+              {pre}
+              <Link href="/privacy" className="underline">{t("politik konfidansyalite")}</Link>
+              {post}
+            </>
+          );
+        })()}
       </p>
       <p className="text-center text-sm" style={{ color: C.muted }}>
-        Gen yon kont deja?{" "}
+        {t("Gen yon kont deja?")}{" "}
         <button type="button" onClick={goLogin} className="font-semibold underline" style={{ color: C.ink }}>
-          Konekte
+          {t("Konekte")}
         </button>
       </p>
     </form>
@@ -248,6 +259,7 @@ function RegisterForm({ goLogin }: { goLogin: () => void }) {
 /* ------------------------------ Pwofil ------------------------------ */
 
 function ProfileForm() {
+  const t = useT();
   const { shop, account, setAccount, showToast } = useShop();
   const [name, setName] = useState(account?.name ?? "");
   const [phone, setPhone] = useState(account?.phone ?? "");
@@ -263,13 +275,13 @@ function ProfileForm() {
     try {
       const { ok, data } = await call(`/api/shop/${shop.slug}/account/me`, "PATCH", { name, phone, address });
       if (!ok) {
-        setError(data.error || "Pa ka sove. Eseye ankò.");
+        setError(data.error ? t(data.error) : t("Pa ka sove. Eseye ankò."));
         return;
       }
       setAccount(data.customer);
       showToast("Pwofil sove ✓");
     } catch {
-      setError("Erè rezo — verifye entènèt ou.");
+      setError(t("Erè rezo — verifye entènèt ou."));
     } finally {
       setBusy(false);
     }
@@ -277,20 +289,20 @@ function ProfileForm() {
 
   return (
     <form onSubmit={submit} className="space-y-4">
-      <Label text="Non konplè">
+      <Label text={t("Non konplè")}>
         <input className={fieldClass} style={fieldStyle} value={name} onChange={(e) => setName(e.target.value)} required minLength={2} maxLength={80} />
       </Label>
-      <Label text="Nimewo telefòn">
+      <Label text={t("Nimewo telefòn")}>
         <input className={fieldClass} style={fieldStyle} type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required />
       </Label>
-      <Label text="Imèl">
+      <Label text={t("Imèl")}>
         <input className={`${fieldClass} opacity-60`} style={fieldStyle} value={account.email} disabled />
       </Label>
-      <Label text="Adrès">
+      <Label text={t("Adrès")}>
         <textarea className={fieldClass} style={fieldStyle} rows={2} maxLength={200} value={address} onChange={(e) => setAddress(e.target.value)} />
       </Label>
       <ErrorLine msg={error} />
-      <Submit busy={busy}>Sove chanjman yo</Submit>
+      <Submit busy={busy}>{t("Sove chanjman yo")}</Submit>
     </form>
   );
 }
@@ -298,13 +310,14 @@ function ProfileForm() {
 /* ------------------------------ Kòmand ------------------------------ */
 
 function Orders() {
+  const t = useT();
   const { base, money, accountOrders } = useShop();
   if (accountOrders.length === 0) {
     return (
       <div className="text-center py-14">
         <div className="mx-auto w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ background: C.soft }}><Package size={28} /></div>
-        <p className="font-semibold">Ou poko gen kòmand</p>
-        <p className="text-sm mt-1" style={{ color: C.muted }}>Kòmand ou pase lè w konekte yo ap parèt isit la.</p>
+        <p className="font-semibold">{t("Ou poko gen kòmand")}</p>
+        <p className="text-sm mt-1" style={{ color: C.muted }}>{t("Kòmand ou pase lè w konekte yo ap parèt isit la.")}</p>
       </div>
     );
   }
@@ -320,7 +333,7 @@ function Orders() {
             <span className="min-w-0">
               <b>#{o.code}</b>
               <span className="block text-xs" style={{ color: C.muted }}>
-                {new Date(o.createdAt).toLocaleDateString("fr-FR")} · {FULFILL_LABEL[o.fulfillment] ?? o.fulfillment}
+                {new Date(o.createdAt).toLocaleDateString("fr-FR")} · {t(FULFILL_LABEL[o.fulfillment] ?? o.fulfillment)}
               </span>
             </span>
             <span className="font-bold tabular-nums shrink-0">{money(o.total)}</span>
@@ -334,30 +347,31 @@ function Orders() {
 /* ------------------------------ Setting ------------------------------ */
 
 function Settings({ base }: { base: string }) {
+  const t = useT();
   const { shop, account, logoutAccount, showToast } = useShop();
   const waHello = shop.whatsapp
-    ? `https://wa.me/${shop.whatsapp}?text=${encodeURIComponent(`Bonjou ${shop.name}, mwen bezwen èd.`)}`
+    ? `https://wa.me/${shop.whatsapp}?text=${encodeURIComponent(t("Bonjou {shop}, mwen bezwen èd.", { shop: shop.name }))}`
     : null;
 
   return (
     <div className="space-y-6">
-      <Section title="App la">
+      <Section title={t("App la")}>
         <InstallButton />
       </Section>
 
-      <Section title="Rakousi">
+      <Section title={t("Rakousi")}>
         <ul className="divide-y rounded-xl border" style={{ borderColor: C.line }}>
-          <RowLink href={`${base}/track`} icon={<Package size={18} />} text="Swiv yon kòmand" />
-          <RowLink href={`${base}/wishlist`} icon={<Heart size={18} />} text="Favori mwen" />
-          <RowLink href={`${base}/about`} icon={<MapPin size={18} />} text="Livrezon, peman ak retou" />
-          {waHello && <RowLink href={waHello} external icon={<MessageCircle size={18} />} text="Kontakte nou sou WhatsApp" />}
+          <RowLink href={`${base}/track`} icon={<Package size={18} />} text={t("Swiv yon kòmand")} />
+          <RowLink href={`${base}/wishlist`} icon={<Heart size={18} />} text={t("Favori mwen")} />
+          <RowLink href={`${base}/about`} icon={<MapPin size={18} />} text={t("Livrezon, peman ak retou")} />
+          {waHello && <RowLink href={waHello} external icon={<MessageCircle size={18} />} text={t("Kontakte nou sou WhatsApp")} />}
         </ul>
       </Section>
 
       {account && (
         <>
           <ChangePassword />
-          <Section title="Sesyon">
+          <Section title={t("Sesyon")}>
             <button
               onClick={async () => {
                 await logoutAccount();
@@ -366,7 +380,7 @@ function Settings({ base }: { base: string }) {
               className="w-full rounded-full border py-3 font-semibold flex items-center justify-center gap-2"
               style={{ borderColor: C.line }}
             >
-              <LogOut size={18} /> Dekonekte
+              <LogOut size={18} /> {t("Dekonekte")}
             </button>
           </Section>
           <DeleteAccount />
@@ -374,7 +388,7 @@ function Settings({ base }: { base: string }) {
       )}
 
       <p className="text-center text-xs" style={{ color: C.muted }}>
-        <Link href="/privacy" className="underline">Konfidansyalite</Link> · <Link href="/terms" className="underline">Kondisyon</Link>
+        <Link href="/privacy" className="underline">{t("Konfidansyalite")}</Link> · <Link href="/terms" className="underline">{t("Kondisyon")}</Link>
       </p>
     </div>
   );
@@ -403,6 +417,7 @@ function RowLink({ href, icon, text, external }: { href: string; icon: React.Rea
 }
 
 function ChangePassword() {
+  const t = useT();
   const { shop, showToast } = useShop();
   const [open, setOpen] = useState(false);
   const [cur, setCur] = useState("");
@@ -417,7 +432,7 @@ function ChangePassword() {
     try {
       const { ok, data } = await call(`/api/shop/${shop.slug}/account/me`, "PATCH", { currentPassword: cur, newPassword: next });
       if (!ok) {
-        setError(data.error || "Pa ka chanje modpas la.");
+        setError(data.error ? t(data.error) : t("Pa ka chanje modpas la."));
         return;
       }
       setCur("");
@@ -425,24 +440,24 @@ function ChangePassword() {
       setOpen(false);
       showToast("Modpas chanje ✓");
     } catch {
-      setError("Erè rezo — verifye entènèt ou.");
+      setError(t("Erè rezo — verifye entènèt ou."));
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <Section title="Sekirite">
+    <Section title={t("Sekirite")}>
       {!open ? (
         <button onClick={() => setOpen(true)} className="w-full rounded-full border py-3 font-semibold flex items-center justify-center gap-2" style={{ borderColor: C.line }}>
-          <KeyRound size={18} /> Chanje modpas
+          <KeyRound size={18} /> {t("Chanje modpas")}
         </button>
       ) : (
         <form onSubmit={submit} className="space-y-3">
-          <input className={fieldClass} style={fieldStyle} type="password" autoComplete="current-password" placeholder="Modpas aktyèl" value={cur} onChange={(e) => setCur(e.target.value)} required />
-          <input className={fieldClass} style={fieldStyle} type="password" autoComplete="new-password" placeholder="Nouvo modpas (omwen 8 karaktè)" minLength={8} value={next} onChange={(e) => setNext(e.target.value)} required />
+          <input className={fieldClass} style={fieldStyle} type="password" autoComplete="current-password" placeholder={t("Modpas aktyèl")} value={cur} onChange={(e) => setCur(e.target.value)} required />
+          <input className={fieldClass} style={fieldStyle} type="password" autoComplete="new-password" placeholder={t("Nouvo modpas (omwen 8 karaktè)")} minLength={8} value={next} onChange={(e) => setNext(e.target.value)} required />
           <ErrorLine msg={error} />
-          <Submit busy={busy}>Chanje modpas</Submit>
+          <Submit busy={busy}>{t("Chanje modpas")}</Submit>
         </form>
       )}
     </Section>
@@ -450,6 +465,7 @@ function ChangePassword() {
 }
 
 function DeleteAccount() {
+  const t = useT();
   const { shop, setAccount, showToast } = useShop();
   const [open, setOpen] = useState(false);
   const [pw, setPw] = useState("");
@@ -458,39 +474,39 @@ function DeleteAccount() {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!confirm("Ou sèten ou vle efase kont ou? Aksyon sa a pa ka defèt.")) return;
+    if (!confirm(t("Ou sèten ou vle efase kont ou? Aksyon sa a pa ka defèt."))) return;
     setBusy(true);
     setError(null);
     try {
       const { ok, data } = await call(`/api/shop/${shop.slug}/account/me`, "DELETE", { password: pw });
       if (!ok) {
-        setError(data.error || "Pa ka efase kont lan.");
+        setError(data.error ? t(data.error) : t("Pa ka efase kont lan."));
         return;
       }
       setAccount(null);
       showToast("Kont efase");
     } catch {
-      setError("Erè rezo — verifye entènèt ou.");
+      setError(t("Erè rezo — verifye entènèt ou."));
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <Section title="Zòn danje">
+    <Section title={t("Zòn danje")}>
       {!open ? (
         <button onClick={() => setOpen(true)} className="w-full rounded-full border py-3 font-semibold flex items-center justify-center gap-2" style={{ borderColor: C.red, color: C.red }}>
-          <Trash2 size={18} /> Efase kont mwen
+          <Trash2 size={18} /> {t("Efase kont mwen")}
         </button>
       ) : (
         <form onSubmit={submit} className="space-y-3">
           <p className="text-sm" style={{ color: C.muted }}>
-            Non, telefòn, imèl ak adrès ou ap efase. Antre modpas ou pou konfime.
+            {t("Non, telefòn, imèl ak adrès ou ap efase. Antre modpas ou pou konfime.")}
           </p>
-          <input className={fieldClass} style={fieldStyle} type="password" autoComplete="current-password" placeholder="Modpas ou" value={pw} onChange={(e) => setPw(e.target.value)} required />
+          <input className={fieldClass} style={fieldStyle} type="password" autoComplete="current-password" placeholder={t("Modpas ou")} value={pw} onChange={(e) => setPw(e.target.value)} required />
           <ErrorLine msg={error} />
           <button type="submit" disabled={busy} className="w-full rounded-full py-3.5 font-semibold text-white flex items-center justify-center gap-2 disabled:opacity-60" style={{ background: C.red }}>
-            {busy && <Loader2 size={18} className="animate-spin" />} Efase kont lan pou toutbon
+            {busy && <Loader2 size={18} className="animate-spin" />} {t("Efase kont lan pou toutbon")}
           </button>
         </form>
       )}

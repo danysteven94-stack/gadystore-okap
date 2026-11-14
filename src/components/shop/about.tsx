@@ -1,10 +1,12 @@
 "use client";
 
 import { Clock, MapPin, MessageCircle, RotateCcw, ShieldCheck, Truck } from "lucide-react";
-import { useShop } from "./shop-context";
+import { useShop, useT } from "./shop-context";
 import { C } from "./ui";
+import { deliveryEta } from "@/lib/delivery-eta";
 
 export function About() {
+  const t = useT();
   const { shop, money } = useShop();
   const wa = shop.whatsapp ? `https://wa.me/${shop.whatsapp}` : null;
   return (
@@ -13,29 +15,32 @@ export function About() {
       <p className="mb-6" style={{ color: C.muted }}>{shop.tagline}</p>
 
       <div className="space-y-4">
-        <Block icon={<Truck size={20} />} title="Livrezon ak ranmase">
+        <Block icon={<Truck size={20} />} title={t("Livrezon ak ranmase")}>
           <ul className="list-disc pl-5 space-y-1">
             {shop.deliveryEnabled ? (
               <li>
-                Livrezon: <b>{shop.deliveryFee > 0 ? money(shop.deliveryFee) : "gratis"}</b>
-                {shop.freeShippingMin > 0 && shop.deliveryFee > 0 ? ` (gratis pou kòmand ${money(shop.freeShippingMin)} oswa plis)` : ""}
+                {t("Livrezon:")} <b>{shop.deliveryFee > 0 ? money(shop.deliveryFee) : t("gratis")}</b>
+                {shop.freeShippingMin > 0 && shop.deliveryFee > 0 ? t(" (gratis pou kòmand {amount} oswa plis)", { amount: money(shop.freeShippingMin) }) : ""}
               </li>
             ) : (
-              <li>Pa gen livrezon pou kounye a.</li>
+              <li>{t("Pa gen livrezon pou kounye a.")}</li>
             )}
-            {shop.pickupEnabled && <li>Ranmase nan boutik la: <b>gratis</b></li>}
+            {shop.deliveryEnabled && deliveryEta(shop.deliveryMinDays, shop.deliveryMaxDays, t) && (
+              <li>{t("Tan livrezon:")} <b>{deliveryEta(shop.deliveryMinDays, shop.deliveryMaxDays, t)}</b> {t("apre ou fin kòmande")}</li>
+            )}
+            {shop.pickupEnabled && <li>{t("Ranmase nan boutik la:")} <b>{t("gratis")}</b></li>}
           </ul>
         </Block>
 
-        <Block icon={<ShieldCheck size={20} />} title="Peman">
-          {shop.paymentInfo ? <p className="whitespace-pre-line">{shop.paymentInfo}</p> : <p>Kach lè w resevwa, MonCash, NatCash oswa transfè bank. Boutik la ap kontakte w apre kòmand lan.</p>}
+        <Block icon={<ShieldCheck size={20} />} title={t("Peman")}>
+          {shop.paymentInfo ? <p className="whitespace-pre-line">{shop.paymentInfo}</p> : <p>{t("Kach lè w resevwa, MonCash, NatCash oswa transfè bank. Boutik la ap kontakte w apre kòmand lan.")}</p>}
         </Block>
 
         {shop.policies && (
-          <Block icon={<RotateCcw size={20} />} title="Retou ak garanti"><p className="whitespace-pre-line">{shop.policies}</p></Block>
+          <Block icon={<RotateCcw size={20} />} title={t("Retou ak garanti")}><p className="whitespace-pre-line">{shop.policies}</p></Block>
         )}
 
-        <Block icon={<MapPin size={20} />} title="Kontak">
+        <Block icon={<MapPin size={20} />} title={t("Kontak")}>
           <ul className="space-y-1.5">
             {shop.address && <li className="flex gap-2"><MapPin size={16} className="mt-0.5 shrink-0" /> {shop.address}</li>}
             {shop.hours && <li className="flex gap-2"><Clock size={16} className="mt-0.5 shrink-0" /> {shop.hours}</li>}
