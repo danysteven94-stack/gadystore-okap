@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { redis } from "@/lib/upstash";
 import { getSessionFromReq, userOwnsBusiness } from "@/lib/shop";
 import type { Order } from "@/app/api/orders/route";
+import { recordOrderSaleIfReady } from "@/lib/order-sale";
 
 const FULFILLMENT = ["new", "confirmed", "preparing", "shipped", "delivered"] as const;
 
@@ -31,11 +32,16 @@ export async function PATCH(
     }
     const note = typeof body.note === "string" ? body.note.trim().slice(0, 200) : "";
     await redis.hset(`order:${id}`, { fulfillment: body.fulfillment, fulfillmentNote: note });
+    // Livre + peye = vant (revni)
+    if (body.fulfillment === "delivered") await recordOrderSaleIfReady(id, session.userId, session.email);
     return NextResponse.json({ order: { ...order, fulfillment: body.fulfillment, fulfillmentNote: note } });
   }
 
   if (body.action !== "cancel") return NextResponse.json({ error: "Aksyon envalid." }, { status: 400 });
   if (order.status === "cancelled") return NextResponse.json({ order });
+  if (order.saleId) {
+    return NextResponse.json({ error: "Kòmand sa a deja nan vant yo. Fè yon retou olye." }, { status: 409 });
+  }
 
   if (order.source === "shop" && Array.isArray(order.items)) {
     for (const it of order.items) {
