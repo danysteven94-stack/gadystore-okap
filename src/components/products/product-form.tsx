@@ -23,6 +23,8 @@ export interface ProductFormValues {
   brand?: string;
   images?: string[];
   featured?: boolean;
+  productType?: "physical" | "digital";
+  leadDays?: number;
   sizes?: string;
   colors?: string;
 }
@@ -50,6 +52,8 @@ const EMPTY: ProductFormValues = {
   brand: "",
   images: [],
   featured: false,
+  productType: "physical",
+  leadDays: 0,
   sizes: "",
   colors: "",
 };
@@ -98,6 +102,8 @@ export function ProductForm({ initial, onSave, onDelete, onClose }: Props) {
       comparePrice: Number(base.comparePrice) || 0,
       brand: base.brand ? String(base.brand) : "",
       featured: isOn(base.featured),
+      productType: base.productType === "digital" ? "digital" : "physical",
+      leadDays: Number(base.leadDays) || 0,
       sizes: base.sizes != null ? String(base.sizes) : "",
       colors: base.colors != null ? String(base.colors) : "",
     };
@@ -157,6 +163,9 @@ export function ProductForm({ initial, onSave, onDelete, onClose }: Props) {
       comparePrice: Number(values.comparePrice) || 0,
       brand: values.brand?.trim() || undefined,
       featured: isOn(values.featured),
+      productType: values.productType === "digital" ? "digital" : "physical",
+      leadDays: Math.max(0, Math.min(365, Math.floor(Number(values.leadDays) || 0))),
+      ...(values.productType === "digital" ? { stock: 0, minStock: 0 } : {}),
       sizes: (values.sizes ?? "").trim(),
       colors: (values.colors ?? "").trim(),
       imageUrl: values.imageUrl || undefined,
@@ -286,6 +295,22 @@ export function ProductForm({ initial, onSave, onDelete, onClose }: Props) {
             </Field>
           </div>
 
+          <Field label="Tip pwodwi">
+            <select
+              className={inputClass}
+              value={values.productType === "digital" ? "digital" : "physical"}
+              onChange={(e) => update("productType", e.target.value as "physical" | "digital")}
+            >
+              <option value="physical">Pwodwi fizik (gen stok)</option>
+              <option value="digital">Pwodwi online (pa gen stok)</option>
+            </select>
+          </Field>
+
+          {values.productType === "digital" ? (
+            <p className="text-xs text-ink/50 dark:text-white/50">
+              Pwodwi online: kantite a pa limite epi kòb li pa konte nan valè stock la.
+            </p>
+          ) : (
           <div className="grid grid-cols-2 gap-3">
             <Field label={t("product_form_stock")}>
               <input
@@ -306,6 +331,19 @@ export function ProductForm({ initial, onSave, onDelete, onClose }: Props) {
               />
             </Field>
           </div>
+          )}
+
+          <Field label="Kantite jou pou pwodwi a rive apre kòmand (opsyonèl)">
+            <input
+              type="number"
+              min={0}
+              max={365}
+              className={inputClass}
+              value={values.leadDays || ""}
+              onChange={(e) => update("leadDays", Number(e.target.value))}
+              placeholder="Ekz: 7"
+            />
+          </Field>
 
           <div className="grid grid-cols-2 gap-3">
             <Field label="Ansyen pri (bare, opsyonèl)">

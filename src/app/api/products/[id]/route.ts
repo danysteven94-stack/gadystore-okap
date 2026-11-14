@@ -21,6 +21,8 @@ const updateSchema = z.object({
   sizes: z.string().max(200).optional(),
   colors: z.string().max(200).optional(),
   featured: z.boolean().optional(),
+  productType: z.enum(["physical", "digital"]).optional(),
+  leadDays: z.number().int().min(0).max(365).optional(),
   unit: z.string().max(20).optional(),
   description: z.string().max(500).optional(),
   barcode: z.string().optional(),
@@ -68,7 +70,8 @@ export async function PATCH(
   await redis.hset(`product:${id}`, parsed.data as Record<string, unknown>);
 
   const updated = { ...existing, ...parsed.data };
-  if (updated.stock <= updated.minStock) {
+  const digital = (updated as Product).productType === "digital";
+  if (!digital && updated.stock <= updated.minStock) {
     await notifyLowStock(existing.businessId, updated.name);
   }
 

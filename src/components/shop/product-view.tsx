@@ -156,6 +156,7 @@ export function ProductView({ productId }: { productId: string }) {
           <div className="mt-4"><Price p={p} money={money} big /></div>
           {pct > 0 && p.comparePrice && <p className="text-sm font-semibold mt-1" style={{ color: C.red }}>{t("Ou ekonomize")} {money(p.comparePrice - p.price)} ({pct}%)</p>}
           <div className="mt-2"><StockLine p={p} /></div>
+          {p.leadDays > 0 && <p className="mt-1 text-sm font-medium flex items-center gap-1.5"><Truck size={15} /> {t("Delè pou resevwa pwodwi sa a: {n} jou apre kòmand", { n: p.leadDays })}</p>}
 
           {!out && p.colors.length > 0 && <OptionPicker label={t("Koulè")} value={color} options={p.colors} onPick={setColor} />}
           {!out && p.sizes.length > 0 && <OptionPicker label={t("Gwosè")} value={size} options={p.sizes} onPick={setSize} />}

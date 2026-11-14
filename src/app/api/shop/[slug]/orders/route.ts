@@ -4,6 +4,7 @@ import { randomUUID, randomBytes } from "crypto";
 import { redis, hsetClean } from "@/lib/upstash";
 import { getBusinessBySlug, rateLimit, cleanPhone, priceCart, normCode } from "@/lib/shop";
 import { pushNotification, notifyLowStock } from "@/lib/notifications";
+import { sendOrderMessages } from "@/lib/order-messages";
 import { getShopCustomer } from "@/lib/shop-customer";
 import type { Order } from "@/app/api/orders/route";
 import type { Product } from "@/types";
@@ -11,6 +12,7 @@ import type { Product } from "@/types";
 const schema = z.object({
   customerName: z.string().trim().min(2).max(80),
   phone: z.string().min(7).max(20),
+  email: z.union([z.string().trim().email().max(120), z.literal("")]).optional(),
   address: z.string().trim().max(200).optional(),
   note: z.string().trim().max(300).optional(),
   paymentMethod: z.enum(["cash_delivery", "moncash", "natcash", "transfer"]),
@@ -72,6 +74,7 @@ export async function POST(
   // Rezève stok la atomikman (hincrby): si yon liy pa sifi, anile sa nou te deja rezève
   const reserved: { productId: string; qty: number }[] = [];
   for (const l of lines) {
+    if (l.digital) continue; // pwodwi online: pa gen stok pou rezève
     const left = await redis.hincrby(`product:${l.productId}`, "stock", -l.qty);
     if (left < 0) {
       await redis.hincrby(`product:${l.productId}`, "stock", l.qty);
@@ -113,6 +116,7 @@ export async function POST(
     source: "shop",
     code,
     customerPhone: phone,
+    customerEmail: (parsed.data.email || acct?.email || "").toLowerCase() || undefined,
     customerAddress: deliveryMethod === "delivery" ? address : undefined,
     note,
     paymentMethod,
@@ -144,6 +148,9 @@ export async function POST(
       deliveryMethod === "pickup" ? "ranmase" : "livrezon"
     }.`
   );
+
+  // Mesaj otomatik pou kliyan an (imèl + WhatsApp) — maks 6 s, erè pa kraze kòmand lan
+  await Promise.race([sendOrderMessages("placed", id), new Promise((r) => setTimeout(r, 6000))]);
 
   return NextResponse.json(
     {

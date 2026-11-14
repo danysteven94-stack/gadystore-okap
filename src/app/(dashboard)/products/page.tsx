@@ -61,8 +61,9 @@ export default function ProductsPage() {
     [products, query, categoryFilter]
   );
 
-  const lowCount = products.filter((p) => p.stock <= p.minStock).length;
-  const stockValue = products.reduce((sum, p) => sum + p.stock * p.buyPrice, 0);
+  const physical = products.filter((p) => p.productType !== "digital");
+  const lowCount = physical.filter((p) => p.stock <= p.minStock).length;
+  const stockValue = physical.reduce((sum, p) => sum + p.stock * p.buyPrice, 0);
 
   async function handleSave(values: ProductFormValues) {
     if (!businessId) return;
@@ -254,7 +255,13 @@ export default function ProductsPage() {
                   <p className="text-xs text-ink/40 dark:text-white/40">achte {fmt(p.buyPrice)}</p>
                 </div>
               </div>
-              <StockBar stock={p.stock} minStock={p.minStock} />
+              {p.productType === "digital" ? (
+                <p className="text-xs text-ink/50 dark:text-white/50">
+                  Pwodwi online · pa gen stok{Number(p.leadDays) > 0 ? ` · ${p.leadDays} jou` : ""}
+                </p>
+              ) : (
+                <StockBar stock={p.stock} minStock={p.minStock} />
+              )}
             </button>
           ))}
         </div>

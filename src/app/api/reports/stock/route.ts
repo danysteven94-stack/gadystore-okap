@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
   const ids = await redis.smembers(`business:${businessId}:products`);
   const products = ids.length
     ? (await Promise.all(ids.map((id) => redis.hgetall<Product>(`product:${id}`)))).filter(
-        (p): p is Product => !!p
+        (p): p is Product => !!p && p.productType !== "digital"
       )
     : [];
 

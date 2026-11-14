@@ -3,6 +3,7 @@ import { redis } from "@/lib/upstash";
 import { getSessionFromReq, userOwnsBusiness } from "@/lib/shop";
 import type { Order } from "@/app/api/orders/route";
 import { recordOrderSaleIfReady } from "@/lib/order-sale";
+import { sendOrderMessages } from "@/lib/order-messages";
 
 const FULFILLMENT = ["new", "confirmed", "preparing", "shipped", "delivered"] as const;
 
@@ -33,7 +34,11 @@ export async function PATCH(
     const note = typeof body.note === "string" ? body.note.trim().slice(0, 200) : "";
     await redis.hset(`order:${id}`, { fulfillment: body.fulfillment, fulfillmentNote: note });
     // Livre + peye = vant (revni)
-    if (body.fulfillment === "delivered") await recordOrderSaleIfReady(id, session.userId, session.email);
+    if (body.fulfillment === "delivered") {
+      await recordOrderSaleIfReady(id, session.userId, session.email);
+      // Mesaj "kòmand livre" (imèl + WhatsApp), yon sèl fwa
+      await Promise.race([sendOrderMessages("delivered", id), new Promise((r) => setTimeout(r, 6000))]);
+    }
     return NextResponse.json({ order: { ...order, fulfillment: body.fulfillment, fulfillmentNote: note } });
   }
 
@@ -45,6 +50,7 @@ export async function PATCH(
 
   if (order.source === "shop" && Array.isArray(order.items)) {
     for (const it of order.items) {
+      if (it.digital) continue;
       const exists = await redis.exists(`product:${it.productId}`);
       if (exists) {
         await redis.hincrby(`product:${it.productId}`, "stock", it.qty);

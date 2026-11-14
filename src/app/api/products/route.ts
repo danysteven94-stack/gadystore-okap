@@ -22,6 +22,8 @@ const productSchema = z.object({
   sizes: z.string().max(200).optional(),
   colors: z.string().max(200).optional(),
   featured: z.boolean().optional(),
+  productType: z.enum(["physical", "digital"]).optional(),
+  leadDays: z.number().int().min(0).max(365).optional(),
   unit: z.string().max(20).optional(),
   description: z.string().max(500).optional(),
   barcode: z.string().optional(),

@@ -79,6 +79,14 @@ export function Price({
 
 export function StockLine({ p }: { p: PublicProduct }) {
   const t = useT();
+  if (p.digital) {
+    return (
+      <p className="flex items-center gap-1.5 text-xs font-medium" style={{ color: C.ok }}>
+        <span className="w-1.5 h-1.5 rounded-full" style={{ background: C.ok }} />
+        {t("Pwodwi online · disponib")}
+      </p>
+    );
+  }
   const out = p.stock <= 0;
   const low = !out && p.stock <= 5;
   const color = out ? C.red : low ? "#B45309" : C.ok;

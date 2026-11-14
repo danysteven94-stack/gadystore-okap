@@ -23,10 +23,11 @@ export interface Order {
   source?: "shop";
   code?: string;
   customerPhone?: string;
+  customerEmail?: string; // pou mesaj otomatik (kòmand plase / livre)
   customerAddress?: string;
   note?: string;
   paymentMethod?: string;
-  items?: { productId: string; name: string; qty: number; unitPrice: number; unit?: string; variant?: string; imageUrl?: string }[];
+  items?: { productId: string; name: string; qty: number; unitPrice: number; unit?: string; variant?: string; imageUrl?: string; digital?: boolean; leadDays?: number }[];
   paymentRef?: string; // nimewo tranzaksyon MonCash/NatCash kliyan an bay
   deliveryMethod?: "delivery" | "pickup";
   fulfillment?: "new" | "confirmed" | "preparing" | "shipped" | "delivered" | "cancelled";

@@ -60,6 +60,11 @@ export async function getBusinessBySlug(slug: string): Promise<Business | null> 
   return business;
 }
 
+/** Pwodwi online (dijital): pa gen stok fizik, kòb li pa konte nan valè stok la. */
+export function isDigital(p: { productType?: unknown }) {
+  return p.productType === "digital";
+}
+
 export function isTrue(v: unknown) {
   return v === true || v === "true";
 }
@@ -119,6 +124,8 @@ export interface PublicProduct {
   sold: number;
   rating: number; // mwayèn 0-5
   ratingCount: number;
+  digital: boolean; // pwodwi online
+  leadDays: number; // jou pou li rive (0 = pa defini)
 }
 
 export interface PublicShop {
@@ -135,6 +142,8 @@ export interface PublicShop {
   pickupEnabled: boolean;
   deliveryFee: number;
   freeShippingMin: number;
+  deliveryMinDays: number;
+  deliveryMaxDays: number;
   address: string | null;
   hours: string | null;
   policies: string | null;
@@ -167,7 +176,7 @@ export function toPublicProduct(p: Product): PublicProduct {
     brand: p.brand ? String(p.brand) : "",
     price,
     comparePrice: compare > price ? compare : null,
-    stock: Math.max(0, toNum(p.stock)),
+    stock: isDigital(p) ? 9999 : Math.max(0, toNum(p.stock)), // online = san limit
     unit: p.unit ? String(p.unit) : "",
     imageUrl: images[0] ?? null,
     images,
@@ -179,6 +188,8 @@ export function toPublicProduct(p: Product): PublicProduct {
     sold: Math.max(0, toNum(p.sold)),
     rating: ratingCount > 0 ? Math.round((ratingSum / ratingCount) * 10) / 10 : 0,
     ratingCount,
+    digital: isDigital(p),
+    leadDays: Math.max(0, Math.floor(toNum(p.leadDays))),
   };
 }
 
@@ -222,6 +233,8 @@ export async function getPublicShop(slug: string): Promise<PublicShop | null> {
     pickupEnabled: flag(business.shopPickupEnabled, true),
     deliveryFee: Math.max(0, toNum(business.shopDeliveryFee)),
     freeShippingMin: Math.max(0, toNum(business.shopFreeShippingMin)),
+    deliveryMinDays: Math.max(0, Math.floor(toNum(business.shopDeliveryMinDays))),
+    deliveryMaxDays: Math.max(0, Math.floor(toNum(business.shopDeliveryMaxDays))),
     address: str(business.shopAddress),
     hours: str(business.shopHours),
     policies: str(business.shopPolicies),
@@ -310,6 +323,8 @@ export interface PricedLine {
   size?: string;
   color?: string;
   variant?: string; // "M / Wouj"
+  digital?: boolean;
+  leadDays?: number;
 }
 
 export type PriceResult =
@@ -377,6 +392,8 @@ export async function priceCart(
       size: w.size || undefined,
       color: w.color || undefined,
       variant: [w.size, w.color].filter(Boolean).join(" / ") || undefined,
+      digital: isDigital(p) || undefined,
+      leadDays: Math.max(0, Math.floor(toNum(p.leadDays))) || undefined,
     });
   }
 

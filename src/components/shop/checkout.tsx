@@ -30,13 +30,14 @@ interface Quote {
 
 export function Checkout() {
   const t = useT();
-  const { shop, base, money, cartLines, subtotal, setLine, clearCart, rememberOrder, customer, rememberCustomer } = useShop();
+  const { shop, base, money, cartLines, subtotal, setLine, clearCart, rememberOrder, customer, rememberCustomer, account } = useShop();
   const router = useRouter();
 
   const firstMethod: Method = shop.deliveryEnabled ? "delivery" : "pickup";
   const [method, setMethod] = useState<Method>(firstMethod);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [address, setAddress] = useState("");
   const [note, setNote] = useState("");
   const [pay, setPay] = useState<PayMethod>("cash_delivery");
@@ -56,6 +57,7 @@ export function Checkout() {
       setName(customer.name);
       setPhone(customer.phone);
       setAddress(customer.address);
+      if (account?.email) setEmail(account.email);
     }
   }, [customer]);
 
@@ -92,6 +94,7 @@ export function Checkout() {
   }, [itemsKey, method, appliedCode, shop.slug]);
 
   const eta = shopEta(shop, t);
+  const leadMax = cartLines.reduce((m, l) => Math.max(m, l.p.leadDays || 0), 0);
   const localShipping = method === "pickup" ? 0 : shop.freeShippingMin > 0 && subtotal >= shop.freeShippingMin ? 0 : shop.deliveryFee;
   const view: Quote = quote ?? { subtotal, discount: 0, shipping: localShipping, total: subtotal + localShipping, freeShipping: localShipping === 0, couponCode: null, couponError: null };
 
@@ -107,6 +110,7 @@ export function Checkout() {
         body: JSON.stringify({
           customerName: name,
           phone,
+          email: email || undefined,
           address: method === "delivery" ? address : undefined,
           note: note || undefined,
           paymentMethod: pay,
@@ -164,6 +168,7 @@ export function Checkout() {
             <div className="space-y-3">
               <input className={fieldClass} style={fieldStyle} placeholder={t("Non konplè *")} value={name} onChange={(e) => setName(e.target.value)} required minLength={2} autoComplete="name" />
               <input className={fieldClass} style={fieldStyle} placeholder={t("Telefòn / WhatsApp *")} inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required autoComplete="tel" />
+              <input className={fieldClass} style={fieldStyle} placeholder={t("Imèl (pou resevwa konfimasyon)")} type="email" inputMode="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
               {method === "delivery" && (
                 <input className={fieldClass} style={fieldStyle} placeholder={t("Adrès livrezon * (ri, katye, vil)")} value={address} onChange={(e) => setAddress(e.target.value)} required minLength={5} autoComplete="street-address" />
               )}
@@ -238,6 +243,7 @@ export function Checkout() {
             {view.discount > 0 && <Row label={t("Rabè koupon")} value={`- ${money(view.discount)}`} color={C.ok} />}
             <Row label={method === "pickup" ? t("Ranmase") : t("Livrezon")} value={view.shipping > 0 ? money(view.shipping) : "Gratis"} />
             {method === "delivery" && eta && <Row label={t("Tan livrezon")} value={eta} />}
+            {leadMax > 0 && <Row label={t("Delè pwodwi")} value={t("{n} jou", { n: leadMax })} />}
             <div className="flex justify-between text-lg font-bold pt-3 mt-2 border-t" style={{ borderColor: C.line }}>
               <dt>{t("Total")}</dt>
               <dd className="tabular-nums">{quoting && !quote ? "…" : money(view.total)}</dd>

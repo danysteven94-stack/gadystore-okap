@@ -37,7 +37,8 @@ export function ProductCard({ p, index = 0 }: { p: PublicProduct; index?: number
         <div className="absolute top-2 left-2 flex flex-col gap-1 items-start">
           {out && <Badge bg={C.ink}>{t("FINI")}</Badge>}
           {!out && pct > 0 && <Badge bg={C.red}>-{pct}%</Badge>}
-          {!out && p.stock <= 5 && <Badge bg="#B45309">{t("BALEN")}</Badge>}
+          {!out && p.digital && <Badge bg={C.ink}>{t("ONLINE")}</Badge>}
+          {!out && !p.digital && p.stock <= 5 && <Badge bg="#B45309">{t("BALEN")}</Badge>}
           {!out && isNew(p) && <Badge bg={C.ink}>{t("NOUVO")}</Badge>}
         </div>
       </Link>
