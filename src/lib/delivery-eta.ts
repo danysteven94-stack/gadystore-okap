@@ -13,3 +13,9 @@ export function deliveryEta(min: number, max: number, t: T = plain): string | nu
   if (lo === hi) return t("{n} jou", { n: hi });
   return t("{lo} a {hi} jou", { lo, hi });
 }
+
+/** Pareil, men pran min/max dirèkteman nan boutik la (tolerans si chan yo pa la). */
+export function shopEta(shop: object, t?: T): string | null {
+  const s = shop as { deliveryMinDays?: number; deliveryMaxDays?: number };
+  return deliveryEta(s.deliveryMinDays ?? 0, s.deliveryMaxDays ?? 0, t);
+}

@@ -10,7 +10,7 @@ import {
 import { useShop, useT } from "./shop-context";
 import { C, Sheet, SheetHeader, clamp2, fieldClass, fieldStyle } from "./ui";
 import { InstallBanner } from "./install-app";
-import { deliveryEta } from "@/lib/delivery-eta";
+import { shopEta } from "@/lib/delivery-eta";
 import { SHOP_LANGS, type ShopLang } from "@/lib/shop-i18n";
 
 export function ShopShell({ children }: { children: React.ReactNode }) {
@@ -169,7 +169,7 @@ export function ShopShell({ children }: { children: React.ReactNode }) {
             )}
             {shop.hours && <p>🕘 {shop.hours}</p>}
             {shop.deliveryEnabled && (
-              <p className="flex gap-2"><Truck size={16} className="shrink-0 mt-0.5" /> {shop.deliveryFee > 0 ? t("Livrezon: {fee}", { fee: money(shop.deliveryFee) }) : t("Livrezon gratis")}{deliveryEta(shop.deliveryMinDays, shop.deliveryMaxDays, t) ? ` · ${deliveryEta(shop.deliveryMinDays, shop.deliveryMaxDays, t)}` : ""}</p>
+              <p className="flex gap-2"><Truck size={16} className="shrink-0 mt-0.5" /> {shop.deliveryFee > 0 ? t("Livrezon: {fee}", { fee: money(shop.deliveryFee) }) : t("Livrezon gratis")}{shopEta(shop, t) ? ` · ${shopEta(shop, t)}` : ""}</p>
             )}
           </div>
         </div>

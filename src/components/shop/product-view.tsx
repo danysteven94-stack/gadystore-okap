@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Bell, Check, ChevronLeft, ChevronRight, Heart, Loader2, MessageCircle, Minus, Package, Plus, Share2, ShieldCheck, ShoppingBag, Star, Truck, X } from "lucide-react";
 import { useShop, useT } from "./shop-context";
-import { deliveryEta } from "@/lib/delivery-eta";
+import { shopEta } from "@/lib/delivery-eta";
 import { ProductRow } from "./product-card";
 import { C, Price, StockLine, Stars, discountPct, fieldClass, fieldStyle } from "./ui";
 
@@ -196,7 +196,7 @@ export function ProductView({ productId }: { productId: string }) {
               <Info icon={<Truck size={18} />} title={t("Livrezon")}>
                 {shop.deliveryFee > 0 ? `${money(shop.deliveryFee)}` : t("Gratis")}
                 {shop.freeShippingMin > 0 && shop.deliveryFee > 0 ? t(" · gratis pou {amount}+", { amount: money(shop.freeShippingMin) }) : ""}
-                {deliveryEta(shop.deliveryMinDays, shop.deliveryMaxDays, t) ? ` · ${deliveryEta(shop.deliveryMinDays, shop.deliveryMaxDays, t)}` : ""}
+                {shopEta(shop, t) ? ` · ${shopEta(shop, t)}` : ""}
               </Info>
             )}
             {shop.pickupEnabled && <Info icon={<Package size={18} />} title={t("Ranmase nan boutik")}>{t("Gratis")}{shop.address ? ` · ${shop.address}` : ""}</Info>}

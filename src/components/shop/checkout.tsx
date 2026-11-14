@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Loader2, Minus, Package, Plus, ShoppingBag, Tag, Trash2, Truck } from "lucide-react";
 import { useShop, useT } from "./shop-context";
 import { C, fieldClass, fieldStyle } from "./ui";
-import { deliveryEta } from "@/lib/delivery-eta";
+import { shopEta } from "@/lib/delivery-eta";
 
 type PayMethod = "cash_delivery" | "moncash" | "natcash" | "transfer";
 type Method = "delivery" | "pickup";
@@ -91,7 +91,7 @@ export function Checkout() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [itemsKey, method, appliedCode, shop.slug]);
 
-  const eta = deliveryEta(shop.deliveryMinDays, shop.deliveryMaxDays, t);
+  const eta = shopEta(shop, t);
   const localShipping = method === "pickup" ? 0 : shop.freeShippingMin > 0 && subtotal >= shop.freeShippingMin ? 0 : shop.deliveryFee;
   const view: Quote = quote ?? { subtotal, discount: 0, shipping: localShipping, total: subtotal + localShipping, freeShipping: localShipping === 0, couponCode: null, couponError: null };
 

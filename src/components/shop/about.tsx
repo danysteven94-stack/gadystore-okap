@@ -3,7 +3,7 @@
 import { Clock, MapPin, MessageCircle, RotateCcw, ShieldCheck, Truck } from "lucide-react";
 import { useShop, useT } from "./shop-context";
 import { C } from "./ui";
-import { deliveryEta } from "@/lib/delivery-eta";
+import { shopEta } from "@/lib/delivery-eta";
 
 export function About() {
   const t = useT();
@@ -25,8 +25,8 @@ export function About() {
             ) : (
               <li>{t("Pa gen livrezon pou kounye a.")}</li>
             )}
-            {shop.deliveryEnabled && deliveryEta(shop.deliveryMinDays, shop.deliveryMaxDays, t) && (
-              <li>{t("Tan livrezon:")} <b>{deliveryEta(shop.deliveryMinDays, shop.deliveryMaxDays, t)}</b> {t("apre ou fin kòmande")}</li>
+            {shop.deliveryEnabled && shopEta(shop, t) && (
+              <li>{t("Tan livrezon:")} <b>{shopEta(shop, t)}</b> {t("apre ou fin kòmande")}</li>
             )}
             {shop.pickupEnabled && <li>{t("Ranmase nan boutik la:")} <b>{t("gratis")}</b></li>}
           </ul>
