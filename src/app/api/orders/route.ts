@@ -26,10 +26,14 @@ export interface Order {
   note?: string;
   paymentMethod?: string;
   items?: { productId: string; name: string; qty: number; unitPrice: number; unit?: string; variant?: string }[];
-  subtotal?: number;
-  deliveryFee?: number;
+  paymentRef?: string; // nimewo tranzaksyon MonCash/NatCash kliyan an bay
   deliveryMethod?: "delivery" | "pickup";
-  fulfillment?: "new" | "preparing" | "shipped" | "delivered"; // eta livrezon (kòmand boutik)
+  fulfillment?: "new" | "confirmed" | "preparing" | "shipped" | "delivered" | "cancelled";
+  fulfillmentNote?: string; // mesaj pou kliyan an wè nan swivi kòmand lan
+  subtotal?: number;
+  discount?: number;
+  shippingFee?: number;
+  couponCode?: string;
 }
 
 const orderSchema = z.object({

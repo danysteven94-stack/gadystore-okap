@@ -6,8 +6,6 @@ import { verifySession } from "@/lib/auth";
 import { userOwnsBusiness } from "@/lib/shop";
 import type { Product } from "@/types";
 
-const imageUrlSchema = z.string().refine((v) => v.startsWith("/api/img/") || /^https?:\/\//.test(v), "URL foto pa valid");
-
 const productSchema = z.object({
   businessId: z.string(),
   name: z.string().min(1),
@@ -16,16 +14,17 @@ const productSchema = z.object({
   sellPrice: z.number().nonnegative(),
   stock: z.number().nonnegative(),
   minStock: z.number().nonnegative(),
-  imageUrl: imageUrlSchema.optional(),
+  imageUrl: z.string().refine((v) => v.startsWith("/api/img/") || /^https?:\/\//.test(v), "URL foto pa valid").optional(),
   published: z.boolean().optional(),
+  images: z.array(z.string().refine((v) => v.startsWith("/api/img/") || /^https?:\/\//.test(v), "URL foto pa valid")).max(6).optional(),
+  comparePrice: z.number().nonnegative().optional(),
+  brand: z.string().max(60).optional(),
+  sizes: z.string().max(200).optional(),
+  colors: z.string().max(200).optional(),
+  featured: z.boolean().optional(),
   unit: z.string().max(20).optional(),
   description: z.string().max(500).optional(),
   barcode: z.string().optional(),
-  oldPrice: z.number().nonnegative().optional(),
-  brand: z.string().max(60).optional(),
-  gallery: z.array(imageUrlSchema).max(7).optional(),
-  sizes: z.string().max(200).optional(),
-  colors: z.string().max(200).optional(),
 });
 
 async function requireSession(req: NextRequest) {
@@ -70,7 +69,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Aksè refize." }, { status: 403 });
   }
 
-  const product: Product = { id: randomUUID(), createdAt: new Date().toISOString(), ...parsed.data };
+  const product: Product = { id: randomUUID(), ...parsed.data, createdAt: new Date().toISOString() };
 
   await hsetClean(`product:${product.id}`, product as unknown as Record<string, unknown>);
   await redis.sadd(`business:${product.businessId}:products`, product.id);

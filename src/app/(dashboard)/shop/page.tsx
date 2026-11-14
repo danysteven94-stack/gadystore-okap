@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { Store, Loader2, Copy, ExternalLink, MessageCircle, Check, ImagePlus } from "lucide-react";
 import { uploadProductImage } from "@/lib/compress-image";
 import { BusinessSwitcher } from "@/components/dashboard/business-switcher";
+import { CouponsManager } from "@/components/shop/coupons-manager";
 import { useLanguage } from "@/lib/i18n/language-provider";
 import type { Product } from "@/types";
 
@@ -20,12 +21,16 @@ interface ShopSettings {
   shopTagline: string;
   shopPaymentInfo: string;
   shopAnnouncement: string;
-  shopAbout: string;
-  shopReturns: string;
-  shopAddress: string;
+  shopDeliveryEnabled: boolean;
+  shopPickupEnabled: boolean;
   shopDeliveryFee: number;
-  shopFreeDeliveryMin: number;
-  shopPickup: boolean;
+  shopFreeShippingMin: number;
+  shopAddress: string;
+  shopHours: string;
+  shopPolicies: string;
+  shopFacebook: string;
+  shopInstagram: string;
+  currency: string;
   productCount: number;
   publishedCount: number;
 }
@@ -39,7 +44,11 @@ export default function ShopPage() {
   const { t } = useLanguage();
   const [shops, setShops] = useState<ShopSettings[] | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [form, setForm] = useState({ slug: "", whatsapp: "", shopName: "", shopLogo: "", shopCover: "", shopTagline: "", shopPaymentInfo: "", shopAnnouncement: "", shopAbout: "", shopReturns: "", shopAddress: "", shopDeliveryFee: 0, shopFreeDeliveryMin: 0, shopPickup: false });
+  const [form, setForm] = useState({
+    slug: "", whatsapp: "", shopName: "", shopLogo: "", shopCover: "", shopTagline: "", shopPaymentInfo: "",
+    shopAnnouncement: "", shopDeliveryEnabled: true, shopPickupEnabled: true, shopDeliveryFee: "", shopFreeShippingMin: "",
+    shopAddress: "", shopHours: "", shopPolicies: "", shopFacebook: "", shopInstagram: "",
+  });
   const [products, setProducts] = useState<Product[]>([]);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
@@ -72,12 +81,15 @@ export default function ShopPage() {
       shopTagline: active.shopTagline,
       shopPaymentInfo: active.shopPaymentInfo,
       shopAnnouncement: active.shopAnnouncement ?? "",
-      shopAbout: active.shopAbout ?? "",
-      shopReturns: active.shopReturns ?? "",
+      shopDeliveryEnabled: active.shopDeliveryEnabled !== false,
+      shopPickupEnabled: active.shopPickupEnabled !== false,
+      shopDeliveryFee: active.shopDeliveryFee ? String(active.shopDeliveryFee) : "",
+      shopFreeShippingMin: active.shopFreeShippingMin ? String(active.shopFreeShippingMin) : "",
       shopAddress: active.shopAddress ?? "",
-      shopDeliveryFee: Number(active.shopDeliveryFee) || 0,
-      shopFreeDeliveryMin: Number(active.shopFreeDeliveryMin) || 0,
-      shopPickup: !!active.shopPickup,
+      shopHours: active.shopHours ?? "",
+      shopPolicies: active.shopPolicies ?? "",
+      shopFacebook: active.shopFacebook ?? "",
+      shopInstagram: active.shopInstagram ?? "",
     });
     setMessage(null);
   }, [active?.id]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -128,12 +140,15 @@ export default function ShopPage() {
         shopTagline: form.shopTagline,
         shopPaymentInfo: form.shopPaymentInfo,
         shopAnnouncement: form.shopAnnouncement,
-        shopAbout: form.shopAbout,
-        shopReturns: form.shopReturns,
-        shopAddress: form.shopAddress,
+        shopDeliveryEnabled: form.shopDeliveryEnabled,
+        shopPickupEnabled: form.shopPickupEnabled,
         shopDeliveryFee: Number(form.shopDeliveryFee) || 0,
-        shopFreeDeliveryMin: Number(form.shopFreeDeliveryMin) || 0,
-        shopPickup: form.shopPickup,
+        shopFreeShippingMin: Number(form.shopFreeShippingMin) || 0,
+        shopAddress: form.shopAddress,
+        shopHours: form.shopHours,
+        shopPolicies: form.shopPolicies,
+        shopFacebook: form.shopFacebook,
+        shopInstagram: form.shopInstagram,
       });
       if (r?.ok) {
         setMessage({ ok: true, text: t("shop_saved") });
@@ -361,44 +376,65 @@ export default function ShopPage() {
               <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">{t("shop_payment_label")}</span>
               <textarea className={inputClass} rows={3} maxLength={300} value={form.shopPaymentInfo} onChange={(e) => setForm({ ...form, shopPaymentInfo: e.target.value })} placeholder="MonCash: 3700-0000 (Non Biznis)" />
             </label>
-            <div className="border-t border-ink/10 dark:border-dark-border pt-4 space-y-4">
-              <p className="text-sm font-semibold">Livrezon ak enfòmasyon pou kliyan</p>
-              <label className="block">
-                <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">Mesaj anlè sit la</span>
-                <input className={inputClass} maxLength={100} value={form.shopAnnouncement} onChange={(e) => setForm({ ...form, shopAnnouncement: e.target.value })} placeholder="Livrezon gratis pou kòmand 5,000 G ak plis" />
-              </label>
-              <div className="grid grid-cols-2 gap-3">
+            <div className="pt-2 border-t border-ink/10 dark:border-dark-border">
+              <h3 className="font-display font-semibold mb-3">Anons, livrezon ak kontak</h3>
+              <div className="space-y-4">
                 <label className="block">
-                  <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">Frè livrezon</span>
-                  <input type="number" min={0} className={inputClass} value={form.shopDeliveryFee || ""} onChange={(e) => setForm({ ...form, shopDeliveryFee: Number(e.target.value) })} placeholder="0" />
+                  <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">Bann anons (anlè sit la)</span>
+                  <input className={inputClass} maxLength={140} value={form.shopAnnouncement} onChange={(e) => setForm({ ...form, shopAnnouncement: e.target.value })} placeholder="Ekz: Rabè 20% pou tout chosi nan wikenn sa a!" />
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <label className="flex items-center gap-2 text-sm rounded-md border border-ink/15 dark:border-dark-border px-3 py-2.5 cursor-pointer">
+                    <input type="checkbox" className="w-4 h-4 accent-red-600" checked={form.shopDeliveryEnabled} onChange={(e) => setForm({ ...form, shopDeliveryEnabled: e.target.checked })} /> Livrezon
+                  </label>
+                  <label className="flex items-center gap-2 text-sm rounded-md border border-ink/15 dark:border-dark-border px-3 py-2.5 cursor-pointer">
+                    <input type="checkbox" className="w-4 h-4 accent-red-600" checked={form.shopPickupEnabled} onChange={(e) => setForm({ ...form, shopPickupEnabled: e.target.checked })} /> Ranmase nan boutik
+                  </label>
+                </div>
+                {form.shopDeliveryEnabled && (
+                  <div className="grid grid-cols-2 gap-3">
+                    <label className="block">
+                      <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">Frè livrezon ({active.currency})</span>
+                      <input className={inputClass} type="number" min={0} value={form.shopDeliveryFee} onChange={(e) => setForm({ ...form, shopDeliveryFee: e.target.value })} placeholder="0 = gratis" />
+                    </label>
+                    <label className="block">
+                      <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">Livrezon gratis si total ≥</span>
+                      <input className={inputClass} type="number" min={0} value={form.shopFreeShippingMin} onChange={(e) => setForm({ ...form, shopFreeShippingMin: e.target.value })} placeholder="0 = pa gen" />
+                    </label>
+                  </div>
+                )}
+                <label className="block">
+                  <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">Adrès boutik la (pou ranmase)</span>
+                  <input className={inputClass} maxLength={200} value={form.shopAddress} onChange={(e) => setForm({ ...form, shopAddress: e.target.value })} placeholder="Ekz: 12 Rue Capois, Pétion-Ville" />
                 </label>
                 <label className="block">
-                  <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">Livrezon gratis depi</span>
-                  <input type="number" min={0} className={inputClass} value={form.shopFreeDeliveryMin || ""} onChange={(e) => setForm({ ...form, shopFreeDeliveryMin: Number(e.target.value) })} placeholder="Pa gen" />
+                  <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">Orè</span>
+                  <input className={inputClass} maxLength={120} value={form.shopHours} onChange={(e) => setForm({ ...form, shopHours: e.target.value })} placeholder="Ekz: Lendi–Samdi 8h–18h" />
                 </label>
+                <label className="block">
+                  <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">Politik retou / garanti</span>
+                  <textarea className={inputClass} rows={3} maxLength={1000} value={form.shopPolicies} onChange={(e) => setForm({ ...form, shopPolicies: e.target.value })} placeholder="Ekz: Retou aksepte nan 3 jou si pwodwi a pa louvri." />
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <label className="block">
+                    <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">Facebook</span>
+                    <input className={inputClass} maxLength={120} value={form.shopFacebook} onChange={(e) => setForm({ ...form, shopFacebook: e.target.value })} placeholder="non-paj oswa lyen" />
+                  </label>
+                  <label className="block">
+                    <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">Instagram</span>
+                    <input className={inputClass} maxLength={120} value={form.shopInstagram} onChange={(e) => setForm({ ...form, shopInstagram: e.target.value })} placeholder="@non" />
+                  </label>
+                </div>
               </div>
-              <label className="flex items-center gap-2 text-sm">
-                <input type="checkbox" checked={form.shopPickup} onChange={(e) => setForm({ ...form, shopPickup: e.target.checked })} className="w-4 h-4" />
-                Kliyan yo ka vin ranmase kòmand lan nan boutik la
-              </label>
-              <label className="block">
-                <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">Adrès boutik la (parèt sou sit la)</span>
-                <input className={inputClass} maxLength={150} value={form.shopAddress} onChange={(e) => setForm({ ...form, shopAddress: e.target.value })} />
-              </label>
-              <label className="block">
-                <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">Sou nou</span>
-                <textarea className={inputClass} rows={2} maxLength={400} value={form.shopAbout} onChange={(e) => setForm({ ...form, shopAbout: e.target.value })} />
-              </label>
-              <label className="block">
-                <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">Règ retou / garanti</span>
-                <textarea className={inputClass} rows={2} maxLength={300} value={form.shopReturns} onChange={(e) => setForm({ ...form, shopReturns: e.target.value })} />
-              </label>
             </div>
             <button type="submit" disabled={saving} className="w-full bg-brick hover:bg-brick-dark text-white rounded-md py-2.5 text-sm font-medium disabled:opacity-50">
               {saving ? "..." : t("shop_save")}
             </button>
             {message && <p className={`text-sm text-center ${message.ok ? "text-forest" : "text-brick"}`}>{message.text}</p>}
           </form>
+
+          {/* Koupon */}
+          <CouponsManager businessId={active.id} currency={active.currency} />
 
           {/* Pwodwi */}
           <div>

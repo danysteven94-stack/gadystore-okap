@@ -302,7 +302,7 @@ function SearchBox() {
 /* ------------------------------ Panye ------------------------------ */
 
 function CartDrawer() {
-  const { shop, base, money, cartLines, subtotal, itemCount, setQty, setCartOpen } = useShop();
+  const { shop, base, money, cartLines, subtotal, itemCount, setLine, setCartOpen } = useShop();
   const close = () => setCartOpen(false);
   const min = shop.freeShippingMin;
   const showFree = shop.deliveryEnabled && min > 0 && itemCount > 0;
@@ -336,8 +336,8 @@ function CartDrawer() {
       ) : (
         <>
           <div className="flex-1 overflow-y-auto divide-y" style={{ borderColor: C.line }}>
-            {cartLines.map(({ p, qty }) => (
-              <div key={p.id} className="flex items-center gap-3 px-5 py-4" style={{ borderColor: C.line }}>
+            {cartLines.map(({ key, p, qty, size, color }) => (
+              <div key={key} className="flex items-center gap-3 px-5 py-4" style={{ borderColor: C.line }}>
                 <Link href={`${base}/p/${p.id}`} onClick={close} className="shrink-0">
                   {p.imageUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -348,14 +348,15 @@ function CartDrawer() {
                 </Link>
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-sm leading-snug" style={clamp2}>{p.name}</p>
+                  {(size || color) && <p className="text-xs" style={{ color: C.muted }}>{[size, color].filter(Boolean).join(" / ")}</p>}
                   <p className="text-sm font-bold tabular-nums mt-0.5">{money(p.price * qty)}</p>
                   <div className="flex items-center gap-1 mt-1.5">
-                    <button aria-label="Mwens" onClick={() => setQty(p, qty - 1)} className="w-8 h-8 rounded-lg border flex items-center justify-center" style={{ borderColor: C.line }}><Minus size={14} /></button>
+                    <button aria-label="Mwens" onClick={() => setLine(key, qty - 1)} className="w-8 h-8 rounded-lg border flex items-center justify-center" style={{ borderColor: C.line }}><Minus size={14} /></button>
                     <span className="w-9 text-center font-bold tabular-nums">{qty}</span>
-                    <button aria-label="Plis" onClick={() => setQty(p, qty + 1)} disabled={qty >= p.stock} className="w-8 h-8 rounded-lg border flex items-center justify-center disabled:opacity-30" style={{ borderColor: C.line }}><Plus size={14} /></button>
+                    <button aria-label="Plis" onClick={() => setLine(key, qty + 1)} disabled={qty >= p.stock} className="w-8 h-8 rounded-lg border flex items-center justify-center disabled:opacity-30" style={{ borderColor: C.line }}><Plus size={14} /></button>
                   </div>
                 </div>
-                <button aria-label="Retire" onClick={() => setQty(p, 0)} className="p-2" style={{ color: C.muted }}><Trash2 size={18} /></button>
+                <button aria-label="Retire" onClick={() => setLine(key, 0)} className="p-2" style={{ color: C.muted }}><Trash2 size={18} /></button>
               </div>
             ))}
           </div>

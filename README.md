@@ -177,19 +177,10 @@ Voir les commentaires dans `src/lib/upstash.ts` pour la convention de clés
 - [x] **Navigation en bas** (`BottomNav`) reliant Tableau de bord / Kès / Pwodwi
       / Kontak — masquée sur `/login` et `/verify`
 
-- [x] **Boutik piblik (`/boutik/[slug]`) — sit ecommerce konplè** (pa bezwen kont pou kliyan an):
-      - Akèy: bann anons, header ak rechèch (sijesyon), nav kategori, banyè, kategori, kawousèl
-        Rabè / Nouvo / Pi byen nòte
-      - Katalòg: filt (kategori, mak, pri, disponib, rabè), tri, "Wè plis", URL pataje
-        (`?q=&cat=&sort=`)
-      - Paj pwodwi `/p/[id]` (SEO + JSON-LD): galri ak zoom, gwosè/koulè, rabè (-%), stok,
-        avi kliyan (achte verifye), pwodwi menm kalite, dènye pwodwi wè
-      - Panye (drawer + `/panye`), checkout `/peman` (livrezon oswa ranmase, 4 mòd peman,
-        frè livrezon + livrezon gratis), konfirmasyon ak kòd + WhatsApp
-      - Swiv kòmand `/swiv` (kòd + telefòn), lis anvi `/anvi`
-      - Paramèt nan `/shop`: frè livrezon, livrezon gratis depi, ranmase, mesaj anons, sou nou, retou
-      - Nan fòm pwodwi: foto adisyonèl, ansyen pri, mak, gwosè, koulè
-      - Nan `/orders`: chanje eta livrezon (Resevwa / Ap prepare / Nan wout / Livre)
+- [x] **Boutik e-commerce konplè** (gade `SHOP.md`: paj pwodwi, panye, checkout, koupon, swivi kòmand, avi, favori)
+- [x] **Boutik piblik (`/boutik/[slug]`)** — chak antrepriz gen pwòp lyen li. Kliyan an
+      wè katalòg la (foto, pri, stok, "Pa disponib" + "Notifye m"), ajoute nan panye,
+      epi voye kòmand lan (non, telefòn, adrès, mòd peman) — pa bezwen kont.
 - [x] **Paj `/shop` (anndan app la)** — louvri/fèmen boutik la, kopye/pataje lyen an
       sou WhatsApp, chanje non lyen an, nimewo WhatsApp, enstriksyon MonCash/NatCash,
       epi pibliye/kache chak pwodwi ak yon switch

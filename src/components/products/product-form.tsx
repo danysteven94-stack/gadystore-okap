@@ -18,9 +18,11 @@ export interface ProductFormValues {
   published?: boolean;
   unit?: string;
   description?: string;
-  oldPrice?: number;
+  // --- Boutik ---
+  comparePrice?: number;
   brand?: string;
-  gallery?: string[];
+  images?: string[];
+  featured?: boolean;
   sizes?: string;
   colors?: string;
 }
@@ -44,26 +46,29 @@ const EMPTY: ProductFormValues = {
   published: false,
   unit: "",
   description: "",
-  oldPrice: 0,
+  comparePrice: 0,
   brand: "",
-  gallery: [],
+  images: [],
+  featured: false,
   sizes: "",
   colors: "",
 };
 
-// Done ki soti nan Upstash ka vini ak lòt fòm (ex: "42" tounen nimewo) — nòmalize yo
-function normalize(v?: ProductFormValues): ProductFormValues {
-  if (!v) return EMPTY;
-  const gal = Array.isArray(v.gallery) ? v.gallery.map(String) : [];
-  return {
-    ...v,
-    oldPrice: Number(v.oldPrice) || 0,
-    brand: v.brand ? String(v.brand) : "",
-    gallery: gal,
-    sizes: v.sizes != null ? String(v.sizes) : "",
-    colors: v.colors != null ? String(v.colors) : "",
-  };
+const MAX_EXTRA = 5;
+
+function asList(v: unknown): string[] {
+  if (Array.isArray(v)) return v.filter((x): x is string => typeof x === "string");
+  if (typeof v === "string" && v.trim().startsWith("[")) {
+    try {
+      const a = JSON.parse(v);
+      return Array.isArray(a) ? a.filter((x): x is string => typeof x === "string") : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
 }
+const isOn = (v: unknown) => v === true || v === "true";
 
 function Field({
   label,
@@ -85,7 +90,20 @@ const inputClass =
 
 export function ProductForm({ initial, onSave, onDelete, onClose }: Props) {
   const { t } = useLanguage();
-  const [values, setValues] = useState<ProductFormValues>(() => normalize(initial));
+  const [values, setValues] = useState<ProductFormValues>(() => {
+    const base = initial ?? EMPTY;
+    return {
+      ...base,
+      images: asList(base.images),
+      comparePrice: Number(base.comparePrice) || 0,
+      brand: base.brand ? String(base.brand) : "",
+      featured: isOn(base.featured),
+      sizes: base.sizes != null ? String(base.sizes) : "",
+      colors: base.colors != null ? String(base.colors) : "",
+    };
+  });
+  const galleryRef = useRef<HTMLInputElement>(null);
+  const [galleryBusy, setGalleryBusy] = useState(false);
   const isEditing = !!initial?.id;
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -106,8 +124,6 @@ export function ProductForm({ initial, onSave, onDelete, onClose }: Props) {
     setUploading(false);
   }
 
-  const galleryRef = useRef<HTMLInputElement>(null);
-  const [galleryBusy, setGalleryBusy] = useState(false);
   async function handleGallery(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? []);
     e.target.value = "";
@@ -115,10 +131,10 @@ export function ProductForm({ initial, onSave, onDelete, onClose }: Props) {
     setGalleryBusy(true);
     setUploadError(null);
     try {
-      const room = 7 - (values.gallery?.length ?? 0);
+      const room = MAX_EXTRA - (values.images?.length ?? 0);
       const urls: string[] = [];
       for (const f of files.slice(0, Math.max(0, room))) urls.push(await uploadProductImage(f));
-      setValues((v) => ({ ...v, gallery: [...(v.gallery ?? []), ...urls] }));
+      setValues((v) => ({ ...v, images: [...(v.images ?? []), ...urls].slice(0, MAX_EXTRA) }));
     } catch (err) {
       setUploadError(err instanceof Error ? err.message : "Pa ka voye foto a.");
     }
@@ -134,15 +150,16 @@ export function ProductForm({ initial, onSave, onDelete, onClose }: Props) {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!values.name.trim() || !values.category.trim() || uploading || galleryBusy) return;
+    if (!values.name.trim() || !values.category.trim() || uploading) return;
     onSave({
       ...values,
-      imageUrl: values.imageUrl || undefined,
-      oldPrice: Number(values.oldPrice) > Number(values.sellPrice) ? Number(values.oldPrice) : 0,
-      brand: (values.brand ?? "").trim(),
+      images: values.images ?? [],
+      comparePrice: Number(values.comparePrice) || 0,
+      brand: values.brand?.trim() || undefined,
+      featured: isOn(values.featured),
       sizes: (values.sizes ?? "").trim(),
       colors: (values.colors ?? "").trim(),
-      gallery: values.gallery ?? [],
+      imageUrl: values.imageUrl || undefined,
       published: values.published === true || (values.published as unknown) === "true",
     });
   }
@@ -195,6 +212,36 @@ export function ProductForm({ initial, onSave, onDelete, onClose }: Props) {
                 {uploadError && <p className="text-brick">{uploadError}</p>}
               </div>
               <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} className="hidden" />
+            </div>
+          </Field>
+
+          <Field label="Plis foto (galri — jiska 5)">
+            <div className="flex flex-wrap gap-2">
+              {(values.images ?? []).map((u) => (
+                <div key={u} className="relative w-16 h-16 rounded-lg overflow-hidden border border-ink/15 dark:border-dark-border">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={u} alt="" className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    aria-label="Retire foto"
+                    onClick={() => update("images", (values.images ?? []).filter((x) => x !== u))}
+                    className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-black/70 text-white flex items-center justify-center"
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
+              ))}
+              {(values.images?.length ?? 0) < MAX_EXTRA && (
+                <button
+                  type="button"
+                  onClick={() => galleryRef.current?.click()}
+                  disabled={galleryBusy}
+                  className="w-16 h-16 rounded-lg border border-dashed border-ink/25 dark:border-dark-border flex items-center justify-center text-ink/50"
+                >
+                  {galleryBusy ? <Loader2 size={18} className="animate-spin" /> : <ImagePlus size={20} />}
+                </button>
+              )}
+              <input ref={galleryRef} type="file" accept="image/*" multiple onChange={handleGallery} className="hidden" />
             </div>
           </Field>
 
@@ -261,6 +308,48 @@ export function ProductForm({ initial, onSave, onDelete, onClose }: Props) {
           </div>
 
           <div className="grid grid-cols-2 gap-3">
+            <Field label="Ansyen pri (bare, opsyonèl)">
+              <input
+                type="number"
+                min={0}
+                className={inputClass}
+                value={values.comparePrice || ""}
+                onChange={(e) => update("comparePrice", Number(e.target.value))}
+                placeholder="Ekz: 1500"
+              />
+            </Field>
+            <Field label="Mak / Brand">
+              <input
+                className={inputClass}
+                value={values.brand ?? ""}
+                onChange={(e) => update("brand", e.target.value)}
+                maxLength={60}
+              />
+            </Field>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Gwosè (separe ak vigil)">
+              <input
+                className={inputClass}
+                value={values.sizes ?? ""}
+                onChange={(e) => update("sizes", e.target.value)}
+                maxLength={200}
+                placeholder="S, M, L, XL"
+              />
+            </Field>
+            <Field label="Koulè (separe ak vigil)">
+              <input
+                className={inputClass}
+                value={values.colors ?? ""}
+                onChange={(e) => update("colors", e.target.value)}
+                maxLength={200}
+                placeholder="Nwa, Wouj, Blan"
+              />
+            </Field>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
             <Field label={t("product_form_unit")}>
               <input
                 className={inputClass}
@@ -279,60 +368,6 @@ export function ProductForm({ initial, onSave, onDelete, onClose }: Props) {
             </Field>
           </div>
 
-          <div className="rounded-card border border-ink/10 dark:border-dark-border p-3 mb-3 space-y-1">
-            <p className="text-xs font-semibold mb-2">Pou boutik an liy lan</p>
-            <Field label="Foto adisyonèl (jiska 7)">
-              <div className="flex flex-wrap gap-2">
-                {(values.gallery ?? []).map((g, i) => (
-                  <div key={g + i} className="relative w-16 h-16 rounded-lg overflow-hidden border border-ink/10">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={g} alt="" className="w-full h-full object-cover" />
-                    <button
-                      type="button"
-                      aria-label="Retire foto"
-                      onClick={() => update("gallery", (values.gallery ?? []).filter((_, j) => j !== i))}
-                      className="absolute top-0 right-0 bg-black/70 text-white w-5 h-5 flex items-center justify-center"
-                    >
-                      <X size={12} />
-                    </button>
-                  </div>
-                ))}
-                {(values.gallery?.length ?? 0) < 7 && (
-                  <button
-                    type="button"
-                    onClick={() => galleryRef.current?.click()}
-                    disabled={galleryBusy}
-                    className="w-16 h-16 rounded-lg border border-dashed border-ink/25 flex items-center justify-center text-ink/50"
-                  >
-                    {galleryBusy ? <Loader2 size={18} className="animate-spin" /> : <ImagePlus size={20} />}
-                  </button>
-                )}
-                <input ref={galleryRef} type="file" accept="image/*" multiple onChange={handleGallery} className="hidden" />
-              </div>
-            </Field>
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="Ansyen pri (rabè)">
-                <input
-                  type="number"
-                  min={0}
-                  className={inputClass}
-                  value={values.oldPrice || ""}
-                  onChange={(e) => update("oldPrice", Number(e.target.value))}
-                  placeholder="Pi wo pase pri vant"
-                />
-              </Field>
-              <Field label="Mak (brand)">
-                <input className={inputClass} value={values.brand ?? ""} onChange={(e) => update("brand", e.target.value)} />
-              </Field>
-            </div>
-            <Field label="Gwosè (separe ak vigil)">
-              <input className={inputClass} value={values.sizes ?? ""} onChange={(e) => update("sizes", e.target.value)} placeholder="S, M, L, XL" />
-            </Field>
-            <Field label="Koulè (separe ak vigil)">
-              <input className={inputClass} value={values.colors ?? ""} onChange={(e) => update("colors", e.target.value)} placeholder="Nwa, Wouj, Blan" />
-            </Field>
-          </div>
-
           <Field label={t("product_form_description")}>
             <textarea
               className={inputClass}
@@ -342,6 +377,16 @@ export function ProductForm({ initial, onSave, onDelete, onClose }: Props) {
               onChange={(e) => update("description", e.target.value)}
             />
           </Field>
+
+          <label className="flex items-center gap-3 rounded-card border border-ink/15 px-3 py-2.5 mb-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={isOn(values.featured)}
+              onChange={(e) => update("featured", e.target.checked)}
+              className="w-4 h-4 accent-red-600"
+            />
+            <span className="text-sm">Mete devan sou boutik la (vedèt)</span>
+          </label>
 
           <label className="flex items-start gap-3 rounded-card border border-ink/20 bg-forest/5 px-3 py-3 mb-3 cursor-pointer">
             <input

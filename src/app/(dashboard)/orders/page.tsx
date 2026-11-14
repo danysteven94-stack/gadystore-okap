@@ -14,6 +14,16 @@ function fmt(n: number) {
 const inputClass =
   "w-full border border-ink/15 dark:border-dark-border bg-white dark:bg-dark-surface rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brick/30";
 
+const FULFILLMENT_LABEL: Record<NonNullable<Order["fulfillment"]>, string> = {
+  new: "Nouvo",
+  confirmed: "Konfime",
+  preparing: "Ap prepare",
+  shipped: "Nan wout / pare",
+  delivered: "Livre",
+  cancelled: "Anile",
+};
+const FULFILLMENT_OPTIONS = ["new", "confirmed", "preparing", "shipped", "delivered"] as const;
+
 const STATUS_STYLE: Record<Order["status"], string> = {
   paid: "bg-emerald-100 text-emerald-700",
   partial: "bg-gold/20 text-gold-dark",
@@ -118,17 +128,25 @@ export default function OrdersPage() {
     }
   }
 
-  async function setFulfillment(o: Order, value: string) {
+  async function setFulfillment(o: Order, fulfillment: string) {
+    const note = window.prompt("Mesaj pou kliyan an wè nan swivi kòmand lan (opsyonèl):", o.fulfillmentNote ?? "") ?? undefined;
+    if (note === undefined) return; // anile
     try {
       const res = await fetch(`/api/orders/${o.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "fulfillment", value }),
+        body: JSON.stringify({ action: "fulfillment", fulfillment, note }),
       });
       if (res.ok) await load();
     } catch {
       // silans — lis la pa chanje
     }
+  }
+
+  function whatsappStatus(o: Order) {
+    const label = FULFILLMENT_LABEL[o.fulfillment ?? "new"];
+    const text = `Bonjou ${o.customerName}, kòmand #${o.code} ou a: ${label}.${o.fulfillmentNote ? " " + o.fulfillmentNote : ""}`;
+    return `https://wa.me/${String(o.customerPhone ?? "").replace(/\D/g, "")}?text=${encodeURIComponent(text)}`;
   }
 
   async function handleAddPayment(e: React.FormEvent) {
@@ -312,8 +330,7 @@ export default function OrdersPage() {
                           {o.customerPhone}
                         </a>
                       )}
-                      {o.deliveryMethod === "pickup" ? " · Ranmase sou plas" : o.customerAddress ? ` · ${o.customerAddress}` : ""}
-                      {Number(o.deliveryFee) > 0 ? ` · livrezon ${fmt(Number(o.deliveryFee))}` : ""}
+                      {o.customerAddress ? ` · ${o.customerAddress}` : ""}
                       {o.note ? ` · “${o.note}”` : ""}
                     </p>
                   )}
@@ -336,6 +353,37 @@ export default function OrdersPage() {
                   <p className="stat-figure font-medium text-brick">{fmt(o.balance)}</p>
                 </div>
               </div>
+              {o.source === "shop" && (
+                <div className="mb-3 rounded-lg bg-ink/[0.03] dark:bg-white/5 px-3 py-2.5 text-xs space-y-1.5">
+                  <p className="text-ink/60 dark:text-white/60">
+                    {o.deliveryMethod === "pickup" ? "🏬 Ranmase nan boutik" : "🚚 Livrezon"}
+                    {o.shippingFee ? ` · livrezon ${fmt(Number(o.shippingFee))}` : ""}
+                    {o.discount ? ` · rabè -${fmt(Number(o.discount))}${o.couponCode ? ` (${o.couponCode})` : ""}` : ""}
+                    {o.paymentRef ? ` · tranzaksyon: ${o.paymentRef}` : ""}
+                  </p>
+                  {o.status !== "cancelled" && (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <label className="flex items-center gap-1.5">
+                        <span className="text-ink/50 dark:text-white/50">Etap:</span>
+                        <select
+                          value={o.fulfillment && o.fulfillment !== "cancelled" ? o.fulfillment : "new"}
+                          onChange={(e) => setFulfillment(o, e.target.value)}
+                          className="border border-ink/15 dark:border-dark-border bg-white dark:bg-dark-surface rounded px-2 py-1 text-xs font-medium"
+                        >
+                          {FULFILLMENT_OPTIONS.map((f) => (
+                            <option key={f} value={f}>{FULFILLMENT_LABEL[f]}</option>
+                          ))}
+                        </select>
+                      </label>
+                      {o.customerPhone && (
+                        <a href={whatsappStatus(o)} target="_blank" rel="noreferrer" className="text-forest underline underline-offset-2 font-medium">
+                          Voye nouvèl sou WhatsApp
+                        </a>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
               {o.status !== "cancelled" && (
                 <div className="flex gap-4">
                   {o.balance > 0 && (
@@ -348,21 +396,6 @@ export default function OrdersPage() {
                     >
                       {t("orders_add_payment")}
                     </button>
-                  )}
-                  {o.source === "shop" && (
-                    <label className="text-xs font-medium flex items-center gap-1.5">
-                      <span className="text-ink/50 dark:text-white/50">Livrezon:</span>
-                      <select
-                        value={o.fulfillment ?? "new"}
-                        onChange={(e) => setFulfillment(o, e.target.value)}
-                        className="border border-ink/15 dark:border-dark-border bg-white dark:bg-dark-surface rounded px-1.5 py-1 text-xs"
-                      >
-                        <option value="new">Resevwa</option>
-                        <option value="preparing">Ap prepare</option>
-                        <option value="shipped">Nan wout</option>
-                        <option value="delivered">Livre</option>
-                      </select>
-                    </label>
                   )}
                   {o.source === "shop" && o.status === "pending" && (
                     <button

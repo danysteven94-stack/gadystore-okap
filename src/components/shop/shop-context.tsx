@@ -3,6 +3,23 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { PublicProduct, PublicShop } from "@/lib/shop";
 
+export interface CartLine {
+  key: string; // pwodwi oswa pwodwi|gwosè|koulè
+  p: PublicProduct;
+  qty: number;
+  size: string;
+  color: string;
+}
+
+/** Kle yon liy panye. San opsyon = jis ID pwodwi a (konpatib ak ansyen panye yo). */
+export function cartKey(id: string, size?: string, color?: string) {
+  return size || color ? `${id}|${size ?? ""}|${color ?? ""}` : id;
+}
+function splitKey(key: string) {
+  const [id, size = "", color = ""] = key.split("|");
+  return { id, size, color };
+}
+
 export interface PlacedRef {
   code: string;
   phone: string;
@@ -22,11 +39,13 @@ interface Ctx {
   money: (n: number) => string;
   byId: Map<string, PublicProduct>;
   cart: Record<string, number>;
-  cartLines: { p: PublicProduct; qty: number }[];
+  cartLines: CartLine[];
+  inCartOf: (productId: string) => number;
   itemCount: number;
   subtotal: number;
   setQty: (p: PublicProduct, qty: number) => void;
-  addToCart: (p: PublicProduct, qty?: number) => void;
+  setLine: (key: string, qty: number) => void;
+  addToCart: (p: PublicProduct, qty?: number, opts?: { size?: string; color?: string }) => void;
   clearCart: () => void;
   wish: string[];
   toggleWish: (id: string) => void;
@@ -110,13 +129,28 @@ export function ShopProvider({ initial, children }: { initial: PublicShop; child
 
   const byId = useMemo(() => new Map(shop.products.map((p) => [p.id, p])), [shop.products]);
 
-  const cartLines = useMemo(
-    () =>
-      Object.entries(cart)
-        .map(([id, qty]) => ({ p: byId.get(id), qty }))
-        .filter((l): l is { p: PublicProduct; qty: number } => !!l.p && l.p.stock > 0 && l.qty > 0)
-        .map((l) => ({ p: l.p, qty: Math.min(l.qty, l.p.stock) })),
-    [cart, byId]
+  // Liy valid sèlman: pwodwi a toujou la, gen stok, opsyon yo toujou egziste, epi
+  // total tout varyant yon pwodwi pa depase stok la.
+  const cartLines = useMemo<CartLine[]>(() => {
+    const left = new Map<string, number>();
+    const out: CartLine[] = [];
+    for (const [key, qty] of Object.entries(cart)) {
+      const { id, size, color } = splitKey(key);
+      const p = byId.get(id);
+      if (!p || p.stock <= 0 || qty <= 0) continue;
+      if (p.sizes.length ? !p.sizes.includes(size) : !!size) continue;
+      if (p.colors.length ? !p.colors.includes(color) : !!color) continue;
+      const remaining = left.get(id) ?? p.stock;
+      const q = Math.min(qty, remaining);
+      if (q <= 0) continue;
+      left.set(id, remaining - q);
+      out.push({ key, p, qty: q, size, color });
+    }
+    return out;
+  }, [cart, byId]);
+  const inCartOf = useCallback(
+    (productId: string) => cartLines.filter((l) => l.p.id === productId).reduce((s, l) => s + l.qty, 0),
+    [cartLines]
   );
   const itemCount = cartLines.reduce((s, l) => s + l.qty, 0);
   const subtotal = cartLines.reduce((s, l) => s + l.qty * l.p.price, 0);
@@ -140,26 +174,36 @@ export function ShopProvider({ initial, children }: { initial: PublicShop; child
     toastTimer.current = setTimeout(() => setToast(null), 2200);
   }, []);
 
-  const setQty = useCallback(
-    (p: PublicProduct, qty: number) => {
-      const q = Math.max(0, Math.min(Math.floor(qty) || 0, p.stock));
+  const setLine = useCallback(
+    (key: string, qty: number) => {
+      const { id } = splitKey(key);
+      const p = byId.get(id);
+      if (!p) return;
+      const others = cartLines.filter((l) => l.p.id === id && l.key !== key).reduce((s, l) => s + l.qty, 0);
+      const q = Math.max(0, Math.min(Math.floor(qty) || 0, p.stock - others));
       const next = { ...cart };
-      if (q === 0) delete next[p.id];
-      else next[p.id] = q;
+      if (q === 0) delete next[key];
+      else next[key] = q;
       persistCart(next);
     },
-    [cart, persistCart]
+    [cart, cartLines, byId, persistCart]
   );
 
+  const setQty = useCallback((p: PublicProduct, qty: number) => setLine(p.id, qty), [setLine]);
+
   const addToCart = useCallback(
-    (p: PublicProduct, qty = 1) => {
+    (p: PublicProduct, qty = 1, opts?: { size?: string; color?: string }) => {
       if (p.stock <= 0) return;
-      const cur = cart[p.id] ?? 0;
-      const q = Math.min(cur + qty, p.stock);
-      persistCart({ ...cart, [p.id]: q });
-      showToast(q === cur ? "Ou rive nan stok ki disponib la." : "Ajoute nan panye ✓");
+      const room = p.stock - inCartOf(p.id);
+      if (room <= 0) {
+        showToast("Ou rive nan stok ki disponib la.");
+        return;
+      }
+      const key = cartKey(p.id, opts?.size, opts?.color);
+      persistCart({ ...cart, [key]: (cart[key] ?? 0) + Math.min(qty, room) });
+      showToast("Ajoute nan panye ✓");
     },
-    [cart, persistCart, showToast]
+    [cart, inCartOf, persistCart, showToast]
   );
 
   const clearCart = useCallback(() => persistCart({}), [persistCart]);
@@ -213,9 +257,11 @@ export function ShopProvider({ initial, children }: { initial: PublicShop; child
     byId,
     cart,
     cartLines,
+    inCartOf,
     itemCount,
     subtotal,
     setQty,
+    setLine,
     addToCart,
     clearCart,
     wish,

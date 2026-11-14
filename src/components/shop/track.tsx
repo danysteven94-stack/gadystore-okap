@@ -16,7 +16,7 @@ interface TrackOrder {
   deliveryMethod: "delivery" | "pickup";
   paymentLabel: string;
   paymentMethod: string;
-  items: { productId: string; name: string; qty: number; unitPrice: number; unit: string }[];
+  items: { productId: string; name: string; qty: number; unitPrice: number; unit: string; variant?: string }[];
   subtotal: number;
   discount: number;
   shipping: number;
@@ -142,10 +142,10 @@ export function Track() {
 
           <section className="rounded-2xl border bg-white" style={{ borderColor: C.line }}>
             <div className="divide-y" style={{ borderColor: C.line }}>
-              {order.items.map((i) => (
-                <div key={i.productId} className="flex items-center justify-between gap-3 px-4 py-3 text-sm" style={{ borderColor: C.line }}>
+              {order.items.map((i, n) => (
+                <div key={`${i.productId}-${n}`} className="flex items-center justify-between gap-3 px-4 py-3 text-sm" style={{ borderColor: C.line }}>
                   <div className="min-w-0">
-                    <Link href={`${base}/p/${i.productId}`} className="font-medium underline-offset-2 hover:underline">{i.qty}{i.unit ? ` ${i.unit}` : ""} × {i.name}</Link>
+                    <Link href={`${base}/p/${i.productId}`} className="font-medium underline-offset-2 hover:underline">{i.qty}{i.unit ? ` ${i.unit}` : ""} × {i.name}{i.variant ? ` (${i.variant})` : ""}</Link>
                     {order.fulfillment === "delivered" && (
                       <Link href={`${base}/p/${i.productId}?code=${order.code}&phone=${encodeURIComponent(phone || sp.get("phone") || "")}#avi`} className="mt-0.5 flex items-center gap-1 text-xs font-semibold" style={{ color: C.red }}>
                         <Star size={12} /> Bay yon avi

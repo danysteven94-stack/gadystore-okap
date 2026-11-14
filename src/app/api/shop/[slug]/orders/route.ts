@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { randomUUID, randomInt } from "crypto";
+import { randomUUID, randomBytes } from "crypto";
 import { redis, hsetClean } from "@/lib/upstash";
-import { getBusinessBySlug, rateLimit, cleanPhone, isTrue, priceCart } from "@/lib/shop";
-import { PAY_LABEL } from "@/lib/shop-utils";
+import { getBusinessBySlug, rateLimit, cleanPhone, priceCart, normCode } from "@/lib/shop";
 import { pushNotification, notifyLowStock } from "@/lib/notifications";
 import type { Order } from "@/app/api/orders/route";
+import type { Product } from "@/types";
 
 const schema = z.object({
   customerName: z.string().trim().min(2).max(80),
@@ -13,7 +13,9 @@ const schema = z.object({
   address: z.string().trim().max(200).optional(),
   note: z.string().trim().max(300).optional(),
   paymentMethod: z.enum(["cash_delivery", "moncash", "natcash", "transfer"]),
+  paymentRef: z.string().trim().max(60).optional(),
   deliveryMethod: z.enum(["delivery", "pickup"]).default("delivery"),
+  couponCode: z.string().max(30).optional(),
   items: z
     .array(
       z.object({
@@ -27,12 +29,12 @@ const schema = z.object({
     .max(50),
 });
 
-const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-function newCode() {
-  let c = "";
-  for (let i = 0; i < 6; i++) c += CODE_CHARS[randomInt(CODE_CHARS.length)];
-  return c;
-}
+const PAY_LABEL: Record<string, string> = {
+  cash_delivery: "Kach lè livrezon/ranmase",
+  moncash: "MonCash",
+  natcash: "NatCash",
+  transfer: "Transfè bank",
+};
 
 export async function POST(
   req: NextRequest,
@@ -51,52 +53,48 @@ export async function POST(
   if (!parsed.success) {
     return NextResponse.json({ error: "Ranpli non ou, nimewo telefòn ou ak omwen yon pwodwi." }, { status: 400 });
   }
-  const { customerName, address, note, paymentMethod, deliveryMethod } = parsed.data;
+  const { customerName, address, note, paymentMethod, paymentRef, deliveryMethod, couponCode } = parsed.data;
   const phone = cleanPhone(parsed.data.phone);
 
-  if (deliveryMethod === "pickup" && !isTrue(business.shopPickup)) {
-    return NextResponse.json({ error: "Boutik la pa ofri ranmase sou plas." }, { status: 400 });
-  }
   if (deliveryMethod === "delivery" && (!address || address.length < 5)) {
-    return NextResponse.json({ error: "Antre adrès livrezon an." }, { status: 400 });
+    return NextResponse.json({ error: "Mete adrès livrezon ou." }, { status: 400 });
   }
 
-  const priced = await priceCart(business, parsed.data.items, deliveryMethod);
+  // Pri, rabè ak livrezon KALKILE SÈVÈ A — jamè navigatè kliyan an
+  const priced = await priceCart(business, parsed.data.items, deliveryMethod, couponCode);
   if (!priced.ok) return NextResponse.json({ error: priced.error }, { status: priced.status });
-  const { lines, subtotal, deliveryFee, total } = priced;
-  const prodCache = priced.products;
+  if (couponCode && normCode(couponCode) && priced.couponError) {
+    return NextResponse.json({ error: priced.couponError }, { status: 400 });
+  }
+  const { lines, subtotal, discount, shipping, total } = priced;
 
-  // Rezève stok la atomikman (hincrby) pa pwodwi: si yon pwodwi pa sifi, anile sa nou te deja rezève
-  const perProduct = new Map<string, number>();
-  for (const l of lines) perProduct.set(l.productId, (perProduct.get(l.productId) ?? 0) + l.qty);
+  // Rezève stok la atomikman (hincrby): si yon liy pa sifi, anile sa nou te deja rezève
   const reserved: { productId: string; qty: number }[] = [];
-  for (const [productId, qty] of perProduct) {
-    const p = prodCache.get(productId)!;
-    const left = await redis.hincrby(`product:${productId}`, "stock", -qty);
+  for (const l of lines) {
+    const left = await redis.hincrby(`product:${l.productId}`, "stock", -l.qty);
     if (left < 0) {
-      await redis.hincrby(`product:${productId}`, "stock", qty);
+      await redis.hincrby(`product:${l.productId}`, "stock", l.qty);
       for (const r of reserved) await redis.hincrby(`product:${r.productId}`, "stock", r.qty);
       return NextResponse.json(
-        { error: `Stok ${p.name} pa sifi. Redwi kantite a oswa rafrechi paj la.` },
+        { error: `Stok ${l.name} pa sifi. Redwi kantite a oswa rafrechi paj la.` },
         { status: 409 }
       );
     }
-    reserved.push({ productId, qty });
-    if (left <= Number(p.minStock)) await notifyLowStock(business.id, String(p.name));
+    reserved.push({ productId: l.productId, qty: l.qty });
+    const prod = await redis.hgetall<Product>(`product:${l.productId}`);
+    if (prod && left <= Number(prod.minStock)) await notifyLowStock(business.id, l.name);
   }
 
-  // Kòd kòmand kout (6 karaktè) ki inik pou biznis la
   const id = randomUUID();
-  let code = newCode();
+  // Kòd kout inik (endèks pou swivi kòmand lan)
+  let code = id.slice(0, 6).toUpperCase();
   for (let i = 0; i < 6; i++) {
-    const ok = await redis.set(`ordercode:${business.id}:${code}`, id, { nx: true });
+    const ok = await redis.set(`shop:ordercode:${business.id}:${code}`, id, { nx: true });
     if (ok) break;
-    code = newCode();
+    code = randomBytes(3).toString("hex").toUpperCase();
   }
 
-  const description = lines
-    .map((l) => `${l.qty}× ${l.name}${l.variant ? ` (${l.variant})` : ""}`)
-    .join(", ");
+  const description = lines.map((l) => `${l.qty}× ${l.name}${l.variant ? ` (${l.variant})` : ""}`).join(", ");
 
   const order: Order = {
     id,
@@ -111,23 +109,33 @@ export async function POST(
     source: "shop",
     code,
     customerPhone: phone,
-    customerAddress: deliveryMethod === "pickup" ? undefined : address,
+    customerAddress: deliveryMethod === "delivery" ? address : undefined,
     note,
     paymentMethod,
-    items: lines,
-    subtotal,
-    deliveryFee,
+    paymentRef: paymentRef || undefined,
     deliveryMethod,
     fulfillment: "new",
+    subtotal,
+    discount,
+    shippingFee: shipping,
+    couponCode: priced.couponCode ?? undefined,
+    items: lines,
   };
 
   await hsetClean(`order:${id}`, order as unknown as Record<string, unknown>);
   await redis.lpush(`business:${business.id}:orders`, id);
+
+  // Estatistik: pi vann yo + itilizasyon koupon
+  await Promise.all([
+    ...lines.map((l) => redis.hincrby(`product:${l.productId}`, "sold", l.qty)),
+    priced.couponCode ? redis.hincrby(`coupon:${business.id}:${priced.couponCode}`, "uses", 1) : Promise.resolve(0),
+  ]);
+
   await pushNotification(
     business.id,
     "new_sale",
-    `Nouvo kòmand sou entènèt #${code} — ${customerName} (${phone}): ${total.toLocaleString("fr-FR")} ${business.currency}${
-      deliveryMethod === "pickup" ? " · ranmase sou plas" : ""
+    `Nouvo kòmand sou entènèt #${code} — ${customerName} (${phone}): ${total.toLocaleString("fr-FR")} ${business.currency} · ${
+      deliveryMethod === "pickup" ? "ranmase" : "livrezon"
     }.`
   );
 
@@ -137,11 +145,12 @@ export async function POST(
         id,
         code,
         subtotal,
-        deliveryFee,
-        deliveryMethod,
+        discount,
+        shipping,
         total,
         currency: business.currency,
         paymentLabel: PAY_LABEL[paymentMethod],
+        deliveryMethod,
         lines,
       },
     },

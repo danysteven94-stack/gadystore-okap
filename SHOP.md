@@ -12,6 +12,7 @@
 | `/boutik/{slug}/about` | Livrezon, peman, politik retou, kontak |
 
 ## Sa ki nan dashboard
+- **Gwosè ak koulè** (`sizes`, `colors`, separe ak vigil): kliyan an dwe chwazi yo sou paj pwodwi a; panye, checkout, kòmand ak swivi montre yo. Stok la pataje ant tout varyant yon pwodwi.
 - **Pwodwi**: ansyen pri (rabè), mak, plizyè foto (jiska 5), vedèt.
 - **Boutik (`/shop`)**: bann anons, livrezon/ranmase, frè livrezon, livrezon gratis depi X, adrès, orè, politik retou, Facebook/Instagram, **kòd promosyon**.
 - **Kòmand (`/orders`)**: chanje etap livrezon (kliyan an wè l nan swivi) + bouton WhatsApp pou voye nouvèl.
@@ -27,4 +28,4 @@
 Chan pwodwi ajoute: `comparePrice, brand, images, featured, createdAt, sold, ratingSum, ratingCount`.
 
 ## Poko fè (pwochen etap posib)
-Peman otomatik MonCash/Stripe (kounye a peman an manyèl), kont kliyan (login), variant (koulè/tay), tradiksyon fr/en sou vitrin nan.
+Peman otomatik MonCash/Stripe (kounye a peman an manyèl), kont kliyan (login), tradiksyon fr/en sou vitrin nan.

@@ -1,141 +1,141 @@
 "use client";
 
 import Link from "next/link";
-import { Heart, ShoppingCart } from "lucide-react";
+import { Bell, Heart, Plus, ShoppingBag } from "lucide-react";
 import type { PublicProduct } from "@/lib/shop";
-import { discountPct } from "@/lib/shop-utils";
-import { useShop } from "./shop-provider";
-import { C, PriceBlock, Stars, clamp2 } from "./ui";
+import { useShop } from "./shop-context";
+import { C, Price, Stars, clamp2, discountPct, isNew } from "./ui";
 
-export function ProductCard({ p, compact }: { p: PublicProduct; compact?: boolean }) {
-  const { base, money, wishlist, toggleWish, addToCart, setCartOpen, hydrated } = useShop();
+export function ProductCard({ p, index = 0 }: { p: PublicProduct; index?: number }) {
+  const { base, money, inCartOf, addToCart, wish, toggleWish, setNotifyFor } = useShop();
   const out = p.stock <= 0;
-  const low = !out && p.stock <= 5;
-  const pct = discountPct(p.price, p.oldPrice);
-  const wished = hydrated && wishlist.includes(p.id);
-  const needsOptions = p.sizes.length > 0 || p.colors.length > 0;
-  const href = `${base}/p/${p.id}`;
+  const pct = discountPct(p);
+  const liked = wish.includes(p.id);
+  const qty = inCartOf(p.id);
+  const hasOptions = p.sizes.length > 0 || p.colors.length > 0;
 
   return (
-    <article className="group relative flex flex-col bg-white">
-      <Link href={href} className="relative block aspect-[4/5] overflow-hidden rounded-lg" style={{ background: C.soft }} aria-label={p.name}>
+    <article
+      className="group relative rounded-2xl bg-white border flex flex-col overflow-hidden transition-shadow hover:shadow-xl"
+      style={{ borderColor: C.line, animation: `fadeUp .45s ease-out ${Math.min(index, 8) * 50}ms both` }}
+    >
+      <Link href={`${base}/p/${p.id}`} className="relative block aspect-square w-full overflow-hidden" style={{ background: C.soft }} aria-label={p.name}>
         {p.imageUrl ? (
-          <>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={p.imageUrl}
-              alt={p.name}
-              loading="lazy"
-              className={`absolute inset-0 w-full h-full object-cover ${out ? "grayscale opacity-60" : ""}`}
-            />
-            {p.images[1] && !out && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={p.images[1]}
-                alt=""
-                loading="lazy"
-                className="absolute inset-0 w-full h-full object-cover opacity-0 md:group-hover:opacity-100 transition-opacity duration-200"
-              />
-            )}
-          </>
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={p.imageUrl}
+            alt={p.name}
+            loading="lazy"
+            className={`w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 ${out ? "grayscale opacity-60" : ""}`}
+          />
         ) : (
-          <span className="absolute inset-0 flex items-center justify-center text-xs" style={{ color: C.muted }}>
-            Pa gen foto
-          </span>
+          <div className="w-full h-full flex items-center justify-center" style={{ color: C.line }}>
+            <ShoppingBag size={44} />
+          </div>
         )}
-        <span className="absolute top-2 left-2 flex flex-col gap-1 items-start">
-          {pct > 0 && !out && (
-            <span className="rounded px-2 py-0.5 text-[11px] font-bold text-white" style={{ background: C.red }}>
-              -{pct}%
-            </span>
-          )}
-          {low && (
-            <span className="rounded px-2 py-0.5 text-[11px] font-bold bg-white border" style={{ borderColor: C.ink }}>
-              {p.stock} rete
-            </span>
-          )}
-        </span>
-        {out && (
-          <span className="absolute bottom-2 left-2 rounded px-2 py-0.5 text-[11px] font-bold text-white" style={{ background: C.ink }}>
-            Fini
-          </span>
-        )}
+        <div className="absolute top-2 left-2 flex flex-col gap-1 items-start">
+          {out && <Badge bg={C.ink}>FINI</Badge>}
+          {!out && pct > 0 && <Badge bg={C.red}>-{pct}%</Badge>}
+          {!out && p.stock <= 5 && <Badge bg="#B45309">BALEN</Badge>}
+          {!out && isNew(p) && <Badge bg={C.ink}>NOUVO</Badge>}
+        </div>
       </Link>
 
       <button
         onClick={() => toggleWish(p.id)}
-        aria-label={wished ? "Retire nan lis anvi" : "Ajoute nan lis anvi"}
-        aria-pressed={wished}
+        aria-label={liked ? "Retire nan favori" : "Ajoute nan favori"}
+        aria-pressed={liked}
         className="absolute top-2 right-2 w-9 h-9 rounded-full bg-white/95 shadow flex items-center justify-center"
       >
-        <Heart size={18} color={wished ? C.red : C.ink} fill={wished ? C.red : "none"} />
+        <Heart size={18} color={liked ? C.red : C.ink} fill={liked ? C.red : "none"} />
       </button>
 
-      <div className="pt-2.5 flex flex-col flex-1">
-        {p.brand && (
-          <p className="text-[11px] font-semibold truncate" style={{ color: C.muted }}>
+      <div className="p-3 flex flex-col flex-1">
+        {p.brand ? (
+          <p className="text-[10px] font-semibold tracking-[0.14em] uppercase truncate" style={{ color: C.muted }}>
             {p.brand}
           </p>
-        )}
-        <Link href={href} className="text-sm leading-snug hover:underline" style={{ ...clamp2, minHeight: "2.6em" }}>
-          {p.name}
-        </Link>
-        {p.ratingCount > 0 && (
-          <span className="mt-1 flex items-center gap-1 text-xs" style={{ color: C.muted }}>
-            <Stars value={p.rating} size={12} /> ({p.ratingCount})
-          </span>
-        )}
-        <div className="mt-1.5 flex items-end justify-between gap-2">
-          <PriceBlock price={p.price} oldPrice={p.oldPrice} money={money} />
-          {!out &&
-            (needsOptions ? (
-              <Link
-                href={href}
-                className="shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold"
-                style={{ borderColor: C.ink }}
-              >
-                Opsyon
-              </Link>
-            ) : (
-              <button
-                aria-label={`Ajoute ${p.name} nan panye`}
-                onClick={() => {
-                  if (addToCart(p, 1)) setCartOpen(true);
-                }}
-                className="shrink-0 w-9 h-9 rounded-full text-white flex items-center justify-center"
-                style={{ background: C.ink }}
-              >
-                <ShoppingCart size={16} />
-              </button>
-            ))}
-        </div>
-        {!compact && p.unit && (
-          <p className="text-[11px] mt-0.5" style={{ color: C.muted }}>
-            pou chak {p.unit.toLowerCase()}
+        ) : (
+          <p className="text-[10px] font-semibold tracking-[0.14em] uppercase truncate" style={{ color: C.muted }}>
+            {p.category}
           </p>
         )}
+        <Link href={`${base}/p/${p.id}`} className="mt-1">
+          <h3 className="text-[14px] font-medium leading-snug min-h-[2.6em]" style={clamp2}>
+            {p.name}
+          </h3>
+        </Link>
+        {p.ratingCount > 0 && (
+          <div className="mt-1 flex items-center gap-1 text-[11px]" style={{ color: C.muted }}>
+            <Stars value={p.rating} size={12} /> ({p.ratingCount})
+          </div>
+        )}
+        <div className="mt-1.5">
+          <Price p={p} money={money} />
+        </div>
+        {p.sold > 0 && (
+          <p className="text-[11px] mt-0.5" style={{ color: C.muted }}>
+            {p.sold.toLocaleString("fr-FR")} vann
+          </p>
+        )}
+
+        <div className="mt-auto pt-3">
+          {out ? (
+            <button
+              onClick={() => setNotifyFor(p)}
+              className="w-full h-10 rounded-xl border text-sm font-semibold flex items-center justify-center gap-2"
+              style={{ borderColor: C.ink }}
+            >
+              <Bell size={15} /> Notifye m
+            </button>
+          ) : hasOptions ? (
+            <Link
+              href={`${base}/p/${p.id}`}
+              className="w-full h-10 rounded-xl border-2 text-sm font-semibold flex items-center justify-center"
+              style={{ borderColor: C.ink }}
+            >
+              Chwazi opsyon
+            </Link>
+          ) : (
+            <button
+              onClick={() => addToCart(p)}
+              className="w-full h-10 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-1.5 active:scale-[.98] transition-transform"
+              style={{ background: C.ink }}
+            >
+              <Plus size={16} /> {qty > 0 ? `Nan panye (${qty})` : "Ajoute"}
+            </button>
+          )}
+        </div>
       </div>
     </article>
   );
 }
 
-/** Ranje orizontal (kawousèl) tankou Amazon/Shein */
-export function ProductRow({ title, products, href }: { title: string; products: PublicProduct[]; href?: string }) {
+function Badge({ bg, children }: { bg: string; children: React.ReactNode }) {
+  return (
+    <span className="rounded-md px-2 py-0.5 text-[10px] font-bold tracking-wider text-white" style={{ background: bg }}>
+      {children}
+    </span>
+  );
+}
+
+/** Ranje orizontal ak defilman (Shein/Amazon style). */
+export function ProductRow({ title, href, products }: { title: string; href?: string; products: PublicProduct[] }) {
   if (products.length === 0) return null;
   return (
-    <section className="mb-10">
-      <div className="flex items-end justify-between mb-3">
-        <h2 className="text-xl font-bold">{title}</h2>
+    <section className="mb-8">
+      <div className="flex items-end justify-between mb-3 px-4 max-w-6xl mx-auto">
+        <h2 className="text-xl font-semibold">{title}</h2>
         {href && (
           <Link href={href} className="text-sm font-semibold underline underline-offset-2" style={{ color: C.red }}>
             Wè tout
           </Link>
         )}
       </div>
-      <div className="flex gap-3 sm:gap-4 overflow-x-auto snap-x pb-2 -mx-4 px-4 [scrollbar-width:none]">
-        {products.map((p) => (
-          <div key={p.id} className="snap-start shrink-0 w-[10.5rem] sm:w-52">
-            <ProductCard p={p} compact />
+      <div className="flex gap-3 overflow-x-auto snap-x px-4 pb-2 max-w-6xl mx-auto [scrollbar-width:none]">
+        {products.map((p, i) => (
+          <div key={p.id} className="w-[44vw] max-w-[220px] sm:w-52 shrink-0 snap-start">
+            <ProductCard p={p} index={i} />
           </div>
         ))}
       </div>

@@ -28,7 +28,7 @@ interface Quote {
 }
 
 export function Checkout() {
-  const { shop, base, money, cartLines, subtotal, setQty, clearCart, rememberOrder, customer, rememberCustomer } = useShop();
+  const { shop, base, money, cartLines, subtotal, setLine, clearCart, rememberOrder, customer, rememberCustomer } = useShop();
   const router = useRouter();
 
   const firstMethod: Method = shop.deliveryEnabled ? "delivery" : "pickup";
@@ -57,7 +57,7 @@ export function Checkout() {
     }
   }, [customer]);
 
-  const itemsKey = useMemo(() => cartLines.map((l) => `${l.p.id}:${l.qty}`).join(","), [cartLines]);
+  const itemsKey = useMemo(() => cartLines.map((l) => `${l.key}:${l.qty}`).join(","), [cartLines]);
 
   // Sèvè a kalkile total la (rabè + livrezon). Navigatè a pa deside anyen.
   useEffect(() => {
@@ -72,7 +72,7 @@ export function Checkout() {
           body: JSON.stringify({
             deliveryMethod: method,
             couponCode: appliedCode || undefined,
-            items: cartLines.map((l) => ({ productId: l.p.id, qty: l.qty })),
+            items: cartLines.map((l) => ({ productId: l.p.id, qty: l.qty, size: l.size || undefined, color: l.color || undefined })),
           }),
         });
         const data = await res.json().catch(() => null);
@@ -110,7 +110,7 @@ export function Checkout() {
           paymentRef: pay !== "cash_delivery" && payRef ? payRef : undefined,
           deliveryMethod: method,
           couponCode: view.couponCode ?? undefined,
-          items: cartLines.map((l) => ({ productId: l.p.id, qty: l.qty })),
+          items: cartLines.map((l) => ({ productId: l.p.id, qty: l.qty, size: l.size || undefined, color: l.color || undefined })),
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -190,8 +190,8 @@ export function Checkout() {
         <aside className="rounded-2xl border p-5 lg:sticky lg:top-32 bg-white" style={{ borderColor: C.line }}>
           <h2 className="font-bold text-lg mb-3">Rezime</h2>
           <div className="divide-y mb-4" style={{ borderColor: C.line }}>
-            {cartLines.map(({ p, qty }) => (
-              <div key={p.id} className="flex items-center gap-3 py-3" style={{ borderColor: C.line }}>
+            {cartLines.map(({ key, p, qty, size, color }) => (
+              <div key={key} className="flex items-center gap-3 py-3" style={{ borderColor: C.line }}>
                 {p.imageUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={p.imageUrl} alt="" className="w-14 h-14 rounded-lg object-cover shrink-0" />
@@ -200,11 +200,12 @@ export function Checkout() {
                 )}
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">{p.name}</p>
+                  {(size || color) && <p className="text-xs" style={{ color: C.muted }}>{[size, color].filter(Boolean).join(" / ")}</p>}
                   <div className="flex items-center gap-1 mt-1">
-                    <button type="button" aria-label="Mwens" onClick={() => setQty(p, qty - 1)} className="w-7 h-7 rounded-md border flex items-center justify-center" style={{ borderColor: C.line }}><Minus size={12} /></button>
+                    <button type="button" aria-label="Mwens" onClick={() => setLine(key, qty - 1)} className="w-7 h-7 rounded-md border flex items-center justify-center" style={{ borderColor: C.line }}><Minus size={12} /></button>
                     <span className="w-7 text-center text-sm font-bold tabular-nums">{qty}</span>
-                    <button type="button" aria-label="Plis" onClick={() => setQty(p, qty + 1)} disabled={qty >= p.stock} className="w-7 h-7 rounded-md border flex items-center justify-center disabled:opacity-30" style={{ borderColor: C.line }}><Plus size={12} /></button>
-                    <button type="button" aria-label="Retire" onClick={() => setQty(p, 0)} className="ml-1 p-1" style={{ color: C.muted }}><Trash2 size={15} /></button>
+                    <button type="button" aria-label="Plis" onClick={() => setLine(key, qty + 1)} disabled={qty >= p.stock} className="w-7 h-7 rounded-md border flex items-center justify-center disabled:opacity-30" style={{ borderColor: C.line }}><Plus size={12} /></button>
+                    <button type="button" aria-label="Retire" onClick={() => setLine(key, 0)} className="ml-1 p-1" style={{ color: C.muted }}><Trash2 size={15} /></button>
                   </div>
                 </div>
                 <span className="text-sm font-bold tabular-nums">{money(p.price * qty)}</span>
