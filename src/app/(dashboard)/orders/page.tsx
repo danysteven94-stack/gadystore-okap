@@ -24,6 +24,13 @@ const FULFILLMENT_LABEL: Record<NonNullable<Order["fulfillment"]>, string> = {
 };
 const FULFILLMENT_OPTIONS = ["new", "confirmed", "preparing", "shipped", "delivered"] as const;
 
+const PAY_LABEL: Record<string, string> = {
+  cash_delivery: "Kach lè livrezon/ranmase",
+  moncash: "MonCash",
+  natcash: "NatCash",
+  transfer: "Transfè bank",
+};
+
 const STATUS_STYLE: Record<Order["status"], string> = {
   paid: "bg-emerald-100 text-emerald-700",
   partial: "bg-gold/20 text-gold-dark",
@@ -57,6 +64,7 @@ export default function OrdersPage() {
   const [payTarget, setPayTarget] = useState<Order | null>(null);
   const [payAmount, setPayAmount] = useState(0);
   const [paying, setPaying] = useState(false);
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/businesses")
@@ -147,6 +155,24 @@ export default function OrdersPage() {
     const label = FULFILLMENT_LABEL[o.fulfillment ?? "new"];
     const text = `Bonjou ${o.customerName}, kòmand #${o.code} ou a: ${label}.${o.fulfillmentNote ? " " + o.fulfillmentNote : ""}`;
     return `https://wa.me/${String(o.customerPhone ?? "").replace(/\D/g, "")}?text=${encodeURIComponent(text)}`;
+  }
+
+  // Konfime peman konplè a nan yon sèl klik (kliyan an peye tout dè a)
+  async function handleConfirmPaid(o: Order) {
+    if (!window.confirm(`Konfime ke ${o.customerName} peye ${fmt(o.balance)} ?`)) return;
+    setConfirmingId(o.id);
+    try {
+      const res = await fetch(`/api/orders/${o.id}/payments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount: o.balance }),
+      });
+      if (res.ok) await load();
+      else window.alert("Pa ka konfime peman an. Eseye ankò.");
+    } catch {
+      window.alert("Erè rezo — eseye ankò.");
+    }
+    setConfirmingId(null);
   }
 
   async function handleAddPayment(e: React.FormEvent) {
@@ -382,6 +408,7 @@ export default function OrdersPage() {
                     {o.deliveryMethod === "pickup" ? "🏬 Ranmase nan boutik" : "🚚 Livrezon"}
                     {o.shippingFee ? ` · livrezon ${fmt(Number(o.shippingFee))}` : ""}
                     {o.discount ? ` · rabè -${fmt(Number(o.discount))}${o.couponCode ? ` (${o.couponCode})` : ""}` : ""}
+                    {o.paymentMethod ? ` · ${PAY_LABEL[String(o.paymentMethod)] ?? String(o.paymentMethod)}` : ""}
                     {o.paymentRef ? ` · tranzaksyon: ${o.paymentRef}` : ""}
                   </p>
                   {o.status !== "cancelled" && (
@@ -408,7 +435,16 @@ export default function OrdersPage() {
                 </div>
               )}
               {o.status !== "cancelled" && (
-                <div className="flex gap-4">
+                <div className="flex flex-wrap items-center gap-4">
+                  {o.balance > 0 && (
+                    <button
+                      onClick={() => handleConfirmPaid(o)}
+                      disabled={confirmingId === o.id}
+                      className="bg-forest text-white rounded-md px-3 py-1.5 text-xs font-medium disabled:opacity-50"
+                    >
+                      {confirmingId === o.id ? "..." : `✅ Konfime peman (${fmt(o.balance)})`}
+                    </button>
+                  )}
                   {o.balance > 0 && (
                     <button
                       onClick={() => {
