@@ -83,7 +83,7 @@ export function StockLine({ p }: { p: PublicProduct }) {
     return (
       <p className="flex items-center gap-1.5 text-xs font-medium" style={{ color: C.ok }}>
         <span className="w-1.5 h-1.5 rounded-full" style={{ background: C.ok }} />
-        {t("Pwodwi online · disponib")}
+        {t("Disponib")}
       </p>
     );
   }
