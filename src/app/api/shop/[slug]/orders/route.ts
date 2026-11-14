@@ -2,11 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { randomUUID, randomInt } from "crypto";
 import { redis, hsetClean } from "@/lib/upstash";
-import { getBusinessBySlug, rateLimit, cleanPhone, isTrue, toList } from "@/lib/shop";
-import { PAY_LABEL, deliveryFeeFor, variantLabel } from "@/lib/shop-utils";
+import { getBusinessBySlug, rateLimit, cleanPhone, isTrue, priceCart } from "@/lib/shop";
+import { PAY_LABEL } from "@/lib/shop-utils";
 import { pushNotification, notifyLowStock } from "@/lib/notifications";
 import type { Order } from "@/app/api/orders/route";
-import type { Product } from "@/types";
 
 const schema = z.object({
   customerName: z.string().trim().min(2).max(80),
@@ -62,61 +61,10 @@ export async function POST(
     return NextResponse.json({ error: "Antre adrès livrezon an." }, { status: 400 });
   }
 
-  // Konbine liy repete (menm pwodwi + gwosè + koulè)
-  const wanted = new Map<string, { productId: string; size: string; color: string; qty: number }>();
-  for (const it of parsed.data.items) {
-    const size = it.size || "";
-    const color = it.color || "";
-    const k = `${it.productId}|${size}|${color}`;
-    const cur = wanted.get(k);
-    if (cur) cur.qty += it.qty;
-    else wanted.set(k, { productId: it.productId, size, color, qty: it.qty });
-  }
-
-  // Pri yo ALWAYS soti nan baz done a, jamè nan navigatè kliyan an
-  const prodCache = new Map<string, Product>();
-  const lines: { productId: string; name: string; qty: number; unitPrice: number; unit: string; variant?: string }[] = [];
-  for (const w of wanted.values()) {
-    let p = prodCache.get(w.productId);
-    if (!p) {
-      const row = await redis.hgetall<Product>(`product:${w.productId}`);
-      if (!row || row.businessId !== business.id || !isTrue(row.published)) {
-        return NextResponse.json({ error: "Yon pwodwi pa disponib ankò. Rafrechi paj la." }, { status: 404 });
-      }
-      p = row as Product;
-      prodCache.set(w.productId, p);
-    }
-    const sizes = toList(p.sizes);
-    const colors = toList(p.colors);
-    if ((sizes.length && !w.size) || (w.size && !sizes.includes(w.size))) {
-      return NextResponse.json({ error: `Chwazi yon gwosè valid pou ${p.name}.` }, { status: 400 });
-    }
-    if ((colors.length && !w.color) || (w.color && !colors.includes(w.color))) {
-      return NextResponse.json({ error: `Chwazi yon koulè valid pou ${p.name}.` }, { status: 400 });
-    }
-    lines.push({
-      productId: w.productId,
-      name: String(p.name),
-      qty: w.qty,
-      unitPrice: Number(p.sellPrice) || 0,
-      unit: (p.unit as string) || "",
-      variant: variantLabel(w.size, w.color) || undefined,
-    });
-  }
-
-  const subtotal = lines.reduce((s, l) => s + l.qty * l.unitPrice, 0);
-  if (subtotal <= 0) {
-    return NextResponse.json({ error: "Pwodwi sa yo pa gen pri. Kontakte biznis la." }, { status: 400 });
-  }
-  const deliveryFee = deliveryFeeFor(
-    {
-      deliveryFee: Math.max(0, Number(business.shopDeliveryFee) || 0),
-      freeDeliveryMin: Math.max(0, Number(business.shopFreeDeliveryMin) || 0),
-    },
-    subtotal,
-    deliveryMethod
-  );
-  const total = subtotal + deliveryFee;
+  const priced = await priceCart(business, parsed.data.items, deliveryMethod);
+  if (!priced.ok) return NextResponse.json({ error: priced.error }, { status: priced.status });
+  const { lines, subtotal, deliveryFee, total } = priced;
+  const prodCache = priced.products;
 
   // Rezève stok la atomikman (hincrby) pa pwodwi: si yon pwodwi pa sifi, anile sa nou te deja rezève
   const perProduct = new Map<string, number>();

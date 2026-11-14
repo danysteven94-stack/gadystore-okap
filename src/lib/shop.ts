@@ -4,6 +4,7 @@ import { redis } from "@/lib/upstash";
 import { verifySession } from "@/lib/auth";
 import type { Business, Product } from "@/types";
 import type { Order } from "@/app/api/orders/route";
+import { deliveryFeeFor, variantLabel, type DeliveryMethod } from "@/lib/shop-utils";
 
 export function slugify(input: string): string {
   return (
@@ -211,4 +212,106 @@ export async function findOrderByCode(businessId: string, rawCode: string): Prom
   }
   const o = await redis.hgetall<Order>(`order:${id}`);
   return o && o.id ? o : null;
+}
+
+export interface CartInput {
+  productId: string;
+  qty: number;
+  size?: string;
+  color?: string;
+}
+
+export interface PricedLine {
+  productId: string;
+  name: string;
+  qty: number;
+  unitPrice: number;
+  unit: string;
+  variant?: string;
+}
+
+export type PriceResult =
+  | {
+      ok: true;
+      lines: PricedLine[];
+      products: Map<string, Product>;
+      subtotal: number;
+      deliveryFee: number;
+      total: number;
+    }
+  | { ok: false; status: number; error: string };
+
+/**
+ * Kalkile panye a sou sèvè: pri yo soti nan baz done a (jamè nan navigatè a),
+ * verifye gwosè/koulè, pwodwi pibliye, stok ak frè livrezon. Itilize pa /quote ak /orders.
+ */
+export async function priceCart(
+  business: Business,
+  items: CartInput[],
+  deliveryMethod: DeliveryMethod
+): Promise<PriceResult> {
+  // Konbine liy repete (menm pwodwi + gwosè + koulè)
+  const wanted = new Map<string, { productId: string; size: string; color: string; qty: number }>();
+  for (const it of items) {
+    const size = it.size || "";
+    const color = it.color || "";
+    const k = `${it.productId}|${size}|${color}`;
+    const cur = wanted.get(k);
+    if (cur) cur.qty += it.qty;
+    else wanted.set(k, { productId: it.productId, size, color, qty: it.qty });
+  }
+
+  const products = new Map<string, Product>();
+  const lines: PricedLine[] = [];
+  for (const w of wanted.values()) {
+    let p = products.get(w.productId);
+    if (!p) {
+      const row = await redis.hgetall<Product>(`product:${w.productId}`);
+      if (!row || row.businessId !== business.id || !isTrue(row.published)) {
+        return { ok: false, status: 404, error: "Yon pwodwi pa disponib ankò. Rafrechi paj la." };
+      }
+      p = row as Product;
+      products.set(w.productId, p);
+    }
+    const sizes = toList(p.sizes);
+    const colors = toList(p.colors);
+    if ((sizes.length && !w.size) || (w.size && !sizes.includes(w.size))) {
+      return { ok: false, status: 400, error: `Chwazi yon gwosè valid pou ${p.name}.` };
+    }
+    if ((colors.length && !w.color) || (w.color && !colors.includes(w.color))) {
+      return { ok: false, status: 400, error: `Chwazi yon koulè valid pou ${p.name}.` };
+    }
+    lines.push({
+      productId: w.productId,
+      name: String(p.name),
+      qty: w.qty,
+      unitPrice: Number(p.sellPrice) || 0,
+      unit: (p.unit as string) || "",
+      variant: variantLabel(w.size, w.color) || undefined,
+    });
+  }
+
+  // Stok la dwe sifi pou total pwodwi a (tout varyant ansanm)
+  const perProduct = new Map<string, number>();
+  for (const l of lines) perProduct.set(l.productId, (perProduct.get(l.productId) ?? 0) + l.qty);
+  for (const [id, qty] of perProduct) {
+    const p = products.get(id)!;
+    if (qty > Math.max(0, Number(p.stock) || 0)) {
+      return { ok: false, status: 409, error: `Stok ${p.name} pa sifi. Redwi kantite a.` };
+    }
+  }
+
+  const subtotal = lines.reduce((s, l) => s + l.qty * l.unitPrice, 0);
+  if (subtotal <= 0) {
+    return { ok: false, status: 400, error: "Pwodwi sa yo pa gen pri. Kontakte biznis la." };
+  }
+  const deliveryFee = deliveryFeeFor(
+    {
+      deliveryFee: Math.max(0, Number(business.shopDeliveryFee) || 0),
+      freeDeliveryMin: Math.max(0, Number(business.shopFreeDeliveryMin) || 0),
+    },
+    subtotal,
+    deliveryMethod
+  );
+  return { ok: true, lines, products, subtotal, deliveryFee, total: subtotal + deliveryFee };
 }
