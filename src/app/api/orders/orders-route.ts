@@ -73,7 +73,21 @@ export async function GET(req: NextRequest) {
     ? await Promise.all(ids.map((id) => redis.hgetall<Order>(`order:${id}`)))
     : [];
 
-  const validOrders = orders.filter((o): o is Order => !!o);
+  // Upstash dezeriyalize valè ki sanble nimewo (ex: telefòn "50937123456" vin tounen nimewo).
+  // Nou fòse chan tèks yo tounen string pou paj la pa kraze (.replace sou yon nimewo).
+  const TEXT_FIELDS = ["customerName", "description", "code", "customerPhone", "customerAddress", "note", "paymentRef", "couponCode", "fulfillmentNote"] as const;
+  const validOrders = orders
+    .filter((o): o is Order => !!o)
+    .map((o) => {
+      const fixed: Order = { ...o };
+      for (const f of TEXT_FIELDS) {
+        if (fixed[f] !== undefined && fixed[f] !== null) (fixed as Record<string, unknown>)[f] = String(fixed[f]);
+      }
+      fixed.totalAmount = Number(o.totalAmount) || 0;
+      fixed.depositAmount = Number(o.depositAmount) || 0;
+      fixed.balance = Number(o.balance) || 0;
+      return fixed;
+    });
   const totalOutstanding = validOrders
     .filter((o) => o.status !== "cancelled")
     .reduce((sum, o) => sum + o.balance, 0);

@@ -322,7 +322,7 @@ export default function OrdersPage() {
                     <p className="text-xs text-ink/50 dark:text-white/50 mt-1">
                       {o.customerPhone && (
                         <a
-                          href={`https://wa.me/${o.customerPhone.replace(/\D/g, "")}`}
+                          href={`https://wa.me/${String(o.customerPhone).replace(/\D/g, "")}`}
                           target="_blank"
                           rel="noreferrer"
                           className="text-forest underline underline-offset-2"
