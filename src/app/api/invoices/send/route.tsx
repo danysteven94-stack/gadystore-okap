@@ -5,6 +5,7 @@ import { renderToBuffer } from "@react-pdf/renderer";
 import { redis } from "@/lib/upstash";
 import { verifySession } from "@/lib/auth";
 import { InvoiceDocument } from "@/lib/pdf/invoice";
+import { signInvoice } from "@/lib/invoice-token";
 import type { Business, Customer, Sale } from "@/types";
 
 const sendSchema = z.object({
@@ -49,7 +50,7 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-    const invoiceUrl = `${req.nextUrl.origin}/api/invoices/${saleId}`;
+    const invoiceUrl = `${req.nextUrl.origin}/api/invoices/public/sale/${saleId}?t=${signInvoice("sale", saleId)}`;
     const message = encodeURIComponent(
       `Bonjou! Men fakti ${invoiceNumber} ou nan ${business.name}: ${invoiceUrl}`
     );

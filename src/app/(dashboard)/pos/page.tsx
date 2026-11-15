@@ -1,5 +1,6 @@
 "use client";
 
+import { InvoiceActions } from "@/components/invoices/invoice-actions";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { Search, ScanLine, Loader2, ShoppingCart } from "lucide-react";
 import { BusinessSwitcher } from "@/components/dashboard/business-switcher";
@@ -27,6 +28,7 @@ export default function POSPage() {
     "cash" | "card" | "mobile_money" | "mixed"
   >("cash");
   const [status, setStatus] = useState<string | null>(null);
+  const [lastSaleId, setLastSaleId] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/businesses")
@@ -149,6 +151,8 @@ export default function POSPage() {
         return;
       }
 
+      const created = await res.json().catch(() => null);
+      setLastSaleId(created?.sale?.id ?? null);
       setCart([]);
       setStatus(t("pos_success"));
       await loadProducts();
@@ -299,6 +303,12 @@ export default function POSPage() {
       </button>
 
       {status && <p className="text-sm text-center text-ink/60 dark:text-white/60 mt-3">{status}</p>}
+      {lastSaleId && (
+        <div className="mt-3 rounded-card border border-ink/10 dark:border-dark-border p-3">
+          <p className="text-xs font-medium mb-2">Fakti dènye vant lan</p>
+          <InvoiceActions kind="sale" id={lastSaleId} />
+        </div>
+      )}
 
       {showScanner && (
         <BarcodeScanner onScan={handleScan} onClose={() => setShowScanner(false)} />

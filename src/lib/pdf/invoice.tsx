@@ -51,6 +51,7 @@ interface InvoiceProps {
   customer?: Customer;
   invoiceNumber: string;
   qrCodeDataUrl?: string; // généré via qrcode.toDataURL() côté serveur
+  extra?: { paid?: number; balance?: number; reference?: string };
 }
 
 export function InvoiceDocument({
@@ -59,6 +60,7 @@ export function InvoiceDocument({
   customer,
   invoiceNumber,
   qrCodeDataUrl,
+  extra,
 }: InvoiceProps) {
   return (
     <Document>
@@ -74,6 +76,7 @@ export function InvoiceDocument({
           <View>
             <Text style={styles.invoiceTitle}>FAKTI</Text>
             <Text style={styles.muted}>N° {invoiceNumber}</Text>
+            {extra?.reference && <Text style={styles.muted}>{extra.reference}</Text>}
             <Text style={styles.muted}>
               {new Date(sale.createdAt).toLocaleDateString("fr-FR")}
             </Text>
@@ -96,8 +99,8 @@ export function InvoiceDocument({
             <Text style={styles.colPrice}>Pri init.</Text>
             <Text style={styles.colTotal}>Total</Text>
           </View>
-          {sale.items.map((item) => (
-            <View style={styles.tableRow} key={item.productId}>
+          {sale.items.map((item, idx) => (
+            <View style={styles.tableRow} key={`${item.productId}-${idx}`}>
               <Text style={styles.colName}>{item.name}</Text>
               <Text style={styles.colQty}>{item.qty}</Text>
               <Text style={styles.colPrice}>{item.unitPrice.toLocaleString("fr-FR")}</Text>
@@ -117,6 +120,12 @@ export function InvoiceDocument({
             <Text>Remiz</Text>
             <Text>-{sale.discount.toLocaleString("fr-FR")}</Text>
           </View>
+          {Number(sale.shipping) > 0 && (
+            <View style={styles.totalRow}>
+              <Text>Livrezon</Text>
+              <Text>{Number(sale.shipping).toLocaleString("fr-FR")}</Text>
+            </View>
+          )}
           <View style={styles.totalRow}>
             <Text>Taks</Text>
             <Text>{sale.tax.toLocaleString("fr-FR")}</Text>
@@ -127,6 +136,18 @@ export function InvoiceDocument({
               {sale.total.toLocaleString("fr-FR")} {business.currency}
             </Text>
           </View>
+          {extra?.paid !== undefined && (
+            <>
+              <View style={styles.totalRow}>
+                <Text>Peye</Text>
+                <Text>{extra.paid.toLocaleString("fr-FR")}</Text>
+              </View>
+              <View style={styles.totalRow}>
+                <Text>Rès pou peye</Text>
+                <Text>{(extra.balance ?? 0).toLocaleString("fr-FR")}</Text>
+              </View>
+            </>
+          )}
         </View>
 
         <View style={styles.qrRow}>

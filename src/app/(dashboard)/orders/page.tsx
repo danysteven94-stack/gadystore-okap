@@ -1,5 +1,6 @@
 "use client";
 
+import { InvoiceActions } from "@/components/invoices/invoice-actions";
 import { useEffect, useState, useCallback } from "react";
 import { ClipboardList, Plus, Loader2, X, Package } from "lucide-react";
 import { BusinessSwitcher } from "@/components/dashboard/business-switcher";
@@ -432,6 +433,11 @@ export default function OrdersPage() {
                       )}
                     </div>
                   )}
+                </div>
+              )}
+              {o.status !== "cancelled" && (
+                <div className="mb-3">
+                  <InvoiceActions kind="order" id={o.id} phone={String(o.customerPhone ?? "")} />
                 </div>
               )}
               {o.status !== "cancelled" && (

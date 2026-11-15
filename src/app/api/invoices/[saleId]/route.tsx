@@ -3,6 +3,7 @@ import { renderToBuffer } from "@react-pdf/renderer";
 import QRCode from "qrcode";
 import { redis } from "@/lib/upstash";
 import { verifySession } from "@/lib/auth";
+import { userOwnsBusiness } from "@/lib/shop";
 import { InvoiceDocument } from "@/lib/pdf/invoice";
 import type { Business, Customer, Sale } from "@/types";
 
@@ -19,6 +20,10 @@ export async function GET(
   const sale = await redis.hgetall<Sale>(`sale:${saleId}`);
   if (!sale) {
     return NextResponse.json({ error: "Vant pa jwenn." }, { status: 404 });
+  }
+
+  if (!(await userOwnsBusiness(session.email, sale.businessId))) {
+    return NextResponse.json({ error: "Aksè refize." }, { status: 403 });
   }
 
   const business = await redis.hgetall<Business>(`business:${sale.businessId}`);
