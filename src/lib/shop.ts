@@ -65,6 +65,11 @@ export function isDigital(p: { productType?: unknown }) {
   return p.productType === "digital";
 }
 
+/** Pwodwi "byento disponib": vizib nan boutik la men kliyan pa ka komande l. */
+export function isComingSoon(p: { comingSoon?: unknown }) {
+  return p.comingSoon === true || p.comingSoon === "true";
+}
+
 export function isTrue(v: unknown) {
   return v === true || v === "true";
 }
@@ -125,6 +130,7 @@ export interface PublicProduct {
   rating: number; // mwayèn 0-5
   ratingCount: number;
   digital: boolean; // pwodwi online
+  comingSoon: boolean; // byento disponib
   leadDays: number; // jou pou li rive (0 = pa defini)
 }
 
@@ -176,7 +182,7 @@ export function toPublicProduct(p: Product): PublicProduct {
     brand: p.brand ? String(p.brand) : "",
     price,
     comparePrice: compare > price ? compare : null,
-    stock: isDigital(p) ? 9999 : Math.max(0, toNum(p.stock)), // online = san limit
+    stock: isComingSoon(p) ? 0 : isDigital(p) ? 9999 : Math.max(0, toNum(p.stock)), // byento = pa ka komande; online = san limit
     unit: p.unit ? String(p.unit) : "",
     imageUrl: images[0] ?? null,
     images,
@@ -189,6 +195,7 @@ export function toPublicProduct(p: Product): PublicProduct {
     rating: ratingCount > 0 ? Math.round((ratingSum / ratingCount) * 10) / 10 : 0,
     ratingCount,
     digital: isDigital(p),
+    comingSoon: isComingSoon(p),
     leadDays: Math.max(0, Math.floor(toNum(p.leadDays))),
   };
 }
@@ -374,6 +381,9 @@ export async function priceCart(
       }
       p = row as Product;
       found.set(w.productId, p);
+    }
+    if (isComingSoon(p)) {
+      return { ok: false, status: 400, error: `${p.name} pa disponib ankò (byento disponib). Retire l nan panye a.` };
     }
     const sizes = optList(p.sizes);
     const colors = optList(p.colors);

@@ -79,6 +79,9 @@ export function Price({
 
 export function StockLine({ p }: { p: PublicProduct }) {
   const t = useT();
+  if (p.comingSoon) {
+    return <p className="text-xs font-semibold" style={{ color: "#B45309" }}>{t("Byento disponib")}</p>;
+  }
   if (p.digital) {
     return (
       <p className="flex items-center gap-1.5 text-xs font-medium" style={{ color: C.ok }}>

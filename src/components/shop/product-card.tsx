@@ -27,7 +27,7 @@ export function ProductCard({ p, index = 0 }: { p: PublicProduct; index?: number
             src={p.imageUrl}
             alt={p.name}
             loading="lazy"
-            className={`w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 ${out ? "grayscale opacity-60" : ""}`}
+            className={`w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 ${out && !p.comingSoon ? "grayscale opacity-60" : ""}`}
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center" style={{ color: C.line }}>
@@ -35,7 +35,8 @@ export function ProductCard({ p, index = 0 }: { p: PublicProduct; index?: number
           </div>
         )}
         <div className="absolute top-2 left-2 flex flex-col gap-1 items-start">
-          {out && <Badge bg={C.ink}>{t("FINI")}</Badge>}
+          {out && p.comingSoon && <Badge bg="#B45309">{t("BYENTO")}</Badge>}
+          {out && !p.comingSoon && <Badge bg={C.ink}>{t("FINI")}</Badge>}
           {!out && pct > 0 && <Badge bg={C.red}>-{pct}%</Badge>}
           {!out && !p.digital && p.stock <= 5 && <Badge bg="#B45309">{t("BALEN")}</Badge>}
           {!out && isNew(p) && <Badge bg={C.ink}>{t("NOUVO")}</Badge>}

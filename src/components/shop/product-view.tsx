@@ -118,7 +118,7 @@ export function ProductView({ productId }: { productId: string }) {
                 src={imgs[idx]}
                 alt={p.name}
                 onClick={() => setZoom(true)}
-                className={`w-full h-full object-cover cursor-zoom-in ${out ? "grayscale opacity-70" : ""}`}
+                className={`w-full h-full object-cover cursor-zoom-in ${out && !p.comingSoon ? "grayscale opacity-70" : ""}`}
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center" style={{ color: C.line }}><ShoppingBag size={72} /></div>

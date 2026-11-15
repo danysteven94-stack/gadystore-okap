@@ -56,6 +56,7 @@ export interface Product {
   images?: string[]; // foto adisyonèl (galri)
   featured?: boolean; // mete devan sou paj dakèy la
   productType?: "physical" | "digital"; // fizik (default) oswa online
+  comingSoon?: boolean; // byento disponib: parèt nan boutik men pa ka komande
   leadDays?: number; // kantite jou pou pwodwi a rive apre kòmand (0 = pa defini)
   sizes?: string; // gwosè, separe ak vigil: "S, M, L"
   colors?: string; // koulè, separe ak vigil: "Nwa, Wouj"

@@ -23,6 +23,7 @@ export interface ProductFormValues {
   brand?: string;
   images?: string[];
   featured?: boolean;
+  comingSoon?: boolean;
   productType?: "physical" | "digital";
   leadDays?: number;
   sizes?: string;
@@ -52,6 +53,7 @@ const EMPTY: ProductFormValues = {
   brand: "",
   images: [],
   featured: false,
+  comingSoon: false,
   productType: "physical",
   leadDays: 0,
   sizes: "",
@@ -102,6 +104,7 @@ export function ProductForm({ initial, onSave, onDelete, onClose }: Props) {
       comparePrice: Number(base.comparePrice) || 0,
       brand: base.brand ? String(base.brand) : "",
       featured: isOn(base.featured),
+      comingSoon: isOn(base.comingSoon),
       productType: base.productType === "digital" ? "digital" : "physical",
       leadDays: Number(base.leadDays) || 0,
       sizes: base.sizes != null ? String(base.sizes) : "",
@@ -163,6 +166,7 @@ export function ProductForm({ initial, onSave, onDelete, onClose }: Props) {
       comparePrice: Number(values.comparePrice) || 0,
       brand: values.brand?.trim() || undefined,
       featured: isOn(values.featured),
+      comingSoon: isOn(values.comingSoon),
       productType: values.productType === "digital" ? "digital" : "physical",
       leadDays: Math.max(0, Math.min(365, Math.floor(Number(values.leadDays) || 0))),
       ...(values.productType === "digital" ? { stock: 0, minStock: 0 } : {}),
@@ -415,6 +419,19 @@ export function ProductForm({ initial, onSave, onDelete, onClose }: Props) {
               onChange={(e) => update("description", e.target.value)}
             />
           </Field>
+
+          <label className="flex items-start gap-3 rounded-card border border-amber-500/40 bg-amber-500/5 px-3 py-2.5 mb-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={isOn(values.comingSoon)}
+              onChange={(e) => update("comingSoon", e.target.checked)}
+              className="w-4 h-4 mt-0.5 accent-red-600"
+            />
+            <span className="text-sm">
+              Byento disponib
+              <span className="block text-xs text-ink/50 dark:text-white/50">Pwodwi a parèt nan reyon "Byento disponib" sou boutik la, men kliyan pa ka komande l.</span>
+            </span>
+          </label>
 
           <label className="flex items-center gap-3 rounded-card border border-ink/15 px-3 py-2.5 mb-3 cursor-pointer">
             <input

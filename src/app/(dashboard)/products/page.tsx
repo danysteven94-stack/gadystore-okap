@@ -61,7 +61,7 @@ export default function ProductsPage() {
     [products, query, categoryFilter]
   );
 
-  const physical = products.filter((p) => p.productType !== "digital");
+  const physical = products.filter((p) => p.productType !== "digital" && !p.comingSoon);
   const lowCount = physical.filter((p) => p.stock <= p.minStock).length;
   const stockValue = physical.reduce((sum, p) => sum + p.stock * p.buyPrice, 0);
 
@@ -255,7 +255,9 @@ export default function ProductsPage() {
                   <p className="text-xs text-ink/40 dark:text-white/40">achte {fmt(p.buyPrice)}</p>
                 </div>
               </div>
-              {p.productType === "digital" ? (
+              {p.comingSoon ? (
+                <p className="text-xs font-semibold text-amber-600">Byento disponib · pa ka komande</p>
+              ) : p.productType === "digital" ? (
                 <p className="text-xs text-ink/50 dark:text-white/50">
                   Pwodwi online · pa gen stok{Number(p.leadDays) > 0 ? ` · ${p.leadDays} jou` : ""}
                 </p>

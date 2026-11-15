@@ -28,6 +28,7 @@ export function Catalog() {
   const q = (sp.get("q") ?? "").trim();
   const cat = sp.get("cat");
   const saleOnly = sp.get("sale") === "1";
+  const soonOnly = sp.get("soon") === "1";
 
   const [sort, setSort] = useState<Sort>("relevance");
   const [inStock, setInStock] = useState(false);
@@ -36,7 +37,7 @@ export function Catalog() {
   const [filterOpen, setFilterOpen] = useState(false);
   const [limit, setLimit] = useState(PAGE);
 
-  useEffect(() => setLimit(PAGE), [q, cat, saleOnly, sort, inStock, minP, maxP]);
+  useEffect(() => setLimit(PAGE), [q, cat, saleOnly, soonOnly, sort, inStock, minP, maxP]);
 
   const categories = useMemo(() => {
     const map = new Map<string, { count: number; image: string | null }>();
@@ -49,7 +50,7 @@ export function Catalog() {
     return [...map.entries()].sort((a, b) => b[1].count - a[1].count);
   }, [shop.products]);
 
-  const browsing = !!(q || cat || saleOnly);
+  const browsing = !!(q || cat || saleOnly || soonOnly);
 
   const list = useMemo(() => {
     const ql = q.toLowerCase();
@@ -61,6 +62,7 @@ export function Catalog() {
         (!ql || `${p.name} ${p.brand} ${p.category} ${p.description ?? ""}`.toLowerCase().includes(ql)) &&
         (!inStock || p.stock > 0) &&
         (!saleOnly || discountPct(p) > 0) &&
+        (!soonOnly || p.comingSoon) &&
         (lo === null || p.price >= lo) &&
         (hi === null || p.price <= hi)
     );
@@ -75,15 +77,16 @@ export function Catalog() {
     };
     const fn = by[sort];
     return fn ? [...r].sort(fn) : r;
-  }, [shop.products, q, cat, saleOnly, sort, inStock, minP, maxP]);
+  }, [shop.products, q, cat, saleOnly, soonOnly, sort, inStock, minP, maxP]);
 
   const deals = useMemo(() => [...shop.products].filter((p) => discountPct(p) > 0 && p.stock > 0).sort((a, b) => discountPct(b) - discountPct(a)).slice(0, 12), [shop.products]);
   const fresh = useMemo(() => shop.products.filter((p) => isNew(p) && p.stock > 0).slice(0, 12), [shop.products]);
+  const soon = useMemo(() => shop.products.filter((p) => p.comingSoon).slice(0, 12), [shop.products]);
   const best = useMemo(() => [...shop.products].filter((p) => p.sold > 0).sort((a, b) => b.sold - a.sold).slice(0, 12), [shop.products]);
   const featured = useMemo(() => shop.products.filter((p) => p.featured && p.stock > 0).slice(0, 12), [shop.products]);
 
   const activeFilters = (inStock ? 1 : 0) + (minP !== "" || maxP !== "" ? 1 : 0);
-  const title = q ? t("Rezilta pou “{q}”", { q }) : cat ? cat : saleOnly ? t("Promosyon") : t("Tout pwodwi");
+  const title = q ? t("Rezilta pou “{q}”", { q }) : cat ? cat : saleOnly ? t("Promosyon") : soonOnly ? t("Byento disponib") : t("Tout pwodwi");
   const waHello = shop.whatsapp
     ? `https://wa.me/${shop.whatsapp}?text=${encodeURIComponent(t("Bonjou {shop}, mwen vle plis enfòmasyon.", { shop: shop.name }))}`
     : null;
@@ -148,6 +151,7 @@ export function Catalog() {
             <ProductRow title={t("🔥 Promosyon")} href={`${base}?sale=1`} products={deals} />
             <ProductRow title={t("🆕 Nouvo")} products={fresh} />
             <ProductRow title={t("🏆 Pi vann")} products={best} />
+            <ProductRow title={t("⏳ Byento disponib")} href={`${base}?soon=1`} products={soon} />
           </div>
         </>
       )}
