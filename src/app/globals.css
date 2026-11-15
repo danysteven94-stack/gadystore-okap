@@ -43,3 +43,20 @@
   button, a { -webkit-user-select: none; user-select: none; }
   table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
 }
+
+/* Mòd sonb: tèks nan chan yo dwe toujou vizib */
+.dark input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]),
+.dark select,
+.dark textarea {
+  background-color: #1a1a1a;
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.18);
+  color-scheme: dark;
+}
+.dark input::placeholder,
+.dark textarea::placeholder { color: rgba(255, 255, 255, 0.45); }
+.dark select option { background-color: #1a1a1a; color: #ffffff; }
+.dark input:-webkit-autofill {
+  -webkit-text-fill-color: #ffffff;
+  -webkit-box-shadow: 0 0 0 1000px #1a1a1a inset;
+}

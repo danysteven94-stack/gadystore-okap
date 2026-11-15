@@ -165,7 +165,7 @@ export function SheetHeader({ title, onClose }: { title: string; onClose: () => 
 }
 
 export const fieldClass =
-  "w-full rounded-xl border bg-white px-4 py-3.5 text-[15px] focus:outline-none focus:ring-2 focus:ring-black/20";
+  "w-full rounded-xl border bg-white text-[#111111] placeholder:text-[#6B6B6B] dark:bg-white dark:text-[#111111] px-4 py-3.5 text-[15px] focus:outline-none focus:ring-2 focus:ring-black/20";
 export const fieldStyle = { borderColor: C.line } as const;
 
 /** Etap livrezon yo, nan lòd. */
