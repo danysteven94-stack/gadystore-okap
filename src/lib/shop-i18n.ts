@@ -89,6 +89,13 @@ const D: [string, string, string][] = [
   // ----- Kat pwodwi / ui
   ["FINI", "ÉPUISÉ", "SOLD OUT"],
   ["BALEN", "DERNIERS", "LOW STOCK"],
+  ["BYENTO", "BIENTÔT", "COMING SOON"],
+  ["Byento disponib", "Bientôt disponible", "Coming soon"],
+  ["⏳ Byento disponib", "⏳ Bientôt disponible", "⏳ Coming soon"],
+  ["Disponib", "Disponible", "Available"],
+  ["Delè pou resevwa pwodwi sa a: {n} jou apre kòmand", "Délai de réception de ce produit : {n} jours après la commande", "Delivery time for this product: {n} days after ordering"],
+  ["Delè pwodwi", "Délai du produit", "Product lead time"],
+  ["Imèl (pou resevwa konfimasyon)", "E-mail (pour recevoir la confirmation)", "Email (to receive confirmation)"],
   ["NOUVO", "NOUVEAU", "NEW"],
   ["Retire nan favori", "Retirer des favoris", "Remove from favorites"],
   ["Ajoute nan favori", "Ajouter aux favoris", "Add to favorites"],
