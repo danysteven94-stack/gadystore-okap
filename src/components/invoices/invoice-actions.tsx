@@ -1,7 +1,44 @@
 "use client";
 
 import { useState } from "react";
-import { Download, Loader2, MessageCircle, FileText } from "lucide-react";
+import { Download, Loader2, MessageCircle, FileText, Share2 } from "lucide-react";
+
+type Cap = {
+  isNativePlatform?: () => boolean;
+  Plugins?: {
+    Browser?: { open: (o: { url: string }) => Promise<void> };
+    Share?: { share: (o: { title?: string; url?: string; dialogTitle?: string }) => Promise<void> };
+  };
+};
+const cap = (): Cap | undefined => (typeof window !== "undefined" ? (window as unknown as { Capacitor?: Cap }).Capacitor : undefined);
+const isNative = () => !!cap()?.isNativePlatform?.();
+
+/** Louvri yon PDF: nan app natif la → navigatè entèn (Safari/Chrome) kote ou ka sove l / pataje l; sou entènèt → nouvo onglè. */
+async function openPdf(url: string) {
+  const browser = cap()?.Plugins?.Browser;
+  if (isNative() && browser) return browser.open({ url });
+  const w = window.open(url, "_blank", "noopener");
+  if (!w) window.location.href = url;
+}
+
+/** Telechaje PDF la: sou entènèt → fichye ki desann dirèkteman; nan app natif la → navigatè entèn ak bouton pataje/sove. */
+async function downloadPdf(url: string, filename: string) {
+  if (isNative()) return openPdf(url);
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error();
+    const blob = await res.blob();
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+  } catch {
+    await openPdf(url);
+  }
+}
 
 interface Props {
   kind: "sale" | "order";
@@ -10,7 +47,7 @@ interface Props {
 }
 
 export function InvoiceActions({ kind, id, phone }: Props) {
-  const [busy, setBusy] = useState<"" | "dl" | "wa" | "view">("");
+  const [busy, setBusy] = useState<"" | "dl" | "wa" | "view" | "share">("");
   const [open, setOpen] = useState(false);
   const [number, setNumber] = useState(phone ?? "");
   const [err, setErr] = useState("");
@@ -26,20 +63,30 @@ export function InvoiceActions({ kind, id, phone }: Props) {
     return data as { pdfUrl: string; downloadUrl: string; whatsappUrl: string };
   }
 
-  async function run(kindBusy: "dl" | "wa" | "view") {
+  async function run(kindBusy: "dl" | "wa" | "view" | "share") {
     setBusy(kindBusy);
     setErr("");
     try {
       if (kindBusy === "wa") {
         const d = await link(number);
-        window.open(d.whatsappUrl, "_blank", "noopener");
+        await openPdf(d.whatsappUrl);
         setOpen(false);
+      } else if (kindBusy === "dl") {
+        const d = await link();
+        await downloadPdf(d.downloadUrl, `fakti-${id.slice(0, 8)}.pdf`);
+      } else if (kindBusy === "share") {
+        const d = await link();
+        const share = cap()?.Plugins?.Share;
+        if (isNative() && share) await share.share({ title: "Fakti", url: d.pdfUrl, dialogTitle: "Pataje fakti a" });
+        else if (navigator.share) await navigator.share({ title: "Fakti", url: d.pdfUrl });
+        else await openPdf(d.pdfUrl);
       } else {
         const d = await link();
-        window.open(kindBusy === "dl" ? d.downloadUrl : d.pdfUrl, "_blank", "noopener");
+        await openPdf(d.pdfUrl);
       }
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "Erè.");
+      // Itilizatè a anile fenèt pataje a: pa afiche erè
+      if (!(e instanceof Error && e.name === "AbortError")) setErr(e instanceof Error ? e.message : "Erè.");
     }
     setBusy("");
   }
@@ -57,6 +104,9 @@ export function InvoiceActions({ kind, id, phone }: Props) {
         </button>
         <button type="button" onClick={() => setOpen((v) => !v)} className={`${btn} text-forest`}>
           <MessageCircle size={13} /> Voye sou WhatsApp
+        </button>
+        <button type="button" onClick={() => run("share")} disabled={!!busy} className={`${btn} text-forest`}>
+          {busy === "share" ? <Loader2 size={13} className="animate-spin" /> : <Share2 size={13} />} Pataje
         </button>
       </div>
 
