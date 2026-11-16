@@ -48,6 +48,12 @@ export function ShopShell({ children }: { children: React.ReactNode }) {
         </div>
       )}
 
+      {shop.type === "restaurant" && !shop.acceptingOrders && (
+        <div className="text-white text-center text-xs sm:text-sm font-semibold px-4 py-2" style={{ background: C.ink }}>
+          {t("Restoran an fèmen kounye a — ou pa ka komande pou kounye a.")}
+        </div>
+      )}
+
       {/* ---------- Header ---------- */}
       <header className="sticky top-0 z-40 bg-white border-b" style={{ borderColor: C.line }}>
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center gap-3 sm:gap-6">

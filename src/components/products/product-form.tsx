@@ -24,7 +24,10 @@ export interface ProductFormValues {
   images?: string[];
   featured?: boolean;
   comingSoon?: boolean;
-  productType?: "physical" | "digital";
+  productType?: "physical" | "digital" | "dish";
+  tags?: string;
+  prepMinutes?: number;
+  unavailable?: boolean;
   leadDays?: number;
   sizes?: string;
   colors?: string;
@@ -55,6 +58,9 @@ const EMPTY: ProductFormValues = {
   featured: false,
   comingSoon: false,
   productType: "physical",
+  tags: "",
+  prepMinutes: 0,
+  unavailable: false,
   leadDays: 0,
   sizes: "",
   colors: "",
@@ -105,7 +111,10 @@ export function ProductForm({ initial, onSave, onDelete, onClose }: Props) {
       brand: base.brand ? String(base.brand) : "",
       featured: isOn(base.featured),
       comingSoon: isOn(base.comingSoon),
-      productType: base.productType === "digital" ? "digital" : "physical",
+      productType: base.productType === "digital" || base.productType === "dish" ? base.productType : "physical",
+      tags: String(base.tags ?? ""),
+      prepMinutes: Number(base.prepMinutes) || 0,
+      unavailable: isOn(base.unavailable),
       leadDays: Number(base.leadDays) || 0,
       sizes: base.sizes != null ? String(base.sizes) : "",
       colors: base.colors != null ? String(base.colors) : "",
@@ -167,9 +176,12 @@ export function ProductForm({ initial, onSave, onDelete, onClose }: Props) {
       brand: values.brand?.trim() || undefined,
       featured: isOn(values.featured),
       comingSoon: isOn(values.comingSoon),
-      productType: values.productType === "digital" ? "digital" : "physical",
+      productType: values.productType === "digital" || values.productType === "dish" ? values.productType : "physical",
+      tags: String(values.tags ?? "").trim(),
+      prepMinutes: Math.max(0, Math.min(240, Math.floor(Number(values.prepMinutes) || 0))),
+      unavailable: isOn(values.unavailable),
       leadDays: Math.max(0, Math.min(365, Math.floor(Number(values.leadDays) || 0))),
-      ...(values.productType === "digital" ? { stock: 0, minStock: 0 } : {}),
+      ...(values.productType === "digital" || values.productType === "dish" ? { stock: 0, minStock: 0 } : {}),
       sizes: (values.sizes ?? "").trim(),
       colors: (values.colors ?? "").trim(),
       imageUrl: values.imageUrl || undefined,
@@ -302,17 +314,33 @@ export function ProductForm({ initial, onSave, onDelete, onClose }: Props) {
           <Field label="Tip pwodwi">
             <select
               className={inputClass}
-              value={values.productType === "digital" ? "digital" : "physical"}
-              onChange={(e) => update("productType", e.target.value as "physical" | "digital")}
+              value={values.productType === "digital" || values.productType === "dish" ? values.productType : "physical"}
+              onChange={(e) => update("productType", e.target.value as "physical" | "digital" | "dish")}
             >
               <option value="physical">Pwodwi fizik (gen stok)</option>
               <option value="digital">Pwodwi online (pa gen stok)</option>
+              <option value="dish">Plat restoran (meni)</option>
             </select>
           </Field>
 
-          {values.productType === "digital" ? (
+          {values.productType === "dish" && (
+            <div className="space-y-3 mb-3">
+              <Field label="Etikèt (separe ak vigil)">
+                <input className={inputClass} value={values.tags ?? ""} onChange={(e) => update("tags", e.target.value)} placeholder="Pikan, Vejetaryen, Nouvo" />
+              </Field>
+              <Field label="Tan preparasyon (minit)">
+                <input type="number" min={0} max={240} className={inputClass} value={values.prepMinutes || ""} onChange={(e) => update("prepMinutes", Number(e.target.value))} placeholder="Ekz: 20" />
+              </Field>
+              <label className="flex items-center gap-3 rounded-card border border-ink/15 px-3 py-2.5 cursor-pointer">
+                <input type="checkbox" checked={isOn(values.unavailable)} onChange={(e) => update("unavailable", e.target.checked)} className="w-4 h-4 accent-red-600" />
+                <span className="text-sm">Fini pou jodi a (kliyan pa ka komande l)</span>
+              </label>
+            </div>
+          )}
+
+          {values.productType === "digital" || values.productType === "dish" ? (
             <p className="text-xs text-ink/50 dark:text-white/50">
-              Pwodwi online: kantite a pa limite epi kòb li pa konte nan valè stock la.
+              {values.productType === "dish" ? "Plat restoran" : "Pwodwi online"}: kantite a pa limite epi kòb li pa konte nan valè stock la.
             </p>
           ) : (
           <div className="grid grid-cols-2 gap-3">

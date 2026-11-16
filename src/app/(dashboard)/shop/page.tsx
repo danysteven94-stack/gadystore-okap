@@ -25,8 +25,13 @@ interface ShopSettings {
   shopPickupEnabled: boolean;
   shopDeliveryFee: number;
   shopFreeShippingMin: number;
+  shopDeliveryMinDays: number;
+  shopDeliveryMaxDays: number;
   shopAddress: string;
   shopHours: string;
+  shopType?: "store" | "restaurant";
+  shopPrepTime?: string;
+  shopAcceptingOrders?: boolean;
   shopPolicies: string;
   shopFacebook: string;
   shopInstagram: string;
@@ -43,11 +48,13 @@ const isOn = (v: unknown) => v === true || v === "true";
 export default function ShopPage() {
   const { t } = useLanguage();
   const [shops, setShops] = useState<ShopSettings[] | null>(null);
+  const [locked, setLocked] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [form, setForm] = useState({
     slug: "", whatsapp: "", shopName: "", shopLogo: "", shopCover: "", shopTagline: "", shopPaymentInfo: "",
-    shopAnnouncement: "", shopDeliveryEnabled: true, shopPickupEnabled: true, shopDeliveryFee: "", shopFreeShippingMin: "",
+    shopAnnouncement: "", shopDeliveryEnabled: true, shopPickupEnabled: true, shopDeliveryFee: "", shopFreeShippingMin: "", shopDeliveryMinDays: "", shopDeliveryMaxDays: "",
     shopAddress: "", shopHours: "", shopPolicies: "", shopFacebook: "", shopInstagram: "",
+    shopType: "store" as "store" | "restaurant", shopPrepTime: "", shopAcceptingOrders: true,
   });
   const [products, setProducts] = useState<Product[]>([]);
   const [saving, setSaving] = useState(false);
@@ -58,6 +65,7 @@ export default function ShopPage() {
     try {
       const res = await fetch("/api/shop/settings");
       const data = await res.json();
+      setLocked(!!data.locked);
       setShops(data.shops ?? []);
     } catch {
       setShops([]);
@@ -85,8 +93,13 @@ export default function ShopPage() {
       shopPickupEnabled: active.shopPickupEnabled !== false,
       shopDeliveryFee: active.shopDeliveryFee ? String(active.shopDeliveryFee) : "",
       shopFreeShippingMin: active.shopFreeShippingMin ? String(active.shopFreeShippingMin) : "",
+      shopDeliveryMinDays: active.shopDeliveryMinDays ? String(active.shopDeliveryMinDays) : "",
+      shopDeliveryMaxDays: active.shopDeliveryMaxDays ? String(active.shopDeliveryMaxDays) : "",
       shopAddress: active.shopAddress ?? "",
       shopHours: active.shopHours ?? "",
+      shopType: active.shopType === "restaurant" ? "restaurant" : "store",
+      shopPrepTime: active.shopPrepTime ?? "",
+      shopAcceptingOrders: active.shopAcceptingOrders !== false,
       shopPolicies: active.shopPolicies ?? "",
       shopFacebook: active.shopFacebook ?? "",
       shopInstagram: active.shopInstagram ?? "",
@@ -140,10 +153,15 @@ export default function ShopPage() {
         shopTagline: form.shopTagline,
         shopPaymentInfo: form.shopPaymentInfo,
         shopAnnouncement: form.shopAnnouncement,
+        shopType: form.shopType,
+        shopPrepTime: form.shopPrepTime,
+        shopAcceptingOrders: form.shopAcceptingOrders,
         shopDeliveryEnabled: form.shopDeliveryEnabled,
         shopPickupEnabled: form.shopPickupEnabled,
         shopDeliveryFee: Number(form.shopDeliveryFee) || 0,
         shopFreeShippingMin: Number(form.shopFreeShippingMin) || 0,
+        shopDeliveryMinDays: Math.floor(Number(form.shopDeliveryMinDays)) || 0,
+        shopDeliveryMaxDays: Math.floor(Number(form.shopDeliveryMaxDays)) || 0,
         shopAddress: form.shopAddress,
         shopHours: form.shopHours,
         shopPolicies: form.shopPolicies,
@@ -220,6 +238,16 @@ export default function ShopPage() {
       <main className="max-w-3xl mx-auto px-4 py-16 flex flex-col items-center text-ink/40 dark:text-white/40">
         <Loader2 size={24} className="animate-spin mb-2" />
         <p className="text-sm">Ap chaje...</p>
+      </main>
+    );
+  }
+
+  if (locked) {
+    return (
+      <main className="max-w-3xl mx-auto px-4 py-16 text-center">
+        <Store size={28} className="mx-auto mb-3 text-ink/30" />
+        <p className="font-semibold mb-1">Boutik piblik pa enkli nan plan ou</p>
+        <p className="text-sm text-ink/60 dark:text-white/60">Kontakte administratè a pou chanje plan ou si ou vle yon boutik piblik.</p>
       </main>
     );
   }
@@ -365,6 +393,28 @@ export default function ShopPage() {
               </div>
             </label>
             <label className="block">
+              <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">Tip boutik</span>
+              <select className={inputClass} value={form.shopType} onChange={(e) => setForm({ ...form, shopType: e.target.value as "store" | "restaurant" })}>
+                <option value="store">Boutik anliy (pwodwi)</option>
+                <option value="restaurant">Restoran (meni manje)</option>
+              </select>
+              {form.shopType === "restaurant" && (
+                <span className="block text-xs text-ink/50 dark:text-white/50 mt-1">Pwodwi ou yo ap parèt kòm yon meni. Nan fòm pwodwi a, chwazi tip "Plat restoran".</span>
+              )}
+            </label>
+            {form.shopType === "restaurant" && (
+              <>
+                <label className="block">
+                  <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">Tan preparasyon / livrezon (ekz: 20-30 min)</span>
+                  <input className={inputClass} maxLength={40} value={form.shopPrepTime} onChange={(e) => setForm({ ...form, shopPrepTime: e.target.value })} placeholder="20-30 min" />
+                </label>
+                <label className="flex items-center justify-between gap-3 rounded-xl border border-ink/15 dark:border-dark-border px-3 py-2.5 cursor-pointer">
+                  <span className="text-sm">Restoran an ouvè (ap pran kòmand kounye a)</span>
+                  <input type="checkbox" checked={form.shopAcceptingOrders} onChange={(e) => setForm({ ...form, shopAcceptingOrders: e.target.checked })} className="w-5 h-5 accent-red-600" />
+                </label>
+              </>
+            )}
+            <label className="block">
               <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">{t("shop_whatsapp_label")}</span>
               <input className={inputClass} inputMode="tel" value={form.whatsapp} onChange={(e) => setForm({ ...form, whatsapp: e.target.value })} placeholder="50937001234" />
             </label>
@@ -401,6 +451,16 @@ export default function ShopPage() {
                       <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">Livrezon gratis si total ≥</span>
                       <input className={inputClass} type="number" min={0} value={form.shopFreeShippingMin} onChange={(e) => setForm({ ...form, shopFreeShippingMin: e.target.value })} placeholder="0 = pa gen" />
                     </label>
+                  </div>
+                )}
+                {form.shopDeliveryEnabled && (
+                  <div>
+                    <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">Tan livrezon (an jou) — kliyan an ap resevwa pwodui a nan entèval sa a</span>
+                    <div className="grid grid-cols-2 gap-3">
+                      <input className={inputClass} type="number" min={0} max={90} value={form.shopDeliveryMinDays} onChange={(e) => setForm({ ...form, shopDeliveryMinDays: e.target.value })} placeholder="Soti (ekz: 2)" aria-label="Minimòm jou" />
+                      <input className={inputClass} type="number" min={0} max={90} value={form.shopDeliveryMaxDays} onChange={(e) => setForm({ ...form, shopDeliveryMaxDays: e.target.value })} placeholder="Jiska (ekz: 5)" aria-label="Maksimòm jou" />
+                    </div>
+                    <p className="text-xs text-ink/50 dark:text-white/50 mt-1">Ekz: 2 ak 5 = « 2 a 5 jou ». Kite vid pou pa montre tan.</p>
                   </div>
                 )}
                 <label className="block">

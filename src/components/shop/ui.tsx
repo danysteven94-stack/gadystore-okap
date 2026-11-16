@@ -91,6 +91,7 @@ export function StockLine({ p }: { p: PublicProduct }) {
     );
   }
   const out = p.stock <= 0;
+  if (p.dish && out) return <p className="text-xs font-semibold" style={{ color: C.red }}>{t("Fini pou jodi a")}</p>;
   const low = !out && p.stock <= 5;
   const color = out ? C.red : low ? "#B45309" : C.ok;
   const text = out

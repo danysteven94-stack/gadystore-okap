@@ -126,7 +126,7 @@ export async function GET(req: NextRequest) {
     ? await Promise.all(productIds.map((id) => redis.hgetall<Product>(`product:${id}`)))
     : [];
   // Pwodwi online pa konte nan stok (valè, stok ba, fini)
-  const validProducts = products.filter((p): p is Product => !!p && p.productType !== "digital" && !(p.comingSoon === true));
+  const validProducts = products.filter((p): p is Product => !!p && !["digital", "dish"].includes(String(p.productType)) && !(p.comingSoon === true));
 
   const lowStock = validProducts
     .filter((p) => p.stock > 0 && p.stock <= p.minStock)

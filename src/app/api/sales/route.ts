@@ -63,7 +63,7 @@ async function postHandler(req: NextRequest) {
           { status: 404 }
         );
       }
-      if (product.productType !== "digital" && product.stock < item.qty) {
+      if (!["digital", "dish"].includes(String(product.productType)) && product.stock < item.qty) {
         return NextResponse.json(
           { error: `Stok ${item.name} pa sifi (${product.stock} rete).` },
           { status: 409 }
@@ -98,7 +98,7 @@ async function postHandler(req: NextRequest) {
     // Soti stok otomatikman epi verifye si sa deklannche yon alèt stok fèb
     for (const item of items) {
       const pr = await redis.hgetall<Product>(`product:${item.productId}`);
-      if (pr?.productType === "digital") continue; // pa gen stok pou pwodwi online
+      if (pr && ["digital", "dish"].includes(String(pr.productType))) continue; // pa gen stok pou pwodwi online
       const updatedStock = await redis.hincrby(
         `product:${item.productId}`,
         "stock",

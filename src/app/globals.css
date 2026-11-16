@@ -60,3 +60,7 @@
   -webkit-text-fill-color: #ffffff;
   -webkit-box-shadow: 0 0 0 1000px #1a1a1a inset;
 }
+
+/* Bann kategori meni restoran: defile san bara */
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }

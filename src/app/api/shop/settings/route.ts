@@ -12,11 +12,14 @@ import {
   RESERVED_SLUGS,
   cleanPhone,
 } from "@/lib/shop";
+import { userHasShop } from "@/lib/plan-access";
+import { NO_SHOP_MESSAGE } from "@/lib/plans";
 import type { Business } from "@/types";
 
 export async function GET(req: NextRequest) {
   const session = await getSessionFromReq(req);
   if (!session) return NextResponse.json({ error: "Pa otorize." }, { status: 401 });
+  if (!(await userHasShop(session.email))) return NextResponse.json({ shops: [], locked: true, message: NO_SHOP_MESSAGE });
 
   const ids = await getUserBusinessIds(session.email);
   const rows = ids.length ? await Promise.all(ids.map((id) => redis.hgetall<Business>(`business:${id}`))) : [];
@@ -44,9 +47,14 @@ export async function GET(req: NextRequest) {
           shopDeliveryEnabled: flag(b.shopDeliveryEnabled, true),
           shopPickupEnabled: flag(b.shopPickupEnabled, true),
           shopDeliveryFee: toNum(b.shopDeliveryFee),
+          shopDeliveryMinDays: toNum(b.shopDeliveryMinDays),
+          shopDeliveryMaxDays: toNum(b.shopDeliveryMaxDays),
           shopFreeShippingMin: toNum(b.shopFreeShippingMin),
           shopAddress: String(b.shopAddress ?? ""),
           shopHours: String(b.shopHours ?? ""),
+          shopType: b.shopType === "restaurant" ? "restaurant" : "store",
+          shopPrepTime: String(b.shopPrepTime ?? ""),
+          shopAcceptingOrders: flag(b.shopAcceptingOrders, true),
           shopPolicies: String(b.shopPolicies ?? ""),
           shopFacebook: String(b.shopFacebook ?? ""),
           shopInstagram: String(b.shopInstagram ?? ""),
@@ -74,9 +82,14 @@ const patchSchema = z.object({
   shopDeliveryEnabled: z.boolean().optional(),
   shopPickupEnabled: z.boolean().optional(),
   shopDeliveryFee: z.number().nonnegative().max(1e9).optional(),
+  shopDeliveryMinDays: z.number().int().min(0).max(90).optional(),
+  shopDeliveryMaxDays: z.number().int().min(0).max(90).optional(),
   shopFreeShippingMin: z.number().nonnegative().max(1e9).optional(),
   shopAddress: z.string().max(200).optional(),
   shopHours: z.string().max(120).optional(),
+  shopType: z.enum(["store", "restaurant"]).optional(),
+  shopPrepTime: z.string().max(40).optional(),
+  shopAcceptingOrders: z.boolean().optional(),
   shopPolicies: z.string().max(1000).optional(),
   shopFacebook: z.string().max(120).optional(),
   shopInstagram: z.string().max(120).optional(),
@@ -85,6 +98,7 @@ const patchSchema = z.object({
 export async function PATCH(req: NextRequest) {
   const session = await getSessionFromReq(req);
   if (!session) return NextResponse.json({ error: "Pa otorize." }, { status: 401 });
+  if (!(await userHasShop(session.email))) return NextResponse.json({ error: NO_SHOP_MESSAGE }, { status: 403 });
 
   const parsed = patchSchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Done pa valid." }, { status: 400 });
@@ -108,9 +122,14 @@ export async function PATCH(req: NextRequest) {
   if (rest.shopDeliveryEnabled !== undefined) updates.shopDeliveryEnabled = rest.shopDeliveryEnabled;
   if (rest.shopPickupEnabled !== undefined) updates.shopPickupEnabled = rest.shopPickupEnabled;
   if (rest.shopDeliveryFee !== undefined) updates.shopDeliveryFee = rest.shopDeliveryFee;
+  if (rest.shopDeliveryMinDays !== undefined) updates.shopDeliveryMinDays = rest.shopDeliveryMinDays;
+  if (rest.shopDeliveryMaxDays !== undefined) updates.shopDeliveryMaxDays = rest.shopDeliveryMaxDays;
   if (rest.shopFreeShippingMin !== undefined) updates.shopFreeShippingMin = rest.shopFreeShippingMin;
   if (rest.shopAddress !== undefined) updates.shopAddress = rest.shopAddress.trim();
   if (rest.shopHours !== undefined) updates.shopHours = rest.shopHours.trim();
+  if (rest.shopType !== undefined) updates.shopType = rest.shopType;
+  if (rest.shopPrepTime !== undefined) updates.shopPrepTime = rest.shopPrepTime.trim();
+  if (rest.shopAcceptingOrders !== undefined) updates.shopAcceptingOrders = rest.shopAcceptingOrders;
   if (rest.shopPolicies !== undefined) updates.shopPolicies = rest.shopPolicies.trim();
   if (rest.shopFacebook !== undefined) updates.shopFacebook = rest.shopFacebook.trim();
   if (rest.shopInstagram !== undefined) updates.shopInstagram = rest.shopInstagram.trim();

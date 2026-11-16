@@ -11,6 +11,9 @@ export interface Business {
   // --- Boutik piblik ---
   slug?: string; // lyen piblik: /shop/{slug}
   shopEnabled?: boolean;
+  shopType?: "store" | "restaurant"; // tip boutik piblik la
+  shopPrepTime?: string; // restoran: ekz "20-30 min"
+  shopAcceptingOrders?: boolean; // restoran: ap pran kòmand kounye a (default: wi)
   whatsapp?: string; // nimewo WhatsApp (chif sèlman, ak kòd peyi: 50912345678)
   shopName?: string; // non ki parèt sou boutik la (si vid: non biznis la)
   shopLogo?: string; // /api/img/{id}
@@ -55,7 +58,10 @@ export interface Product {
   brand?: string;
   images?: string[]; // foto adisyonèl (galri)
   featured?: boolean; // mete devan sou paj dakèy la
-  productType?: "physical" | "digital"; // fizik (default) oswa online
+  productType?: "physical" | "digital" | "dish"; // fizik (default), online, oswa plat restoran
+  tags?: string; // plat: "Pikan, Vejetaryen" (separe ak vigil)
+  prepMinutes?: number; // plat: tan preparasyon (minit)
+  unavailable?: boolean; // plat: fini pou jodi a
   comingSoon?: boolean; // byento disponib: parèt nan boutik men pa ka komande
   leadDays?: number; // kantite jou pou pwodwi a rive apre kòmand (0 = pa defini)
   sizes?: string; // gwosè, separe ak vigil: "S, M, L"

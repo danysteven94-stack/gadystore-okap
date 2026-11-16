@@ -22,7 +22,10 @@ const updateSchema = z.object({
   colors: z.string().max(200).optional(),
   featured: z.boolean().optional(),
   comingSoon: z.boolean().optional(),
-  productType: z.enum(["physical", "digital"]).optional(),
+  productType: z.enum(["physical", "digital", "dish"]).optional(),
+  tags: z.string().max(120).optional(),
+  prepMinutes: z.number().int().min(0).max(240).optional(),
+  unavailable: z.boolean().optional(),
   leadDays: z.number().int().min(0).max(365).optional(),
   unit: z.string().max(20).optional(),
   description: z.string().max(500).optional(),
@@ -71,7 +74,7 @@ export async function PATCH(
   await redis.hset(`product:${id}`, parsed.data as Record<string, unknown>);
 
   const updated = { ...existing, ...parsed.data };
-  const digital = (updated as Product).productType === "digital";
+  const digital = (updated as Product).productType === "digital" || (updated as Product).productType === "dish";
   if (!digital && updated.stock <= updated.minStock) {
     await notifyLowStock(existing.businessId, updated.name);
   }

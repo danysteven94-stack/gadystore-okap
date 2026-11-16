@@ -61,7 +61,7 @@ export default function ProductsPage() {
     [products, query, categoryFilter]
   );
 
-  const physical = products.filter((p) => p.productType !== "digital" && !p.comingSoon);
+  const physical = products.filter((p) => !["digital", "dish"].includes(String(p.productType)) && !p.comingSoon);
   const lowCount = physical.filter((p) => p.stock <= p.minStock).length;
   const stockValue = physical.reduce((sum, p) => sum + p.stock * p.buyPrice, 0);
 
@@ -257,9 +257,9 @@ export default function ProductsPage() {
               </div>
               {p.comingSoon ? (
                 <p className="text-xs font-semibold text-amber-600">Byento disponib · pa ka komande</p>
-              ) : p.productType === "digital" ? (
+              ) : p.productType === "digital" || p.productType === "dish" ? (
                 <p className="text-xs text-ink/50 dark:text-white/50">
-                  Pwodwi online · pa gen stok{Number(p.leadDays) > 0 ? ` · ${p.leadDays} jou` : ""}
+                  {p.productType === "dish" ? "Plat restoran" : "Pwodwi online"}{p.unavailable ? " · fini jodi a" : " · pa gen stok"}{Number(p.leadDays) > 0 ? ` · ${p.leadDays} jou` : ""}
                 </p>
               ) : (
                 <StockBar stock={p.stock} minStock={p.minStock} />

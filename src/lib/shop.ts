@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 import { redis } from "@/lib/upstash";
 import { verifySession } from "@/lib/auth";
 import type { Business, Product } from "@/types";
+import { shopAllowedForBusiness } from "@/lib/plan-access";
 
 export function slugify(input: string): string {
   return (
@@ -57,17 +58,27 @@ export async function getBusinessBySlug(slug: string): Promise<Business | null> 
   const business = await redis.hgetall<Business>(`business:${id}`);
   if (!business || !business.id) return null;
   if (!isTrue(business.shopEnabled)) return null;
+  // Plan pwopriyetè a dwe gen boutik piblik
+  if (!(await shopAllowedForBusiness(business))) return null;
   return business;
 }
 
 /** Pwodwi online (dijital): pa gen stok fizik, kòb li pa konte nan valè stok la. */
 export function isDigital(p: { productType?: unknown }) {
-  return p.productType === "digital";
+  return p.productType === "digital" || p.productType === "dish";
 }
 
 /** Pwodwi "byento disponib": vizib nan boutik la men kliyan pa ka komande l. */
 export function isComingSoon(p: { comingSoon?: unknown }) {
   return p.comingSoon === true || p.comingSoon === "true";
+}
+
+export function isUnavailable(p: { unavailable?: unknown }) {
+  return p.unavailable === true || p.unavailable === "true";
+}
+
+export function isDish(p: { productType?: unknown }) {
+  return p.productType === "dish";
 }
 
 export function isTrue(v: unknown) {
@@ -131,6 +142,9 @@ export interface PublicProduct {
   ratingCount: number;
   digital: boolean; // pwodwi online
   comingSoon: boolean; // byento disponib
+  dish: boolean; // plat restoran
+  tags: string[]; // plat: Pikan, Vejetaryen...
+  prepMinutes: number; // plat: tan preparasyon
   leadDays: number; // jou pou li rive (0 = pa defini)
 }
 
@@ -155,6 +169,9 @@ export interface PublicShop {
   policies: string | null;
   facebook: string | null;
   instagram: string | null;
+  type: "store" | "restaurant";
+  prepTime: string | null;
+  acceptingOrders: boolean;
   products: PublicProduct[];
 }
 
@@ -182,7 +199,7 @@ export function toPublicProduct(p: Product): PublicProduct {
     brand: p.brand ? String(p.brand) : "",
     price,
     comparePrice: compare > price ? compare : null,
-    stock: isComingSoon(p) ? 0 : isDigital(p) ? 9999 : Math.max(0, toNum(p.stock)), // byento = pa ka komande; online = san limit
+    stock: isComingSoon(p) || isUnavailable(p) ? 0 : isDigital(p) ? 9999 : Math.max(0, toNum(p.stock)), // byento = pa ka komande; online = san limit
     unit: p.unit ? String(p.unit) : "",
     imageUrl: images[0] ?? null,
     images,
@@ -196,6 +213,9 @@ export function toPublicProduct(p: Product): PublicProduct {
     ratingCount,
     digital: isDigital(p),
     comingSoon: isComingSoon(p),
+    dish: isDish(p),
+    tags: String(p.tags ?? "").split(",").map((s) => s.trim()).filter(Boolean).slice(0, 6),
+    prepMinutes: Math.max(0, Math.floor(toNum(p.prepMinutes))),
     leadDays: Math.max(0, Math.floor(toNum(p.leadDays))),
   };
 }
@@ -247,6 +267,9 @@ export async function getPublicShop(slug: string): Promise<PublicShop | null> {
     policies: str(business.shopPolicies),
     facebook: socialUrl("facebook", business.shopFacebook),
     instagram: socialUrl("instagram", business.shopInstagram),
+    type: business.shopType === "restaurant" ? "restaurant" : "store",
+    prepTime: str(business.shopPrepTime),
+    acceptingOrders: flag(business.shopAcceptingOrders, true),
     products,
   };
 }
@@ -384,6 +407,9 @@ export async function priceCart(
     }
     if (isComingSoon(p)) {
       return { ok: false, status: 400, error: `${p.name} pa disponib ankò (byento disponib). Retire l nan panye a.` };
+    }
+    if (isUnavailable(p)) {
+      return { ok: false, status: 400, error: `${p.name} fini pou jodi a. Retire l nan panye a.` };
     }
     const sizes = optList(p.sizes);
     const colors = optList(p.colors);
