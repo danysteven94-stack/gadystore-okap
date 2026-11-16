@@ -2,10 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { redis } from "@/lib/upstash";
 import { getSessionFromReq, userOwnsBusiness, normCode, getCoupon, type Coupon } from "@/lib/shop";
+import { userHasShop } from "@/lib/plan-access";
+import { NO_SHOP_MESSAGE } from "@/lib/plans";
 
 async function guard(req: NextRequest, businessId: string | null) {
   const session = await getSessionFromReq(req);
   if (!session) return NextResponse.json({ error: "Pa otorize." }, { status: 401 });
+  if (!(await userHasShop(session.email))) return NextResponse.json({ error: NO_SHOP_MESSAGE }, { status: 403 });
   if (!businessId) return NextResponse.json({ error: "businessId obligatwa." }, { status: 400 });
   if (!(await userOwnsBusiness(session.email, businessId))) {
     return NextResponse.json({ error: "Aksè refize." }, { status: 403 });

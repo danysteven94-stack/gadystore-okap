@@ -42,7 +42,9 @@ export function Track() {
       setBusy(true);
       setError(null);
       try {
-        const res = await fetch(`/api/shop/${shop.slug}/track?code=${encodeURIComponent(c)}&phone=${encodeURIComponent(ph)}`, { cache: "no-store" });
+        // Kòd yo fèt ak chif ak lèt A-F sèlman: yon "O" moun tape se yon zewo, "I"/"L" se yon 1.
+        const norm = c.toUpperCase().replace(/[^A-Z0-9]/g, "").replace(/O/g, "0").replace(/[IL]/g, "1");
+        const res = await fetch(`/api/shop/${shop.slug}/track?code=${encodeURIComponent(norm)}&phone=${encodeURIComponent(ph)}`, { cache: "no-store" });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) {
           setOrder(null);

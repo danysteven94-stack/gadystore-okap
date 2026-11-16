@@ -3,6 +3,7 @@ import { redis } from "@/lib/upstash";
 import { verifySession, hashPassword, can, SUPER_ADMIN_EMAIL, isSuperAdmin } from "@/lib/auth";
 import { generateTempPassword } from "@/lib/password";
 import { userOwnsBusiness } from "@/lib/shop";
+import { isPlanId } from "@/lib/plans";
 
 async function getSession(req: NextRequest) {
   const token = req.cookies.get("session")?.value;
@@ -59,7 +60,7 @@ export async function PATCH(
 
   const body = await req.json().catch(() => ({}));
   const action = body.action as string;
-  if (!["reset_password", "deactivate", "activate", "set_businesses"].includes(action)) {
+  if (!["reset_password", "deactivate", "activate", "set_businesses", "set_plan"].includes(action)) {
     return NextResponse.json({ error: "Aksyon envalid." }, { status: 400 });
   }
 
@@ -89,6 +90,24 @@ export async function PATCH(
     }
     await redis.hset(`user:${email}`, { businessIds: JSON.stringify(unique) });
     return NextResponse.json({ ok: true, businessIds: unique });
+  }
+
+  // Chanje plan: SÈL kont prensipal la. Antrepriz ki deja kreye yo pa efase; sèlman nouvo kreyasyon ak boutik piblik la swiv plan an.
+  if (action === "set_plan") {
+    if (!isSuperCaller) {
+      return NextResponse.json({ error: "Sèl kont prensipal la ka chanje plan yon kont." }, { status: 403 });
+    }
+    if (email === SUPER_ADMIN_EMAIL) {
+      return NextResponse.json({ error: "Kont prensipal la gen tout aksè." }, { status: 400 });
+    }
+    if (!isPlanId(body.plan)) return NextResponse.json({ error: "Plan envalid." }, { status: 400 });
+    const target = await redis.hgetall<Record<string, unknown>>(`user:${email}`);
+    if (!target || !target.id) return NextResponse.json({ error: "Itilizatè pa jwenn." }, { status: 404 });
+    if (target.role !== "admin") {
+      return NextResponse.json({ error: "Plan an fikse sou kont pwopriyetè a (admin). Anplwaye yo swiv li." }, { status: 400 });
+    }
+    await redis.hset(`user:${email}`, { plan: body.plan });
+    return NextResponse.json({ ok: true, plan: body.plan });
   }
 
   // Dezaktive / reaktive: SÈL kont prensipal la gen dwa sa a.

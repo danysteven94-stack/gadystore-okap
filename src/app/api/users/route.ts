@@ -4,6 +4,8 @@ import { randomUUID } from "crypto";
 import { redis } from "@/lib/upstash";
 import { verifySession, hashPassword, can, isSuperAdmin, type UserRole } from "@/lib/auth";
 import { generateTempPassword, isTrue } from "@/lib/password";
+import { getUserPlan } from "@/lib/plan-access";
+import { isPlanId, type PlanId } from "@/lib/plans";
 
 async function getSession(req: NextRequest) {
   const token = req.cookies.get("session")?.value;
@@ -14,6 +16,7 @@ const createUserSchema = z.object({
   email: z.string().email(),
   fullName: z.string().trim().min(2).max(80),
   role: z.enum(["admin", "gestionnaire", "caissier"]).default("gestionnaire"),
+  plan: z.string().optional(), // sèlman kont prensipal la ka chwazi l
 });
 
 interface UserSummary {
@@ -28,6 +31,7 @@ interface UserSummary {
   businessCount: number;
   businessIds: string[];
   createdBy: string;
+  plan: PlanId;
 }
 
 export async function GET(req: NextRequest) {
@@ -54,7 +58,9 @@ export async function GET(req: NextRequest) {
             const businessIds: string[] = Array.isArray(rawIds)
               ? rawIds
               : JSON.parse((rawIds as string) || "[]");
+            const plan = (await getUserPlan(String(record.email))).id;
             return {
+              plan,
               id: record.id as string,
               email: record.email as string,
               fullName: record.fullName ? String(record.fullName) : "",
@@ -89,6 +95,15 @@ export async function POST(req: NextRequest) {
   }
 
   const { role, fullName } = parsed.data;
+  const isSuper = isSuperAdmin(session.email);
+  // Kont prensipal la chwazi plan an lè l kreye yon kont admin (pwopriyetè). Lòt kont yo eritye.
+  let plan: PlanId | undefined;
+  if (isSuper && role === "admin") {
+    if (!isPlanId(parsed.data.plan)) {
+      return NextResponse.json({ error: "Chwazi yon plan pou kont sa a." }, { status: 400 });
+    }
+    plan = parsed.data.plan;
+  }
   const email = parsed.data.email.trim().toLowerCase();
 
   const existing = await redis.hgetall<Record<string, unknown>>(`user:${email}`);
@@ -108,6 +123,7 @@ export async function POST(req: NextRequest) {
     mustChangePassword: true,
     createdBy: session.email,
     role,
+    ...(plan ? { plan } : {}),
     // Chak nouvo itilizatè kòmanse ak pwòp done pa yo — pa gen okenn
     // antrepriz pataje ak lòt kont otomatikman.
     businessIds: JSON.stringify([]),
@@ -118,7 +134,7 @@ export async function POST(req: NextRequest) {
   await redis.sadd("users:all", email);
 
   return NextResponse.json(
-    { user: { id: user.id, email: user.email, fullName, role: user.role }, temporaryPassword },
+    { user: { id: user.id, email: user.email, fullName, role: user.role, plan }, temporaryPassword },
     { status: 201 }
   );
 }

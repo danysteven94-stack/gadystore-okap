@@ -3,6 +3,8 @@ import { randomUUID } from "crypto";
 import { redis } from "@/lib/upstash";
 import { verifySession } from "@/lib/auth";
 import type { Business } from "@/types";
+import { getUserPlan } from "@/lib/plan-access";
+import { businessLimitMessage } from "@/lib/plans";
 
 async function getSession(req: NextRequest) {
   const token = req.cookies.get("session")?.value;
@@ -40,6 +42,17 @@ export async function POST(req: NextRequest) {
   if (!body.name || typeof body.name !== "string" || !body.name.trim()) {
     return NextResponse.json({ error: "Non antrepriz la obligatwa." }, { status: 400 });
   }
+  // Limit antrepriz selon plan kont lan
+  const plan = await getUserPlan(session.email);
+  if (plan.maxBusinesses !== null) {
+    const rec = await redis.hgetall<{ businessIds?: string | string[] }>(`user:${session.email}`);
+    const raw = rec?.businessIds;
+    const have: string[] = Array.isArray(raw) ? raw : JSON.parse(raw || "[]");
+    if (have.length >= plan.maxBusinesses) {
+      return NextResponse.json({ error: businessLimitMessage(plan.maxBusinesses), code: "plan_business_limit" }, { status: 403 });
+    }
+  }
+
   const id = randomUUID();
 
   const business: Business = {
@@ -53,7 +66,7 @@ export async function POST(req: NextRequest) {
     createdAt: new Date().toISOString(),
   };
 
-  await redis.hset(`business:${id}`, { ...business });
+  await redis.hset(`business:${id}`, { ...business, ownerEmail: session.email.toLowerCase() });
   await redis.sadd(`user:${session.userId}:businesses`, id);
   await redis.sadd("businesses:all", id);
 

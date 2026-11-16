@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 export function useSuperInfo() {
   const [isSuper, setIsSuper] = useState(false);
   const [alertCount, setAlertCount] = useState(0);
+  const [shopAllowed, setShopAllowed] = useState(true); // montre pandan l ap chaje; kache si plan an pa gen boutik
 
   useEffect(() => {
     let cancelled = false;
@@ -13,7 +14,9 @@ export function useSuperInfo() {
       try {
         const me = await fetch("/api/auth/me");
         if (!me.ok) return;
-        const { isSuper } = await me.json();
+        const info = await me.json();
+        if (!cancelled) setShopAllowed(info.shopAllowed !== false);
+        const { isSuper } = info;
         if (cancelled || !isSuper) return;
         setIsSuper(true);
         const res = await fetch("/api/user-billing?summary=1");
@@ -29,5 +32,5 @@ export function useSuperInfo() {
     };
   }, []);
 
-  return { isSuper, alertCount };
+  return { isSuper, alertCount, shopAllowed };
 }
