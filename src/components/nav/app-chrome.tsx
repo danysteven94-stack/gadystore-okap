@@ -11,7 +11,7 @@ const HIDE_NAV_PREFIXES = ["/login", "/verify", "/boutik", "/change-password", "
 
 export function AppChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const showNav = !HIDE_NAV_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+  const showNav = pathname !== "/" && !HIDE_NAV_PREFIXES.some((prefix) => pathname.startsWith(prefix));
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   // Siyal pou lòt eleman fiks (ex: bann offline) pou yo monte anlè nav anba a
