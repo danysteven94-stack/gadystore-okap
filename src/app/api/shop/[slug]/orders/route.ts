@@ -51,7 +51,7 @@ export async function POST(
 
   const business = await getBusinessBySlug(slug);
   if (!business) return NextResponse.json({ error: "Boutik pa jwenn." }, { status: 404 });
-  if (business.shopType === "restaurant" && (business.shopAcceptingOrders === false || business.shopAcceptingOrders === "false")) {
+  if (business.shopType === "restaurant" && String(business.shopAcceptingOrders) === "false") {
     return NextResponse.json({ error: "Restoran an fèmen kounye a. Eseye ankò pita." }, { status: 403 });
   }
 
