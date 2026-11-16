@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { MessageCircle, ShoppingBag, SlidersHorizontal, X } from "lucide-react";
 import { useShop, useT } from "./shop-context";
 import { ProductCard, ProductRow } from "./product-card";
+import { HeroSlides } from "./hero-slides";
 import { C, Sheet, SheetHeader, discountPct, fieldClass, fieldStyle, isNew } from "./ui";
 
 type Sort = "relevance" | "popular" | "new" | "priceAsc" | "priceDesc" | "discount" | "rating";
@@ -97,21 +98,19 @@ export function Catalog() {
         <>
           {/* ---------- Hero ---------- */}
           <section className="relative overflow-hidden text-white" style={{ background: C.ink }}>
-            {shop.coverUrl && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={shop.coverUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />
-            )}
+            <HeroSlides covers={shop.covers} seconds={shop.slideSeconds} />
             <div
               className="absolute inset-0"
               style={{
-                background: shop.coverUrl
-                  ? "linear-gradient(90deg, rgba(0,0,0,.78) 0%, rgba(0,0,0,.45) 60%, rgba(0,0,0,.2) 100%)"
+                background: shop.covers.length > 0
+                  ? `linear-gradient(90deg, rgba(0,0,0,${(shop.heroOverlay * 1.4) / 100}) 0%, rgba(0,0,0,${(shop.heroOverlay * 0.8) / 100}) 60%, rgba(0,0,0,${(shop.heroOverlay * 0.35) / 100}) 100%)`
                   : `linear-gradient(120deg, ${C.ink} 0%, #2A2A2A 55%, ${C.redDark} 140%)`,
               }}
             />
-            <div className="relative max-w-6xl mx-auto px-4 py-12 sm:py-20">
+            <div className={`relative max-w-6xl mx-auto px-4 ${shop.heroSize === "lg" ? "py-20 sm:py-32" : shop.heroSize === "sm" ? "py-8 sm:py-12" : "py-12 sm:py-20"}`}>
               <p className="text-[11px] sm:text-xs tracking-[0.3em] uppercase opacity-80 mb-3">{shop.tagline}</p>
-              <h1 className="text-4xl sm:text-6xl font-bold leading-tight max-w-2xl">{shop.name}</h1>
+              <h1 className="text-4xl sm:text-6xl font-bold leading-tight max-w-2xl">{shop.heroTitle || shop.name}</h1>
+              {shop.heroText && <p className="mt-3 text-base sm:text-lg max-w-xl opacity-90">{shop.heroText}</p>}
               <div className="mt-6 flex flex-wrap gap-3">
                 <a href="#tout" className="rounded-full px-7 py-3.5 text-sm font-bold text-white" style={{ background: C.red }}>
                   {t("Achte kounye a")}

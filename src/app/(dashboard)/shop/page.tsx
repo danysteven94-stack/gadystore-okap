@@ -18,6 +18,13 @@ interface ShopSettings {
   shopName: string;
   shopLogo: string;
   shopCover: string;
+  shopCovers?: string[];
+  shopAccent?: string;
+  shopHeroTitle?: string;
+  shopHeroText?: string;
+  shopHeroOverlay?: number;
+  shopHeroSize?: "sm" | "md" | "lg";
+  shopSlideSeconds?: number;
   shopTagline: string;
   shopPaymentInfo: string;
   shopAnnouncement: string;
@@ -51,7 +58,7 @@ export default function ShopPage() {
   const [locked, setLocked] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [form, setForm] = useState({
-    slug: "", whatsapp: "", shopName: "", shopLogo: "", shopCover: "", shopTagline: "", shopPaymentInfo: "",
+    slug: "", whatsapp: "", shopName: "", shopLogo: "", shopCover: "", shopCovers: [] as string[], shopAccent: "", shopHeroTitle: "", shopHeroText: "", shopHeroOverlay: 55, shopHeroSize: "md" as "sm" | "md" | "lg", shopSlideSeconds: 5, shopTagline: "", shopPaymentInfo: "",
     shopAnnouncement: "", shopDeliveryEnabled: true, shopPickupEnabled: true, shopDeliveryFee: "", shopFreeShippingMin: "", shopDeliveryMinDays: "", shopDeliveryMaxDays: "",
     shopAddress: "", shopHours: "", shopPolicies: "", shopFacebook: "", shopInstagram: "",
     shopType: "store" as "store" | "restaurant", shopPrepTime: "", shopAcceptingOrders: true,
@@ -86,6 +93,13 @@ export default function ShopPage() {
       shopName: active.shopName,
       shopLogo: active.shopLogo,
       shopCover: active.shopCover ?? "",
+      shopCovers: active.shopCovers ?? (active.shopCover ? [active.shopCover] : []),
+      shopAccent: active.shopAccent ?? "",
+      shopHeroTitle: active.shopHeroTitle ?? "",
+      shopHeroText: active.shopHeroText ?? "",
+      shopHeroOverlay: active.shopHeroOverlay ?? 55,
+      shopHeroSize: active.shopHeroSize ?? "md",
+      shopSlideSeconds: active.shopSlideSeconds ?? 5,
       shopTagline: active.shopTagline,
       shopPaymentInfo: active.shopPaymentInfo,
       shopAnnouncement: active.shopAnnouncement ?? "",
@@ -149,7 +163,13 @@ export default function ShopPage() {
         whatsapp: form.whatsapp,
         shopName: form.shopName,
         shopLogo: form.shopLogo,
-        shopCover: form.shopCover,
+        shopCovers: form.shopCovers,
+        shopAccent: form.shopAccent,
+        shopHeroTitle: form.shopHeroTitle,
+        shopHeroText: form.shopHeroText,
+        shopHeroOverlay: form.shopHeroOverlay,
+        shopHeroSize: form.shopHeroSize,
+        shopSlideSeconds: form.shopSlideSeconds,
         shopTagline: form.shopTagline,
         shopPaymentInfo: form.shopPaymentInfo,
         shopAnnouncement: form.shopAnnouncement,
@@ -211,17 +231,29 @@ export default function ShopPage() {
 
   const [coverBusy, setCoverBusy] = useState(false);
   async function handleCover(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
+    const files = Array.from(e.target.files ?? []);
     e.target.value = "";
-    if (!file) return;
+    if (files.length === 0) return;
     setCoverBusy(true);
     try {
-      const url = await uploadProductImage(file, 1400);
-      setForm((f) => ({ ...f, shopCover: url }));
+      const room = Math.max(0, 6 - form.shopCovers.length);
+      const urls: string[] = [];
+      for (const f of files.slice(0, room)) urls.push(await uploadProductImage(f, 1400));
+      setForm((f) => ({ ...f, shopCovers: [...f.shopCovers, ...urls].slice(0, 6) }));
     } catch (err) {
       setMessage({ ok: false, text: err instanceof Error ? err.message : "Erè foto." });
     }
     setCoverBusy(false);
+  }
+
+  function moveCover(idx: number, dir: -1 | 1) {
+    setForm((f) => {
+      const list = [...f.shopCovers];
+      const j = idx + dir;
+      if (j < 0 || j >= list.length) return f;
+      [list[idx], list[j]] = [list[j], list[idx]];
+      return { ...f, shopCovers: list };
+    });
   }
 
   async function publishAll() {
@@ -340,25 +372,65 @@ export default function ShopPage() {
           {/* Paramèt */}
           <form onSubmit={saveSettings} className="rounded-card border border-ink/10 dark:border-dark-border bg-white dark:bg-dark-surface p-5 space-y-4">
             <div>
-              <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">{t("shop_cover_label")}</span>
-              <label className="relative block h-28 rounded-card border border-dashed border-ink/25 dark:border-dark-border overflow-hidden cursor-pointer bg-white dark:bg-dark-surface">
-                {coverBusy ? (
-                  <span className="absolute inset-0 flex items-center justify-center"><Loader2 size={20} className="animate-spin" /></span>
-                ) : form.shopCover ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={form.shopCover} alt="" className="w-full h-full object-cover" />
-                ) : (
-                  <span className="absolute inset-0 flex flex-col items-center justify-center gap-1 text-ink/40 text-xs">
-                    <ImagePlus size={22} /> Ajoute yon imaj laj (pi bon an peyizaj)
-                  </span>
+              <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">Imaj background (jiska 6 — yo chanje otomatikman)</span>
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                {form.shopCovers.map((u, idx) => (
+                  <div key={u} className="relative aspect-video rounded-lg overflow-hidden border border-ink/15 dark:border-dark-border">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={u} alt="" className="w-full h-full object-cover" />
+                    <div className="absolute inset-x-0 bottom-0 flex justify-between bg-black/55 text-white text-[11px]">
+                      <button type="button" onClick={() => moveCover(idx, -1)} disabled={idx === 0} className="px-2 py-0.5 disabled:opacity-30">◀</button>
+                      <button type="button" onClick={() => setForm({ ...form, shopCovers: form.shopCovers.filter((x) => x !== u) })} className="px-2 py-0.5">✕</button>
+                      <button type="button" onClick={() => moveCover(idx, 1)} disabled={idx === form.shopCovers.length - 1} className="px-2 py-0.5 disabled:opacity-30">▶</button>
+                    </div>
+                  </div>
+                ))}
+                {form.shopCovers.length < 6 && (
+                  <label className="relative aspect-video rounded-lg border border-dashed border-ink/25 dark:border-dark-border flex flex-col items-center justify-center gap-1 text-ink/40 text-xs cursor-pointer">
+                    {coverBusy ? <Loader2 size={18} className="animate-spin" /> : <><ImagePlus size={20} /> Ajoute</>}
+                    <input type="file" accept="image/*" multiple className="hidden" onChange={handleCover} />
+                  </label>
                 )}
-                <input type="file" accept="image/*" className="hidden" onChange={handleCover} />
+              </div>
+              <p className="mt-1 text-[11px] text-ink/50 dark:text-white/50">Imaj laj (peyizaj) mache pi byen. Ou ka chwazi plizyè imaj yon sèl fwa.</p>
+            </div>
+
+            <div className="rounded-card border border-ink/10 dark:border-dark-border p-3 space-y-3">
+              <p className="text-sm font-semibold">Pèsonalize aparans boutik la</p>
+              <label className="flex items-center gap-3">
+                <span className="text-xs font-medium text-ink/70 dark:text-white/70 w-32">Koulè prensipal</span>
+                <input type="color" value={form.shopAccent || "#C8102E"} onChange={(e) => setForm({ ...form, shopAccent: e.target.value })} className="h-9 w-12 rounded border border-ink/15 bg-transparent p-0.5" />
+                <span className="text-xs text-ink/50 dark:text-white/50">{form.shopAccent || "#C8102E (default)"}</span>
+                {form.shopAccent && <button type="button" onClick={() => setForm({ ...form, shopAccent: "" })} className="text-xs text-brick underline underline-offset-2">Reyajiste</button>}
               </label>
-              {form.shopCover && (
-                <button type="button" onClick={() => setForm({ ...form, shopCover: "" })} className="mt-1 text-xs text-brick underline underline-offset-2">
-                  Retire
-                </button>
-              )}
+              <label className="block">
+                <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">Gwo tit sou imaj la (si vid: non boutik la)</span>
+                <input className={inputClass} maxLength={80} value={form.shopHeroTitle} onChange={(e) => setForm({ ...form, shopHeroTitle: e.target.value })} />
+              </label>
+              <label className="block">
+                <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">Ti tèks anba tit la</span>
+                <input className={inputClass} maxLength={160} value={form.shopHeroText} onChange={(e) => setForm({ ...form, shopHeroText: e.target.value })} />
+              </label>
+              <label className="block">
+                <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">Fonse imaj la (pou tèks la ka li): {form.shopHeroOverlay}%</span>
+                <input type="range" min={0} max={90} step={5} value={form.shopHeroOverlay} onChange={(e) => setForm({ ...form, shopHeroOverlay: Number(e.target.value) })} className="w-full accent-red-600" />
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <label className="block">
+                  <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">Wotè imaj la</span>
+                  <select className={inputClass} value={form.shopHeroSize} onChange={(e) => setForm({ ...form, shopHeroSize: e.target.value as "sm" | "md" | "lg" })}>
+                    <option value="sm">Piti</option>
+                    <option value="md">Mwayen</option>
+                    <option value="lg">Gwo</option>
+                  </select>
+                </label>
+                <label className="block">
+                  <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">Chanje imaj chak</span>
+                  <select className={inputClass} value={form.shopSlideSeconds} onChange={(e) => setForm({ ...form, shopSlideSeconds: Number(e.target.value) })}>
+                    {[3, 5, 7, 10].map((n) => <option key={n} value={n}>{n} segonn</option>)}
+                  </select>
+                </label>
+              </div>
             </div>
             <div>
               <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">{t("shop_logo_label")}</span>

@@ -9,8 +9,8 @@ import type { PublicProduct } from "@/lib/shop";
 export const C = {
   ink: "#111111",
   soft: "#F5F5F5",
-  red: "#C8102E",
-  redDark: "#9E0C24",
+  red: "var(--shop-accent, #C8102E)", // koulè prensipal: chanje nan paramèt boutik la
+  redDark: "var(--shop-accent-dark, #9E0C24)",
   line: "#E5E5E5",
   muted: "#6B6B6B",
   ok: "#15803D",

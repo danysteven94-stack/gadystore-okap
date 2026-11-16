@@ -11,6 +11,8 @@ import {
   toNum,
   RESERVED_SLUGS,
   cleanPhone,
+  shopCovers,
+  heroOverlayOf,
 } from "@/lib/shop";
 import { userHasShop } from "@/lib/plan-access";
 import { NO_SHOP_MESSAGE } from "@/lib/plans";
@@ -41,6 +43,13 @@ export async function GET(req: NextRequest) {
           shopName: String(b.shopName ?? ""),
           shopLogo: String(b.shopLogo ?? ""),
           shopCover: String(b.shopCover ?? ""),
+          shopCovers: shopCovers(b),
+          shopAccent: String(b.shopAccent ?? ""),
+          shopHeroTitle: String(b.shopHeroTitle ?? ""),
+          shopHeroText: String(b.shopHeroText ?? ""),
+          shopHeroOverlay: heroOverlayOf(b.shopHeroOverlay),
+          shopHeroSize: b.shopHeroSize === "sm" || b.shopHeroSize === "lg" ? b.shopHeroSize : "md",
+          shopSlideSeconds: Number(b.shopSlideSeconds) || 5,
           shopTagline: String(b.shopTagline ?? ""),
           shopPaymentInfo: String(b.shopPaymentInfo ?? ""),
           shopAnnouncement: String(b.shopAnnouncement ?? ""),
@@ -76,6 +85,13 @@ const patchSchema = z.object({
   shopName: z.string().max(60).optional(),
   shopLogo: z.string().refine((v) => v === "" || v.startsWith("/api/img/")).optional(),
   shopCover: z.string().refine((v) => v === "" || v.startsWith("/api/img/")).optional(),
+  shopCovers: z.array(z.string().refine((v) => v.startsWith("/api/img/"))).max(6).optional(),
+  shopAccent: z.union([z.string().regex(/^#[0-9a-fA-F]{6}$/), z.literal("")]).optional(),
+  shopHeroTitle: z.string().max(80).optional(),
+  shopHeroText: z.string().max(160).optional(),
+  shopHeroOverlay: z.number().int().min(0).max(90).optional(),
+  shopHeroSize: z.enum(["sm", "md", "lg"]).optional(),
+  shopSlideSeconds: z.number().int().min(3).max(12).optional(),
   shopTagline: z.string().max(60).optional(),
   shopPaymentInfo: z.string().max(300).optional(),
   shopAnnouncement: z.string().max(140).optional(),
@@ -116,6 +132,16 @@ export async function PATCH(req: NextRequest) {
   if (rest.shopName !== undefined) updates.shopName = rest.shopName.trim();
   if (rest.shopLogo !== undefined) updates.shopLogo = rest.shopLogo;
   if (rest.shopCover !== undefined) updates.shopCover = rest.shopCover;
+  if (rest.shopCovers !== undefined) {
+    updates.shopCovers = JSON.stringify(rest.shopCovers);
+    updates.shopCover = rest.shopCovers[0] ?? ""; // kenbe ansyen chan an sinkronize
+  }
+  if (rest.shopAccent !== undefined) updates.shopAccent = rest.shopAccent;
+  if (rest.shopHeroTitle !== undefined) updates.shopHeroTitle = rest.shopHeroTitle.trim();
+  if (rest.shopHeroText !== undefined) updates.shopHeroText = rest.shopHeroText.trim();
+  if (rest.shopHeroOverlay !== undefined) updates.shopHeroOverlay = rest.shopHeroOverlay;
+  if (rest.shopHeroSize !== undefined) updates.shopHeroSize = rest.shopHeroSize;
+  if (rest.shopSlideSeconds !== undefined) updates.shopSlideSeconds = rest.shopSlideSeconds;
   if (rest.shopTagline !== undefined) updates.shopTagline = rest.shopTagline.trim();
   if (rest.shopPaymentInfo !== undefined) updates.shopPaymentInfo = rest.shopPaymentInfo.trim();
   if (rest.shopAnnouncement !== undefined) updates.shopAnnouncement = rest.shopAnnouncement.trim();

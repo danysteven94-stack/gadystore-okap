@@ -12,6 +12,13 @@ export interface Business {
   slug?: string; // lyen piblik: /shop/{slug}
   shopEnabled?: boolean;
   shopType?: "store" | "restaurant"; // tip boutik piblik la
+  shopCovers?: string; // JSON: jiska 6 imaj background
+  shopAccent?: string; // koulè prensipal #rrggbb
+  shopHeroTitle?: string;
+  shopHeroText?: string;
+  shopHeroOverlay?: number;
+  shopHeroSize?: "sm" | "md" | "lg";
+  shopSlideSeconds?: number;
   shopPrepTime?: string; // restoran: ekz "20-30 min"
   shopAcceptingOrders?: boolean; // restoran: ap pran kòmand kounye a (default: wi)
   whatsapp?: string; // nimewo WhatsApp (chif sèlman, ak kòd peyi: 50912345678)

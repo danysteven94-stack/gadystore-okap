@@ -13,6 +13,15 @@ import { InstallBanner } from "./install-app";
 import { shopEta } from "@/lib/delivery-eta";
 import { SHOP_LANGS, type ShopLang } from "@/lib/shop-i18n";
 
+/** Koulè prensipal boutik la → varyab CSS (ak yon vèsyon pi fonse pou degrade yo). */
+function accentVars(hex: string | null): React.CSSProperties | undefined {
+  if (!hex) return undefined;
+  const n = parseInt(hex.slice(1), 16);
+  const d = (v: number) => Math.max(0, Math.round(v * 0.72)).toString(16).padStart(2, "0");
+  const dark = `#${d((n >> 16) & 255)}${d((n >> 8) & 255)}${d(n & 255)}`;
+  return { "--shop-accent": hex, "--shop-accent-dark": dark } as React.CSSProperties;
+}
+
 export function ShopShell({ children }: { children: React.ReactNode }) {
   const t = useT();
   const { shop, base, money, itemCount, subtotal, wish, cartOpen, setCartOpen, notifyFor, setNotifyFor, toast, account } = useShop();
@@ -35,7 +44,7 @@ export function ShopShell({ children }: { children: React.ReactNode }) {
   }, [pathname, setCartOpen]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-white text-[#111]">
+    <div className="min-h-screen flex flex-col bg-white text-[#111]" style={accentVars(shop.accent)}>
       <style>{`
         @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
         @keyframes slideIn { from { transform: translateX(100%); } to { transform: none; } }

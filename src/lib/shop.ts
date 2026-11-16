@@ -81,6 +81,27 @@ export function isDish(p: { productType?: unknown }) {
   return p.productType === "dish";
 }
 
+/** Lis imaj background yo (JSON nan shopCovers; si pa genyen, ansyen shopCover la). */
+export function shopCovers(b: { shopCovers?: unknown; shopCover?: unknown }): string[] {
+  let list: unknown[] = [];
+  const raw = b.shopCovers;
+  if (Array.isArray(raw)) list = raw;
+  else if (typeof raw === "string" && raw.trim()) {
+    try {
+      const v = JSON.parse(raw);
+      if (Array.isArray(v)) list = v;
+    } catch {}
+  }
+  if (list.length === 0 && b.shopCover) list = [b.shopCover];
+  return list.map(String).filter((u) => u.startsWith("/api/img/")).slice(0, 6);
+}
+
+export function heroOverlayOf(v: unknown) {
+  const raw = String(v ?? "").trim();
+  const n = raw === "" ? 55 : Number(raw);
+  return Math.min(90, Math.max(0, Number.isFinite(n) ? n : 55));
+}
+
 export function isTrue(v: unknown) {
   return v === true || v === "true";
 }
@@ -153,6 +174,13 @@ export interface PublicShop {
   name: string;
   logoUrl: string | null;
   coverUrl: string | null;
+  covers: string[]; // imaj background (slideshow)
+  accent: string | null; // koulè prensipal boutik la (#rrggbb)
+  heroTitle: string | null;
+  heroText: string | null;
+  heroOverlay: number; // 0-90: ki jan imaj la fonse
+  heroSize: "sm" | "md" | "lg";
+  slideSeconds: number;
   tagline: string;
   currency: string;
   whatsapp: string | null;
@@ -250,7 +278,14 @@ export async function getPublicShop(slug: string): Promise<PublicShop | null> {
     slug: business.slug || slug,
     name: shopDisplayName(business),
     logoUrl: str(business.shopLogo),
-    coverUrl: str(business.shopCover),
+    coverUrl: shopCovers(business)[0] ?? null,
+    covers: shopCovers(business),
+    accent: /^#[0-9a-fA-F]{6}$/.test(String(business.shopAccent ?? "")) ? String(business.shopAccent) : null,
+    heroTitle: str(business.shopHeroTitle),
+    heroText: str(business.shopHeroText),
+    heroOverlay: heroOverlayOf(business.shopHeroOverlay),
+    heroSize: business.shopHeroSize === "sm" || business.shopHeroSize === "lg" ? business.shopHeroSize : "md",
+    slideSeconds: Math.min(12, Math.max(3, Number(business.shopSlideSeconds) || 5)),
     tagline: String(business.shopTagline || "Katalòg & Kòmand"),
     currency: business.currency || "HTG",
     whatsapp: business.whatsapp ? String(business.whatsapp).replace(/\D/g, "") : null,
