@@ -1,5 +1,6 @@
 "use client";
 
+import { PLANS, PLAN_IDS, type PlanId } from "@/lib/plans";
 import { useEffect, useState } from "react";
 import { UserCog, Plus, Loader2, ShieldCheck, Trash2, RefreshCw, Copy, Check, MessageCircle, KeyRound } from "lucide-react";
 import { useLanguage } from "@/lib/i18n/language-provider";
@@ -18,6 +19,7 @@ interface UserSummary {
   businessCount: number;
   businessIds?: string[];
   createdBy: string;
+  plan?: PlanId;
 }
 
 interface Credentials {
@@ -54,6 +56,7 @@ export default function UsersPage() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<Role>("gestionnaire");
+  const [plan, setPlan] = useState<PlanId>("solo_shop");
   const [saving, setSaving] = useState(false);
   const [busyEmail, setBusyEmail] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -96,7 +99,7 @@ export default function UsersPage() {
       const res = await fetch("/api/users", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fullName, email, role }),
+        body: JSON.stringify({ fullName, email, role, ...(role === "admin" ? { plan } : {}) }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -114,6 +117,26 @@ export default function UsersPage() {
       setError("Erè rezo — eseye ankò.");
     }
     setSaving(false);
+  }
+
+  async function handleSetPlan(u: UserSummary, next: PlanId) {
+    if (u.plan === next) return;
+    if (!confirm(`Chanje plan ${u.fullName || u.email} an: ${PLANS[next].label} ?`)) return;
+    setBusyEmail(u.email);
+    setError(null);
+    try {
+      const res = await fetch(`/api/users/${encodeURIComponent(u.email)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "set_plan", plan: next }),
+      });
+      const data = await res.json();
+      if (!res.ok) setError(data.error || "Pa ka chanje plan lan.");
+      else await load();
+    } catch {
+      setError("Erè rezo — eseye ankò.");
+    }
+    setBusyEmail(null);
   }
 
   async function handleReset(u: UserSummary) {
@@ -336,6 +359,17 @@ export default function UsersPage() {
                 <option value="admin">{t("users_role_admin")}</option>
               </select>
             </label>
+            {isSuperAdmin && role === "admin" && (
+              <label className="block">
+                <span className={labelClass}>Plan</span>
+                <select value={plan} onChange={(e) => setPlan(e.target.value as PlanId)} className={`${inputClass} sm:max-w-md`}>
+                  {PLAN_IDS.map((id) => (
+                    <option key={id} value={id}>{PLANS[id].label}</option>
+                  ))}
+                </select>
+                <span className="block text-xs text-ink/50 dark:text-paper/50 mt-1">{PLANS[plan].description}. Anplwaye ki kreye anba kont sa a swiv menm plan an.</span>
+              </label>
+            )}
             <p className="text-xs text-ink/55 dark:text-paper/55 flex gap-2">
               <KeyRound size={14} className="shrink-0 mt-0.5" /> {t("users_temp_hint")}
             </p>
@@ -397,6 +431,23 @@ export default function UsersPage() {
                   {ROLE_LABELS[u.role]} · {u.businessCount} {t("users_businesses_count")}
                   {isSuperAdmin && u.createdBy && <> · par {u.createdBy}</>}
                 </p>
+                {u.role === "admin" && !isSuper && u.plan && (
+                  <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                    <span className="rounded-full px-3 py-1 font-bold bg-ink/10 dark:bg-white/10">{PLANS[u.plan].label}</span>
+                    {isSuperAdmin && (
+                      <select
+                        value={u.plan}
+                        disabled={busyEmail === u.email}
+                        onChange={(e) => handleSetPlan(u, e.target.value as PlanId)}
+                        className="border border-ink/15 dark:border-dark-border bg-white dark:bg-dark-surface rounded-lg px-2 py-1 text-xs"
+                      >
+                        {PLAN_IDS.map((id) => (
+                          <option key={id} value={id}>{PLANS[id].label}</option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+                )}
 
                 {(canReset || canAssign || (isSuperAdmin && !isSuper)) && (
                   <div className="flex items-center gap-5 mt-3 pt-3 border-t border-ink/8 dark:border-dark-border/60">
