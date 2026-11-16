@@ -31,18 +31,26 @@ async function cacheFirst(req) {
   return res;
 }
 
+let lastFail = 0; // dènye fwa rezo a echwe (pou pa tann ankò si koneksyon an move)
+
 async function networkFirstPage(req, url) {
   const cache = await caches.open(PAGES);
   const key = url.pathname;
   try {
+    // Pa gen entènèt → ale dirèk nan kach la (pa tann okenn timeout)
+    if (self.navigator && self.navigator.onLine === false) throw new Error("offline");
+    // Si nou gen yon kopi nan kach (oswa rezo a te fèk echwe), pa tann plis pase 2.5 s
+    const hasCopy = !!(await cache.match(key));
+    const wait = hasCopy || Date.now() - lastFail < 30000 ? 2500 : 8000;
     const res = await Promise.race([
       fetch(req),
-      new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), 6000)),
+      new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), wait)),
     ]);
     // Pa kenbe redireksyon (ex: sesyon ekspire → /login) anba kle paj la
     if (res.ok && !res.redirected) cache.put(key, res.clone());
     return res;
   } catch {
+    lastFail = Date.now();
     const hit = await cache.match(key);
     if (hit) return hit;
     if (key === "/") {

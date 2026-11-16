@@ -83,9 +83,27 @@ function withTimeout(ms: number) {
   return { signal: ctrl.signal, done: () => clearTimeout(t) };
 }
 
+// Dènye fwa yon rekèt rezo echwe: si koneksyon an move ("wifi san entènèt"), pa tann 12 s chak fwa.
+let lastNetFail = 0;
+const recentlyFailed = () => Date.now() - lastNetFail < 30000;
+
+async function cachedResponse(key: string) {
+  const hit = await idbGet<{ body: string }>("cache", key).catch(() => undefined);
+  return hit ? new Response(hit.body, { status: 200, headers: { "Content-Type": "application/json", "X-Offline-Cache": "1" } }) : null;
+}
+
 async function handleGet(url: URL, input: RequestInfo | URL, init?: RequestInit) {
   const key = url.pathname + url.search;
-  const to = withTimeout(12000);
+  // Pa gen entènèt: sèvi ak done sove yo imedyatman, san eseye rezo a
+  if (typeof navigator !== "undefined" && !navigator.onLine) {
+    setOnline(false);
+    const off = await cachedResponse(key);
+    if (off) return off;
+    return json({ error: "Pa gen koneksyon, e done sa a poko sove sou telefòn nan." }, 503);
+  }
+  // Si nou gen done sove (oswa rezo a te fèk echwe), tann sèlman 3 s anvan nou itilize yo
+  const saved = await cachedResponse(key);
+  const to = withTimeout(saved || recentlyFailed() ? 3000 : 12000);
   try {
     const res = await realFetch(input, { ...init, signal: to.signal });
     to.done();
@@ -96,9 +114,10 @@ async function handleGet(url: URL, input: RequestInfo | URL, init?: RequestInit)
     return res;
   } catch {
     to.done();
+    lastNetFail = Date.now();
     setOnline(navigator.onLine);
-    const hit = await idbGet<{ body: string }>("cache", key).catch(() => undefined);
-    if (hit) return new Response(hit.body, { status: 200, headers: { "Content-Type": "application/json", "X-Offline-Cache": "1" } });
+    const off = saved ?? (await cachedResponse(key));
+    if (off) return off;
     return json({ error: "Pa gen koneksyon, e done sa a poko sove sou telefòn nan." }, 503);
   }
 }
@@ -190,7 +209,11 @@ async function handleMutation(url: URL, method: string, input: RequestInfo | URL
   const headers = new Headers(init?.headers || (input instanceof Request ? input.headers : undefined));
   headers.set("Content-Type", "application/json");
   headers.set("X-Idempotency-Key", id);
-  const to = withTimeout(15000);
+  if (typeof navigator !== "undefined" && !navigator.onLine) {
+    setOnline(false);
+    return enqueueAndFake(url.pathname, body, id);
+  }
+  const to = withTimeout(recentlyFailed() ? 4000 : 15000);
   try {
     const res = await realFetch(url.pathname + url.search, { method, headers, body, credentials: "same-origin", signal: to.signal });
     to.done();
@@ -198,6 +221,7 @@ async function handleMutation(url: URL, method: string, input: RequestInfo | URL
     return res;
   } catch {
     to.done();
+    lastNetFail = Date.now();
     setOnline(navigator.onLine);
     return enqueueAndFake(url.pathname, body, id);
   }
