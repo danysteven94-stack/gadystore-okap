@@ -8,6 +8,7 @@ import { useLanguage } from "@/lib/i18n/language-provider";
 import { LANGUAGES } from "@/lib/i18n/dictionary";
 import { LogoutButton } from "@/components/nav/logout-button";
 import { PushToggle } from "@/components/nav/push-toggle";
+import { InstallButton } from "@/components/nav/install-button";
 import { NAV_ITEMS } from "@/lib/nav-items";
 import { useSuperInfo } from "@/lib/use-super-info";
 
@@ -15,7 +16,7 @@ export function Sidebar() {
   const pathname = usePathname();
   const { theme, toggleTheme } = useTheme();
   const { lang, setLang, t } = useLanguage();
-  const { isSuper, alertCount } = useSuperInfo();
+  const { isSuper, alertCount, shopAllowed } = useSuperInfo();
 
   return (
     <aside className="hidden lg:flex lg:flex-col w-64 shrink-0 h-screen sticky top-0 bg-night text-paper border-r border-white/10">
@@ -32,7 +33,7 @@ export function Sidebar() {
       </div>
 
       <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-        {NAV_ITEMS.filter((i) => !i.superOnly || isSuper).map(({ href, icon: Icon, key }) => {
+        {NAV_ITEMS.filter((i) => (!i.superOnly || isSuper) && (!i.needsShop || shopAllowed)).map(({ href, icon: Icon, key }) => {
           const active = pathname === href.split("?")[0];
           return (
             <Link
@@ -76,6 +77,7 @@ export function Sidebar() {
             ))}
           </select>
         </div>
+        <InstallButton className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-white/60 hover:bg-white/5 hover:text-paper w-full text-left" />
         <PushToggle className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-white/60 hover:bg-white/5 hover:text-paper w-full text-left" />
         <LogoutButton className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-white/60 hover:bg-white/5 hover:text-paper w-full text-left" />
       </div>
