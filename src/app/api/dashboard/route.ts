@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { userOwnsBusiness } from "@/lib/shop";
 import { redis } from "@/lib/upstash";
-import { verifySession, isSuperAdmin } from "@/lib/auth";
-import { getMonthlySubscriptionRevenue } from "@/lib/billing-summary";
+import { verifySession } from "@/lib/auth";
 import { recordOrderSaleIfReady } from "@/lib/order-sale";
 import type { Expense, Product, Sale } from "@/types";
 
@@ -136,11 +135,7 @@ export async function GET(req: NextRequest) {
   const outOfStockCount = validProducts.filter((p) => p.stock <= 0).length;
   const stockValue = validProducts.reduce((sum, p) => sum + p.stock * p.buyPrice, 0);
 
-  // Revni abònman itilizatè yo — SÈL kont prensipal la resevwa l (lòt kont yo pa wè anyen).
-  const subscriptionRevenue = isSuperAdmin(session.email) ? await getMonthlySubscriptionRevenue() : 0;
-
   return NextResponse.json({
-    subscriptionRevenue,
     todayRevenue,
     todaySales: todaySalesCount,
     todayExpenses,

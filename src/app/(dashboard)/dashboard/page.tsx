@@ -28,6 +28,7 @@ import { StatCard } from "@/components/dashboard/stat-card";
 import { BusinessBreakdown } from "@/components/dashboard/business-breakdown";
 import { BusinessForm, type BusinessFormValues } from "@/components/business/business-form";
 import { useLanguage } from "@/lib/i18n/language-provider";
+import { useSuperInfo } from "@/lib/use-super-info";
 import type { Business, DashboardStats } from "@/types";
 
 function fmt(n: number) {
@@ -82,6 +83,8 @@ function StatsGrid({ s, t }: { s: StatsLike; t: (k: any) => string }) {
 
 function DashboardInner() {
   const { t } = useLanguage();
+  // Revni abònman itilizatè yo: rekèt separe ki rapid, pou kont prensipal la sèlman (0 pou lòt yo).
+  const { monthlyRevenue: subscriptionRevenue } = useSuperInfo();
   const [businesses, setBusinesses] = useState<Business[] | null>(null);
   const [activeId, setActiveId] = useState("all");
   const [statsByBusiness, setStatsByBusiness] = useState<Record<string, DashboardStats>>({});
@@ -216,10 +219,8 @@ function DashboardInner() {
     );
   }
 
-  // Revni abònman yo se youn pou tout kont lan (pa pou yon antrepriz), kidonk nou
-  // pran l yon sèl fwa — pa chak antrepriz — epi nou ajoute l nan revni jodi a, mwa a, ane a ak pwofi mwa a.
-  const subscriptionRevenue = Math.max(0, ...Object.values(statsByBusiness).map((b) => b?.subscriptionRevenue ?? 0));
-
+  // subscriptionRevenue (anwo a) se youn pou tout kont lan, pa pou yon antrepriz: nou ajoute l yon sèl fwa
+  // nan revni jodi a, mwa a, ane a ak pwofi mwa a.
   const empireStats = {
     todayRevenue: Object.values(statsByBusiness).reduce((s, b) => s + (b?.todayRevenue ?? 0), 0) + subscriptionRevenue,
     monthRevenue: Object.values(statsByBusiness).reduce((s, b) => s + (b?.monthRevenue ?? 0), 0) + subscriptionRevenue,

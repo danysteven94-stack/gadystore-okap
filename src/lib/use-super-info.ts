@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 export function useSuperInfo() {
   const [isSuper, setIsSuper] = useState(false);
   const [alertCount, setAlertCount] = useState(0);
+  const [monthlyRevenue, setMonthlyRevenue] = useState(0); // revni mensyèl abònman itilizatè yo
   const [shopAllowed, setShopAllowed] = useState(true); // montre pandan l ap chaje; kache si plan an pa gen boutik
 
   useEffect(() => {
@@ -22,7 +23,10 @@ export function useSuperInfo() {
         const res = await fetch("/api/user-billing?summary=1");
         if (!res.ok) return;
         const { summary } = await res.json();
-        if (!cancelled) setAlertCount((summary?.overdue ?? 0) + (summary?.dueToday ?? 0));
+        if (!cancelled) {
+          setAlertCount((summary?.overdue ?? 0) + (summary?.dueToday ?? 0));
+          setMonthlyRevenue(Number(summary?.monthlyRevenue) || 0);
+        }
       } catch {
         /* silans */
       }
@@ -32,5 +36,5 @@ export function useSuperInfo() {
     };
   }, []);
 
-  return { isSuper, alertCount, shopAllowed };
+  return { isSuper, alertCount, shopAllowed, monthlyRevenue };
 }
