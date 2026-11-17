@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { redis } from "@/lib/upstash";
-import { verifyPassword, signSession, signPwChangeToken, type SessionPayload } from "@/lib/auth";
+import { verifyPassword, signSession, signPwChangeToken, SESSION_MAX_AGE, type SessionPayload } from "@/lib/auth";
 import { isTrue } from "@/lib/password";
 import { rateLimit } from "@/lib/shop";
 
@@ -93,7 +93,7 @@ export async function POST(req: NextRequest) {
       httpOnly: true,
       secure: true,
       sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 7,
+      maxAge: SESSION_MAX_AGE,
       path: "/",
     });
     return res;
