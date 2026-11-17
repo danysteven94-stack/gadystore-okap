@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { Sidebar } from "@/components/nav/sidebar";
 import { MobileTopbar } from "@/components/nav/mobile-topbar";
@@ -24,13 +24,17 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="lg:flex">
-      <Sidebar />
+      <Suspense fallback={null}>
+        <Sidebar />
+      </Suspense>
       <div className="flex-1 min-w-0 flex flex-col">
         <MobileTopbar onOpen={() => setDrawerOpen(true)} />
         <div className="flex-1 pb-[calc(3.5rem+env(safe-area-inset-bottom))] lg:pb-0">{children}</div>
       </div>
-      <BottomNav onMore={() => setDrawerOpen(true)} />
-      <MobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
+      <Suspense fallback={null}>
+        <BottomNav onMore={() => setDrawerOpen(true)} />
+        <MobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
+      </Suspense>
     </div>
   );
 }

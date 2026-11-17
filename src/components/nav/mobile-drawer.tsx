@@ -11,6 +11,7 @@ import { PushToggle } from "@/components/nav/push-toggle";
 import { InstallButton } from "@/components/nav/install-button";
 import { NAV_ITEMS } from "@/lib/nav-items";
 import { useSuperInfo } from "@/lib/use-super-info";
+import { useIsNavActive } from "@/lib/nav-active";
 import { useUnreadNotifications } from "@/lib/use-unread-notifications";
 
 interface Props {
@@ -24,6 +25,7 @@ export function MobileDrawer({ open, onClose }: Props) {
   const { lang, setLang, t } = useLanguage();
   const { isSuper, alertCount, shopAllowed } = useSuperInfo();
   const unreadCount = useUnreadNotifications();
+  const isActive = useIsNavActive();
 
   return (
     <div
@@ -62,7 +64,7 @@ export function MobileDrawer({ open, onClose }: Props) {
 
         <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
           {NAV_ITEMS.filter((i) => (!i.superOnly || isSuper) && (!i.needsShop || shopAllowed)).map(({ href, icon: Icon, key }) => {
-            const active = pathname === href.split("?")[0];
+            const active = isActive(href);
             return (
               <Link
                 key={href}

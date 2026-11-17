@@ -11,6 +11,7 @@ import { PushToggle } from "@/components/nav/push-toggle";
 import { InstallButton } from "@/components/nav/install-button";
 import { NAV_ITEMS } from "@/lib/nav-items";
 import { useSuperInfo } from "@/lib/use-super-info";
+import { useIsNavActive } from "@/lib/nav-active";
 import { useUnreadNotifications } from "@/lib/use-unread-notifications";
 
 export function Sidebar() {
@@ -19,6 +20,7 @@ export function Sidebar() {
   const { lang, setLang, t } = useLanguage();
   const { isSuper, alertCount, shopAllowed } = useSuperInfo();
   const unreadCount = useUnreadNotifications();
+  const isActive = useIsNavActive();
 
   return (
     <aside className="hidden lg:flex lg:flex-col w-64 shrink-0 h-screen sticky top-0 bg-night text-paper border-r border-white/10">
@@ -36,7 +38,7 @@ export function Sidebar() {
 
       <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
         {NAV_ITEMS.filter((i) => (!i.superOnly || isSuper) && (!i.needsShop || shopAllowed)).map(({ href, icon: Icon, key }) => {
-          const active = pathname === href.split("?")[0];
+          const active = isActive(href);
           return (
             <Link
               key={href}
