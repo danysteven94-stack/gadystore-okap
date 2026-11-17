@@ -34,15 +34,11 @@ export interface SessionPayload {
   businessIds: string[];
 }
 
-// Sesyon an dire 1 èdtan. Chak aktivite re-bay yon nouvo 1 èdtan (gade /api/auth/refresh),
-// kidonk sesyon an fini sèlman si pa gen okenn aktivite pandan 1 èdtan.
-export const SESSION_MAX_AGE = 60 * 60; // segonn
-
 export async function signSession(payload: SessionPayload): Promise<string> {
   return new SignJWT({ ...payload })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
-    .setExpirationTime(`${SESSION_MAX_AGE}s`)
+    .setExpirationTime("7d")
     .sign(getSecret());
 }
 

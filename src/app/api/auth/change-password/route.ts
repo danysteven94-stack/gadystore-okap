@@ -5,7 +5,6 @@ import {
   hashPassword,
   verifyPassword,
   signSession,
-  SESSION_MAX_AGE,
   verifyPwChangeToken,
   type SessionPayload,
 } from "@/lib/auth";
@@ -78,7 +77,7 @@ export async function POST(req: NextRequest) {
     httpOnly: true,
     secure: true,
     sameSite: "lax",
-    maxAge: SESSION_MAX_AGE,
+    maxAge: 60 * 60 * 24 * 7,
     path: "/",
   });
   res.cookies.set("pwchange", "", { httpOnly: true, secure: true, sameSite: "lax", maxAge: 0, path: "/api/auth" });

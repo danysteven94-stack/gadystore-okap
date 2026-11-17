@@ -4,7 +4,6 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { LanguageProvider } from "@/lib/i18n/language-provider";
 import { AppChrome } from "@/components/nav/app-chrome";
-import { IdleGuard } from "@/components/providers/idle-guard";
 import { OfflineProvider } from "@/components/providers/offline-provider";
 
 const sans = Inter({ subsets: ["latin"], variable: "--font-sans" });
@@ -44,7 +43,6 @@ export default function RootLayout({
         <ThemeProvider>
           <LanguageProvider>
             <OfflineProvider>
-              <IdleGuard />
               <AppChrome>{children}</AppChrome>
             </OfflineProvider>
           </LanguageProvider>
