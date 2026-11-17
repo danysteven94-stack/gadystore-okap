@@ -216,14 +216,18 @@ function DashboardInner() {
     );
   }
 
+  // Revni abònman yo se youn pou tout kont lan (pa pou yon antrepriz), kidonk nou
+  // pran l yon sèl fwa — pa chak antrepriz — epi nou ajoute l nan revni jodi a, mwa a, ane a ak pwofi mwa a.
+  const subscriptionRevenue = Math.max(0, ...Object.values(statsByBusiness).map((b) => b?.subscriptionRevenue ?? 0));
+
   const empireStats = {
-    todayRevenue: Object.values(statsByBusiness).reduce((s, b) => s + (b?.todayRevenue ?? 0), 0),
-    monthRevenue: Object.values(statsByBusiness).reduce((s, b) => s + (b?.monthRevenue ?? 0), 0),
-    yearRevenue: Object.values(statsByBusiness).reduce((s, b) => s + (b?.yearRevenue ?? 0), 0),
+    todayRevenue: Object.values(statsByBusiness).reduce((s, b) => s + (b?.todayRevenue ?? 0), 0) + subscriptionRevenue,
+    monthRevenue: Object.values(statsByBusiness).reduce((s, b) => s + (b?.monthRevenue ?? 0), 0) + subscriptionRevenue,
+    yearRevenue: Object.values(statsByBusiness).reduce((s, b) => s + (b?.yearRevenue ?? 0), 0) + subscriptionRevenue,
     monthSales: Object.values(statsByBusiness).reduce((s, b) => s + (b?.monthSales ?? 0), 0),
     monthReturns: Object.values(statsByBusiness).reduce((s, b) => s + (b?.monthReturns ?? 0), 0),
     monthExpenses: Object.values(statsByBusiness).reduce((s, b) => s + (b?.monthExpenses ?? 0), 0),
-    monthProfit: Object.values(statsByBusiness).reduce((s, b) => s + (b?.monthProfit ?? 0), 0),
+    monthProfit: Object.values(statsByBusiness).reduce((s, b) => s + (b?.monthProfit ?? 0), 0) + subscriptionRevenue,
     outOfStockCount: Object.values(statsByBusiness).reduce((s, b) => s + (b?.outOfStockCount ?? 0), 0),
     lowStockCount: Object.values(statsByBusiness).reduce((s, b) => s + (b?.lowStock.length ?? 0), 0),
     ordersCount: Object.values(statsByBusiness).reduce((s, b) => s + (b?.ordersCount ?? 0), 0),

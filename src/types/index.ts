@@ -125,6 +125,8 @@ export interface Expense {
 }
 
 export interface DashboardStats {
+  /** Revni mensyèl abònman itilizatè yo (kont prensipal sèlman; 0 pou lòt yo). */
+  subscriptionRevenue?: number;
   todayRevenue: number;
   todaySales: number;
   todayExpenses: number;
