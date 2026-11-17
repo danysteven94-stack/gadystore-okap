@@ -3,7 +3,8 @@ import { z } from "zod";
 import { redis } from "@/lib/upstash";
 import { verifySession, isSuperAdmin, SUPER_ADMIN_EMAIL } from "@/lib/auth";
 import { isTrue } from "@/lib/password";
-import { billingInfo, type BillingStatus } from "@/lib/user-billing";
+import { billingInfo, addMonthsYmd, ymd, type BillingStatus } from "@/lib/user-billing";
+import { notifyPaymentReceived } from "@/lib/billing-notify";
 
 async function getSuperSession(req: NextRequest) {
   const token = req.cookies.get("session")?.value;
@@ -114,6 +115,12 @@ export async function PATCH(req: NextRequest) {
       lastPaymentAt: new Date().toISOString(),
       lastPaymentMonths: body.months,
     });
+    // Notification (push) à l'utilisateur : paiement reçu + prochaine échéance.
+    const createdAt = user.createdAt ? String(user.createdAt) : "";
+    const d = new Date(createdAt);
+    if (createdAt && !isNaN(d.getTime())) {
+      await notifyPaymentReceived(email, body.months, addMonthsYmd(ymd(d), paidMonths + body.months));
+    }
   } else {
     await redis.hset(`user:${email}`, { paidMonths: Math.max(0, paidMonths - 1) });
   }
