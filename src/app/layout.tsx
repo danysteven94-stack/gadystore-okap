@@ -1,12 +1,12 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, IBM_Plex_Mono } from "next/font/google";
+import { Manrope, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { LanguageProvider } from "@/lib/i18n/language-provider";
 import { AppChrome } from "@/components/nav/app-chrome";
 import { OfflineProvider } from "@/components/providers/offline-provider";
 
-const sans = Inter({ subsets: ["latin"], variable: "--font-sans" });
+const sans = Manrope({ subsets: ["latin"], variable: "--font-sans", weight: ["400", "500", "600", "700", "800"] });
 const mono = IBM_Plex_Mono({
   subsets: ["latin"],
   variable: "--font-mono",
@@ -38,7 +38,7 @@ export default function RootLayout({
   return (
     <html lang="fr" suppressHydrationWarning>
       <body
-        className={`${sans.variable} ${mono.variable} font-sans bg-paper text-ink dark:bg-dark-bg dark:text-white antialiased transition-colors`}
+        className={`${sans.variable} ${mono.variable} font-sans bg-canvas text-ink dark:bg-dark-bg dark:text-white antialiased transition-colors`}
       >
         <ThemeProvider>
           <LanguageProvider>

@@ -26,12 +26,13 @@ const config: Config = {
           muted: "#6B6B6B",
         },
         night: "#111111",
-        line: "#E5E5E5",
-        mist: "#F5F5F5",
+        line: "#E4E6EB",
+        mist: "#F0F2F5",
+        canvas: "#F6F7F9",
         dark: {
-          bg: "#0A0A0A",
-          surface: "#141414",
-          border: "#2A2A2A",
+          bg: "#0B0C0E",
+          surface: "#15171B",
+          border: "#25282E",
         },
       },
       fontFamily: {
@@ -41,7 +42,10 @@ const config: Config = {
         mono: ["var(--font-mono)", "monospace"],
       },
       borderRadius: {
-        card: "8px",
+        card: "14px",
+      },
+      boxShadow: {
+        card: "0 1px 2px rgba(15,17,21,0.05), 0 4px 12px -6px rgba(15,17,21,0.08)",
       },
     },
   },

@@ -417,6 +417,10 @@ export const dictionary = {
   notif_type_large_expense: { ht: "Depans enpòtan", fr: "Dépense importante", en: "Large expense" },
   notif_type_billing: { ht: "Abònman", fr: "Abonnement", en: "Subscription" },
 
+  dash_group_revenue: { ht: "Revni", fr: "Revenus", en: "Revenue" },
+  dash_group_activity: { ht: "Aktivite", fr: "Activité", en: "Activity" },
+  dash_group_stock: { ht: "Stòk", fr: "Stock", en: "Stock" },
+
   common_save: { ht: "Anrejistre chanjman", fr: "Enregistrer", en: "Save changes" },
   common_add: { ht: "Ajoute", fr: "Ajouter", en: "Add" },
   common_delete: { ht: "Efase", fr: "Supprimer", en: "Delete" },

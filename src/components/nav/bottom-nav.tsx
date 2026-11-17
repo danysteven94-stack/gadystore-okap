@@ -18,12 +18,12 @@ export function BottomNav({ onMore }: { onMore: () => void }) {
   const pathname = usePathname();
   const { t } = useLanguage();
 
-  const base = "flex-1 flex flex-col items-center justify-center gap-0.5 min-h-14 text-[11px] active:bg-white/10";
+  const base = "flex-1 flex flex-col items-center justify-center gap-0.5 min-h-14 text-[11px] font-medium active:bg-white/10";
 
   return (
     <nav
       aria-label="Navigasyon prensipal"
-      className="lg:hidden fixed inset-x-0 bottom-0 z-40 flex bg-night text-white border-t border-white/10 pb-[env(safe-area-inset-bottom)]"
+      className="lg:hidden fixed inset-x-0 bottom-0 z-40 flex bg-ink/95 backdrop-blur text-white border-t border-white/10 pb-[env(safe-area-inset-bottom)]"
     >
       {TABS.map(({ href, match, icon: Icon, key }) => {
         const active = pathname.startsWith(match);

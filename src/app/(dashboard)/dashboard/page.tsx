@@ -58,25 +58,46 @@ interface StatsLike {
   stockValue: number;
 }
 
+function StatGroup({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section className="mb-6">
+      <h2 className="text-sm font-semibold text-ink/70 dark:text-white/70 mb-2.5">{title}</h2>
+      <div className="grid grid-cols-2 gap-3">{children}</div>
+    </section>
+  );
+}
+
 function StatsGrid({ s, t }: { s: StatsLike; t: (k: any) => string }) {
   return (
-    <div className="grid grid-cols-2 gap-3 mb-8">
-      <a href="/orders" className="block">
-        <StatCard icon={ClipboardList} label={t("dashboard_orders_total")} value={String(s.ordersCount)} />
-      </a>
-      <a href="/orders" className="block">
-        <StatCard icon={BellRing} tone="gold" label={t("dashboard_orders_new")} value={String(s.newOrdersCount)} />
-      </a>
-      <StatCard icon={Coins} tone="gold" label={t("dashboard_today_revenue")} value={fmt(s.todayRevenue)} />
-      <StatCard icon={CalendarClock} label={t("dashboard_month_revenue")} value={fmt(s.monthRevenue)} />
-      <StatCard icon={TrendingUp} tone="gold" label={t("dashboard_year_revenue")} value={fmt(s.yearRevenue)} />
-      <StatCard icon={Wallet} label={t("dashboard_month_sales")} value={String(s.monthSales)} />
-      <StatCard icon={CheckCircle2} label={t("dashboard_month_returns")} value={fmt(s.monthReturns)} />
-      <StatCard icon={RefreshCcw} label={t("dashboard_month_expenses")} value={fmt(s.monthExpenses)} />
-      <StatCard icon={BadgeDollarSign} accent label={t("dashboard_month_profit")} value={fmt(s.monthProfit)} />
-      <StatCard icon={HandCoins} label={t("dashboard_out_of_stock")} value={String(s.outOfStockCount)} />
-      <StatCard icon={AlertTriangle} label={t("dashboard_low_stock_count")} value={String(s.lowStockCount)} />
-      <StatCard icon={Boxes} label={t("dashboard_stock_value")} value={fmt(s.stockValue)} />
+    <div className="mb-4">
+      <StatGroup title={t("dash_group_revenue")}>
+        <StatCard icon={Coins} label={t("dashboard_today_revenue")} value={fmt(s.todayRevenue)} />
+        <StatCard icon={CalendarClock} label={t("dashboard_month_revenue")} value={fmt(s.monthRevenue)} />
+        <StatCard icon={TrendingUp} label={t("dashboard_year_revenue")} value={fmt(s.yearRevenue)} />
+        <StatCard icon={BadgeDollarSign} accent label={t("dashboard_month_profit")} value={fmt(s.monthProfit)} />
+      </StatGroup>
+
+      <StatGroup title={t("dash_group_activity")}>
+        <a href="/orders" className="block">
+          <StatCard icon={ClipboardList} label={t("dashboard_orders_total")} value={String(s.ordersCount)} />
+        </a>
+        <a href="/orders" className="block">
+          <StatCard icon={BellRing} tone={s.newOrdersCount > 0 ? "gold" : "white"} label={t("dashboard_orders_new")} value={String(s.newOrdersCount)} />
+        </a>
+        <StatCard icon={Wallet} label={t("dashboard_month_sales")} value={String(s.monthSales)} />
+        <StatCard icon={CheckCircle2} label={t("dashboard_month_returns")} value={fmt(s.monthReturns)} />
+        <div className="col-span-2">
+          <StatCard icon={RefreshCcw} label={t("dashboard_month_expenses")} value={fmt(s.monthExpenses)} />
+        </div>
+      </StatGroup>
+
+      <StatGroup title={t("dash_group_stock")}>
+        <StatCard icon={HandCoins} tone={s.outOfStockCount > 0 ? "gold" : "white"} label={t("dashboard_out_of_stock")} value={String(s.outOfStockCount)} />
+        <StatCard icon={AlertTriangle} tone={s.lowStockCount > 0 ? "gold" : "white"} label={t("dashboard_low_stock_count")} value={String(s.lowStockCount)} />
+        <div className="col-span-2">
+          <StatCard icon={Boxes} label={t("dashboard_stock_value")} value={fmt(s.stockValue)} />
+        </div>
+      </StatGroup>
     </div>
   );
 }
@@ -250,7 +271,7 @@ function DashboardInner() {
           <button
             onClick={() => setShowForm(true)}
             aria-label={t("dashboard_add_first_business")}
-            className="w-10 h-10 shrink-0 rounded-lg border border-ink text-ink dark:border-white dark:text-white hover:bg-ink hover:text-white dark:hover:bg-white dark:hover:text-ink flex items-center justify-center ml-2 transition-colors"
+            className="w-10 h-10 shrink-0 rounded-full bg-brick text-white hover:bg-brick-dark shadow-card dark:shadow-none flex items-center justify-center ml-2 transition-colors"
           >
             <Plus size={20} />
           </button>
@@ -265,14 +286,16 @@ function DashboardInner() {
         </div>
 
         {loadingStats ? (
-          <div className="flex justify-center py-10 text-ink/40 dark:text-white/40">
-            <Loader2 size={20} className="animate-spin" />
+          <div className="grid grid-cols-2 gap-3 mb-8" aria-busy="true">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="h-[74px] rounded-card bg-mist dark:bg-white/5 animate-pulse" />
+            ))}
           </div>
         ) : (
           <StatsGrid s={empireStats} t={t} />
         )}
 
-        <h2 className="text-base font-semibold mb-2">{t("dashboard_breakdown")}</h2>
+        <h2 className="text-sm font-semibold text-ink/70 dark:text-white/70 mb-2.5">{t("dashboard_breakdown")}</h2>
         <BusinessBreakdown
           businesses={businesses.map((b) => ({
             id: b.id,
@@ -311,7 +334,7 @@ function DashboardInner() {
         <button
           onClick={() => setShowForm(true)}
           aria-label={t("dashboard_add_first_business")}
-          className="w-10 h-10 shrink-0 rounded-lg border border-ink text-ink dark:border-white dark:text-white hover:bg-ink hover:text-white dark:hover:bg-white dark:hover:text-ink flex items-center justify-center ml-2 transition-colors"
+          className="w-10 h-10 shrink-0 rounded-full bg-brick text-white hover:bg-brick-dark shadow-card dark:shadow-none flex items-center justify-center ml-2 transition-colors"
         >
           <Plus size={20} />
         </button>

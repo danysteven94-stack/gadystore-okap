@@ -4,7 +4,8 @@
 
 @layer base {
   body {
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    font-feature-settings: "tnum" 0;
+    letter-spacing: -0.005em;
   }
   :focus-visible {
     outline: 2px solid #c8102e;
@@ -13,9 +14,10 @@
 }
 
 @layer components {
+  /* Chif: menm fanmi ak rès app la, men lajè egal pou kolòn yo aliyen byen */
   .stat-figure {
-    font-family: var(--font-mono);
     font-variant-numeric: tabular-nums;
+    letter-spacing: -0.03em;
   }
 }
 

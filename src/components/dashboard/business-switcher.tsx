@@ -50,7 +50,7 @@ export function BusinessSwitcher({
           role="tab"
           aria-selected={activeId === "all"}
           onClick={() => onSelect("all")}
-          className={`flex items-center gap-2 whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium transition-colors border ${
+          className={`flex items-center gap-2 whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold transition-colors border ${
             activeId === "all" ? ACTIVE : INACTIVE
           }`}
         >
@@ -67,7 +67,7 @@ export function BusinessSwitcher({
             role="tab"
             aria-selected={active}
             onClick={() => onSelect(b.id)}
-            className={`flex items-center gap-2 whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium transition-colors border ${
+            className={`flex items-center gap-2 whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold transition-colors border ${
               active ? ACTIVE : INACTIVE
             }`}
           >
