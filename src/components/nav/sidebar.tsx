@@ -11,12 +11,14 @@ import { PushToggle } from "@/components/nav/push-toggle";
 import { InstallButton } from "@/components/nav/install-button";
 import { NAV_ITEMS } from "@/lib/nav-items";
 import { useSuperInfo } from "@/lib/use-super-info";
+import { useUnreadNotifications } from "@/lib/use-unread-notifications";
 
 export function Sidebar() {
   const pathname = usePathname();
   const { theme, toggleTheme } = useTheme();
   const { lang, setLang, t } = useLanguage();
   const { isSuper, alertCount, shopAllowed } = useSuperInfo();
+  const unreadCount = useUnreadNotifications();
 
   return (
     <aside className="hidden lg:flex lg:flex-col w-64 shrink-0 h-screen sticky top-0 bg-night text-paper border-r border-white/10">
@@ -50,6 +52,9 @@ export function Sidebar() {
                         {href === "/user-billing" && alertCount > 0 && (
                           <span className="min-w-5 h-5 px-1.5 rounded-full bg-brick text-white text-[11px] font-bold flex items-center justify-center">{alertCount}</span>
                         )}
+              {href === "/notifications" && unreadCount > 0 && (
+                <span className="min-w-5 h-5 px-1.5 rounded-full bg-brick text-white text-[11px] font-bold flex items-center justify-center">{unreadCount > 99 ? "99+" : unreadCount}</span>
+              )}
               {active && <ChevronRight size={18} />}
             </Link>
           );

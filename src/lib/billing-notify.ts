@@ -1,5 +1,6 @@
 import { redis } from "@/lib/upstash";
 import { sendToUser } from "@/lib/push";
+import { storeUserNotification } from "@/lib/notifications";
 import { billingInfo } from "@/lib/user-billing";
 import { isTrue } from "@/lib/password";
 import { SUPER_ADMIN_EMAIL } from "@/lib/session";
@@ -22,6 +23,7 @@ export async function notifyPaymentReceived(email: string, months: number, nextD
   const body =
     `Votre paiement de ${months} mois a bien été reçu. Merci ! ` +
     `Prochaine échéance : ${frDate(nextDue)}.`;
+  await storeUserNotification(email, "✅ Paiement reçu", body).catch((e) => console.error("billing inbox error", e));
   try {
     await sendToUser(email, { title: "✅ Paiement reçu", body, url: "/dashboard", tag: `billing-paid-${Date.now()}` });
   } catch (e) {
@@ -47,16 +49,14 @@ export async function sendDueSoonReminders(now: Date = new Date()) {
     const ok = await redis.set(`billing:reminded:${email}:${info.nextDue}:${days}`, "1", { nx: true, ex: 60 * 60 * 24 * 10 });
     if (!ok) continue;
 
+    const title = days === 1 ? "⚠️ Échéance demain" : "⏰ Échéance proche";
+    const body =
+      days === 1
+        ? `Votre abonnement arrive à échéance demain (${frDate(info.nextDue)}). Pensez à effectuer votre paiement.`
+        : `Votre abonnement arrive à échéance dans ${days} jours (${frDate(info.nextDue)}). Pensez à effectuer votre paiement.`;
+    await storeUserNotification(email, title, body).catch((e) => console.error("billing inbox error", e));
     try {
-      await sendToUser(email, {
-        title: days === 1 ? "⚠️ Échéance demain" : "⏰ Échéance proche",
-        body:
-          days === 1
-            ? `Votre abonnement arrive à échéance demain (${frDate(info.nextDue)}). Pensez à effectuer votre paiement.`
-            : `Votre abonnement arrive à échéance dans ${days} jours (${frDate(info.nextDue)}). Pensez à effectuer votre paiement.`,
-        url: "/dashboard",
-        tag: `billing-due-${info.nextDue}-${days}`,
-      });
+      await sendToUser(email, { title, body, url: "/dashboard", tag: `billing-due-${info.nextDue}-${days}` });
       sent.push(email);
     } catch (e) {
       console.error("billing reminder error", e);

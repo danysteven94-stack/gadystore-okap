@@ -16,11 +16,13 @@ import {
   MonitorPlay,
   Store,
   WalletCards,
+  Bell,
 } from "lucide-react";
 import type { TranslationKey } from "@/lib/i18n/dictionary";
 
 export const NAV_ITEMS: { href: string; icon: React.ElementType; key: TranslationKey; superOnly?: boolean; needsShop?: boolean }[] = [
   { href: "/dashboard", icon: LayoutDashboard, key: "nav_dashboard" },
+  { href: "/notifications", icon: Bell, key: "nav_notifications" },
   { href: "/businesses", icon: Building2, key: "nav_businesses" },
   { href: "/products", icon: Package, key: "nav_products" },
   { href: "/shop", icon: Store, key: "nav_shop", needsShop: true },

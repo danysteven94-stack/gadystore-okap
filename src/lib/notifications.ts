@@ -8,12 +8,16 @@ export type NotificationType =
   | "new_sale"
   | "new_purchase"
   | "product_return"
-  | "large_expense";
+  | "large_expense"
+  | "billing";
 
 export interface AppNotification {
   [key: string]: unknown;
   id: string;
-  businessId: string;
+  businessId: string; // "" pou yon notifikasyon pèsonèl (ex: abònman)
+  email?: string; // sèlman pou notifikasyon pèsonèl yo
+  title?: string;
+  url?: string;
   type: NotificationType;
   message: string;
   read: boolean;
@@ -85,4 +89,32 @@ export async function notifyLargeExpense(businessId: string, amount: number) {
     "large_expense",
     `Depans enpòtan anrejistre: ${amount.toLocaleString("fr-FR")}.`
   );
+}
+
+/**
+ * Notifikasyon pèsonèl (pa lye ak yon antrepriz) — ex: peman abònman resevwa, dat limit ki pwoche.
+ * Li sove nan bwat resepsyon itilizatè a pou li ka wè l nan paj Notifikasyon yo (push la se yon lòt bagay).
+ */
+export async function storeUserNotification(
+  email: string,
+  title: string,
+  message: string,
+  url = "/dashboard",
+  type: NotificationType = "billing"
+) {
+  const notif: AppNotification = {
+    id: randomUUID(),
+    businessId: "",
+    email: email.toLowerCase(),
+    title,
+    url,
+    type,
+    message,
+    read: false,
+    createdAt: new Date().toISOString(),
+  };
+  await redis.hset(`notification:${notif.id}`, notif as unknown as Record<string, unknown>);
+  await redis.lpush(`user:${notif.email}:notifications`, notif.id);
+  await redis.ltrim(`user:${notif.email}:notifications`, 0, 99);
+  return notif;
 }
