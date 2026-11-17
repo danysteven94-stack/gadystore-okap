@@ -469,7 +469,7 @@ export default function UsersPage() {
                       <button
                         onClick={() => handleToggleActive(u)}
                         disabled={busyEmail === u.email}
-                        className={`text-sm font-semibold disabled:opacity-40 ${u.disabled ? "text-forest" : "text-brick"}`}
+                        className={`text-sm font-semibold disabled:opacity-40 ${u.disabled ? "text-green-600 dark:text-green-400" : "text-brick"}`}
                       >
                         {u.disabled ? t("users_activate") : t("users_deactivate")}
                       </button>
