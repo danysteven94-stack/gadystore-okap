@@ -31,6 +31,21 @@ export async function notifyPaymentReceived(email: string, months: number, nextD
   }
 }
 
+/**
+ * Envoyée au compte principal après que le paiement d'un compte a été enregistré :
+ * confirmation que le paiement est vérifié. (Le compte payé reçoit sa propre notification, plus haut.)
+ */
+export async function notifyPaymentVerified(superEmail: string, who: string, months: number, nextDue: string) {
+  const title = "✅ Paiement vérifié";
+  const body = `Le paiement de ${who} (${months} mois) a été vérifié. Prochaine échéance : ${frDate(nextDue)}.`;
+  await storeUserNotification(superEmail, title, body, "/user-billing").catch((e) => console.error("billing inbox error", e));
+  try {
+    await sendToUser(superEmail, { title, body, url: "/user-billing", tag: `billing-verified-${Date.now()}` });
+  } catch (e) {
+    console.error("billing push error", e);
+  }
+}
+
 /** Rappels : l'échéance approche (J-3 et J-1). Une seule fois par échéance et par rappel. */
 export async function sendDueSoonReminders(now: Date = new Date()) {
   const emails = await redis.smembers("users:all");

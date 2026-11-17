@@ -4,7 +4,7 @@ import { redis } from "@/lib/upstash";
 import { verifySession, isSuperAdmin, SUPER_ADMIN_EMAIL } from "@/lib/auth";
 import { isTrue } from "@/lib/password";
 import { billingInfo, addMonthsYmd, ymd, type BillingStatus } from "@/lib/user-billing";
-import { notifyPaymentReceived } from "@/lib/billing-notify";
+import { notifyPaymentReceived, notifyPaymentVerified } from "@/lib/billing-notify";
 
 async function getSuperSession(req: NextRequest) {
   const token = req.cookies.get("session")?.value;
@@ -119,7 +119,12 @@ export async function PATCH(req: NextRequest) {
     const createdAt = user.createdAt ? String(user.createdAt) : "";
     const d = new Date(createdAt);
     if (createdAt && !isNaN(d.getTime())) {
-      await notifyPaymentReceived(email, body.months, addMonthsYmd(ymd(d), paidMonths + body.months));
+      const nextDue = addMonthsYmd(ymd(d), paidMonths + body.months);
+      // 1) Le compte qui a payé reçoit « Paiement reçu » — lui seul.
+      await notifyPaymentReceived(email, body.months, nextDue);
+      // 2) Ensuite le compte principal reçoit « Paiement vérifié ».
+      const who = String(user.fullName ?? "").trim() || email;
+      await notifyPaymentVerified(auth.session.email, who, body.months, nextDue);
     }
   } else {
     await redis.hset(`user:${email}`, { paidMonths: Math.max(0, paidMonths - 1) });
