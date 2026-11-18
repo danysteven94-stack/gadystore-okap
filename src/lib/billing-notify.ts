@@ -3,6 +3,7 @@ import { sendToUser } from "@/lib/push";
 import { storeUserNotification } from "@/lib/notifications";
 import { billingInfo } from "@/lib/user-billing";
 import { isTrue } from "@/lib/password";
+import { isBillableAccount } from "@/lib/user-scope";
 import { SUPER_ADMIN_EMAIL } from "@/lib/session";
 
 // Notifications d'abonnement (en français) envoyées à l'utilisateur concerné.
@@ -54,7 +55,7 @@ export async function sendDueSoonReminders(now: Date = new Date()) {
     const email = raw.toLowerCase();
     if (email === SUPER_ADMIN_EMAIL) continue;
     const r = await redis.hgetall<Record<string, unknown>>(`user:${email}`);
-    if (!r || !r.id || isTrue(r.disabled)) continue;
+    if (!r || !r.id || isTrue(r.disabled) || !isBillableAccount(r)) continue;
     const paidMonths = r.paidMonths === undefined || r.paidMonths === null ? 1 : Number(r.paidMonths) || 0;
     const info = billingInfo(r.createdAt ? String(r.createdAt) : "", paidMonths, now);
     if (!info || info.monthsOverdue > 0 || !REMINDER_DAYS.includes(info.daysUntil)) continue;

@@ -4,6 +4,7 @@ import { verifySession, hashPassword, can, SUPER_ADMIN_EMAIL, isSuperAdmin } fro
 import { generateTempPassword } from "@/lib/password";
 import { userOwnsBusiness } from "@/lib/shop";
 import { isPlanId } from "@/lib/plans";
+import { canManageAccount } from "@/lib/user-scope";
 
 async function getSession(req: NextRequest) {
   const token = req.cookies.get("session")?.value;
@@ -17,11 +18,8 @@ export async function DELETE(
   const session = await getSession(req);
   if (!session) return NextResponse.json({ error: "Pa otorize." }, { status: 401 });
 
-  if (!isSuperAdmin(session.email)) {
-    return NextResponse.json(
-      { error: "Sèl kont prensipal la ka efase lòt administratè." },
-      { status: 403 }
-    );
+  if (!can(session.role, "*")) {
+    return NextResponse.json({ error: "Sèl Administrateur ka efase yon kont." }, { status: 403 });
   }
 
   const { email: rawEmail } = await params;
@@ -34,8 +32,13 @@ export async function DELETE(
     );
   }
 
+  if (email === session.email.toLowerCase()) {
+    return NextResponse.json({ error: "Ou pa ka efase pwòp kont ou la a." }, { status: 400 });
+  }
+
   const existing = await redis.hgetall<Record<string, unknown>>(`user:${email}`);
-  if (!existing || !existing.id) {
+  // Yon admin ka efase SÈLMAN kont li menm li kreye. Pou lòt yo: "pa jwenn".
+  if (!existing || !existing.id || !canManageAccount(session.email, isSuperAdmin(session.email), existing)) {
     return NextResponse.json({ error: "Itilizatè pa jwenn." }, { status: 404 });
   }
 
@@ -110,16 +113,16 @@ export async function PATCH(
     return NextResponse.json({ ok: true, plan: body.plan });
   }
 
-  // Dezaktive / reaktive: SÈL kont prensipal la gen dwa sa a.
+  // Dezaktive / reaktive: kont prensipal la, oswa admin ki kreye kont lan (pou anplwaye li yo).
   if (action === "deactivate" || action === "activate") {
-    if (!isSuperCaller) {
-      return NextResponse.json({ error: "Sèl kont prensipal la ka dezaktive oswa reaktive yon kont." }, { status: 403 });
-    }
     if (email === SUPER_ADMIN_EMAIL) {
       return NextResponse.json({ error: "Ou pa ka dezaktive kont prensipal la." }, { status: 400 });
     }
+    if (email === session.email.toLowerCase()) {
+      return NextResponse.json({ error: "Ou pa ka dezaktive pwòp kont ou la a." }, { status: 400 });
+    }
     const user = await redis.hgetall<Record<string, unknown>>(`user:${email}`);
-    if (!user || !user.id) {
+    if (!user || !user.id || !canManageAccount(session.email, isSuperCaller, user)) {
       return NextResponse.json({ error: "Itilizatè pa jwenn." }, { status: 404 });
     }
     if (action === "deactivate") {

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { redis } from "@/lib/upstash";
 import { verifySession, isSuperAdmin, SUPER_ADMIN_EMAIL } from "@/lib/auth";
 import { isTrue } from "@/lib/password";
+import { isBillableAccount } from "@/lib/user-scope";
 import { billingInfo, addMonthsYmd, ymd, type BillingStatus } from "@/lib/user-billing";
 import { notifyPaymentReceived, notifyPaymentVerified } from "@/lib/billing-notify";
 
@@ -43,6 +44,7 @@ export async function GET(req: NextRequest) {
       if (email.toLowerCase() === SUPER_ADMIN_EMAIL) return null;
       const r = await redis.hgetall<Record<string, unknown>>(`user:${email}`);
       if (!r || !r.id) return null;
+      if (!isBillableAccount(r)) return null; // anplwaye (jesyonè/kesye) pa peye epi pa parèt isit la
       const createdAt = r.createdAt ? String(r.createdAt) : "";
       const paidMonths = r.paidMonths === undefined || r.paidMonths === null ? 1 : Number(r.paidMonths) || 0;
       const info = billingInfo(createdAt, paidMonths);
@@ -103,7 +105,7 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "Kont prensipal la pa gen abònman." }, { status: 400 });
   }
   const user = await redis.hgetall<Record<string, unknown>>(`user:${email}`);
-  if (!user || !user.id) return NextResponse.json({ error: "Itilizatè pa jwenn." }, { status: 404 });
+  if (!user || !user.id || !isBillableAccount(user)) return NextResponse.json({ error: "Itilizatè pa jwenn." }, { status: 404 });
 
   const paidMonths = user.paidMonths === undefined || user.paidMonths === null ? 1 : Number(user.paidMonths) || 0;
 
