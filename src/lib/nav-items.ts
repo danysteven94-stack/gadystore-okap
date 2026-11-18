@@ -19,6 +19,17 @@ import {
 } from "lucide-react";
 import type { TranslationKey } from "@/lib/i18n/dictionary";
 
+/** Yon lyen aktif selon chemen AN MENM TAN ak ?kind= (Kliyan ≠ Founisè). */
+export function isNavActive(href: string, pathname: string, kind: string | null): boolean {
+  const [path, query] = href.split("?");
+  if (pathname !== path) return false;
+  if (path === "/contacts") {
+    const want = new URLSearchParams(query ?? "").get("kind") === "supplier" ? "supplier" : "customer";
+    return (kind === "supplier" ? "supplier" : "customer") === want;
+  }
+  return true;
+}
+
 export const NAV_ITEMS: { href: string; icon: React.ElementType; key: TranslationKey; superOnly?: boolean; needsShop?: boolean }[] = [
   { href: "/dashboard", icon: LayoutDashboard, key: "nav_dashboard" },
   { href: "/businesses", icon: Building2, key: "nav_businesses" },

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { ChevronRight, Moon, Sun, X } from "lucide-react";
 import { useTheme } from "@/components/providers/theme-provider";
 import { useLanguage } from "@/lib/i18n/language-provider";
@@ -9,7 +9,7 @@ import { LANGUAGES } from "@/lib/i18n/dictionary";
 import { LogoutButton } from "@/components/nav/logout-button";
 import { PushToggle } from "@/components/nav/push-toggle";
 import { InstallButton } from "@/components/nav/install-button";
-import { NAV_ITEMS } from "@/lib/nav-items";
+import { NAV_ITEMS, isNavActive } from "@/lib/nav-items";
 import { useSuperInfo } from "@/lib/use-super-info";
 
 interface Props {
@@ -19,6 +19,7 @@ interface Props {
 
 export function MobileDrawer({ open, onClose }: Props) {
   const pathname = usePathname();
+  const kind = useSearchParams().get("kind");
   const { theme, toggleTheme } = useTheme();
   const { lang, setLang, t } = useLanguage();
   const { isSuper, alertCount, shopAllowed } = useSuperInfo();
@@ -60,7 +61,7 @@ export function MobileDrawer({ open, onClose }: Props) {
 
         <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
           {NAV_ITEMS.filter((i) => (!i.superOnly || isSuper) && (!i.needsShop || shopAllowed)).map(({ href, icon: Icon, key }) => {
-            const active = pathname === href.split("?")[0];
+            const active = isNavActive(href, pathname, kind);
             return (
               <Link
                 key={href}

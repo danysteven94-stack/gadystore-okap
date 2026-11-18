@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useCallback, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Search, Plus, Users, Phone, Loader2 } from "lucide-react";
 import { BusinessSwitcher } from "@/components/dashboard/business-switcher";
 import { ContactForm, type ContactFormValues } from "@/components/contacts/contact-form";
@@ -12,12 +12,19 @@ type Contact = Customer | Supplier;
 
 function ContactsPageInner() {
   const { t } = useLanguage();
+  const router = useRouter();
   const searchParams = useSearchParams();
-  const initialKind = searchParams.get("kind") === "supplier" ? "supplier" : "customer";
+  // Kliyan OU Founisè, jamais tou de: URL la se sous verite a (nav la swiv li)
+  const kind: "customer" | "supplier" = searchParams.get("kind") === "supplier" ? "supplier" : "customer";
+  const setKind = (k: "customer" | "supplier") => {
+    setQuery("");
+    setContacts([]);
+    setFormTarget(null);
+    router.replace(`/contacts?kind=${k}`);
+  };
 
   const [businesses, setBusinesses] = useState<Business[] | null>(null);
   const [businessId, setBusinessId] = useState<string | null>(null);
-  const [kind, setKind] = useState<"customer" | "supplier">(initialKind);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loadingContacts, setLoadingContacts] = useState(false);
   const [query, setQuery] = useState("");
