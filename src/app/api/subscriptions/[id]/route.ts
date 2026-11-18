@@ -26,6 +26,16 @@ export async function PATCH(
 
   const body = await req.json();
 
+  // Korije non kliyan an (+ telefòn si l voye)
+  if (typeof body.customerName === "string") {
+    const customerName = body.customerName.trim().slice(0, 100);
+    if (!customerName) return NextResponse.json({ error: "Non kliyan an obligatwa." }, { status: 400 });
+    const update: Record<string, string> = { customerName };
+    if (typeof body.customerPhone === "string") update.customerPhone = body.customerPhone.trim().slice(0, 30);
+    await redis.hset(`subscription:${id}`, update);
+    return NextResponse.json({ subscription: { ...sub, ...update } });
+  }
+
   // Chanje nimewo telefòn/WhatsApp moun nan
   if (typeof body.customerPhone === "string") {
     const customerPhone = body.customerPhone.trim().slice(0, 30);

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { MonitorPlay, Plus, Loader2, CheckCircle2, XCircle, Undo2, Trash2, Store, UserRound, CalendarClock, MessageCircle } from "lucide-react";
+import { MonitorPlay, Plus, Loader2, CheckCircle2, XCircle, Undo2, Trash2, Store, UserRound, CalendarClock, MessageCircle, Pencil } from "lucide-react";
 import { useLanguage } from "@/lib/i18n/language-provider";
 import type { Business } from "@/types";
 import type { Subscription } from "@/app/api/subscriptions/route";
@@ -86,6 +86,9 @@ export default function SubscriptionsPage() {
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [editPhoneId, setEditPhoneId] = useState<string | null>(null);
+  const [editNameId, setEditNameId] = useState<string | null>(null);
+  const [nameDraft, setNameDraft] = useState("");
+  const [namePhoneDraft, setNamePhoneDraft] = useState("");
   const [phoneDraft, setPhoneDraft] = useState("");
   const [productName, setProductName] = useState("");
   const [profile, setProfile] = useState("");
@@ -255,6 +258,16 @@ export default function SubscriptionsPage() {
     });
     setEditPhoneId(null);
     openWhatsApp(s, phoneDraft);
+  };
+
+  const saveCustomer = async (id: string) => {
+    if (!nameDraft.trim()) return;
+    await call(id, `/api/subscriptions/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ customerName: nameDraft, customerPhone: namePhoneDraft }),
+    });
+    setEditNameId(null);
   };
 
   const handleCancel = (id: string) => {
@@ -454,6 +467,17 @@ export default function SubscriptionsPage() {
                         <CheckCircle2 size={13} /> {t("subscriptions_mark_paid")}
                       </button>
                     )}
+                    <button
+                      onClick={() => {
+                        setNameDraft(s.customerName);
+                        setNamePhoneDraft(String(s.customerPhone ?? ""));
+                        setEditNameId(editNameId === s.id ? null : s.id);
+                      }}
+                      disabled={working === s.id}
+                      className="flex items-center gap-1 text-xs font-medium text-ink/60 dark:text-white/60 disabled:opacity-40"
+                    >
+                      <Pencil size={13} /> {t("subscriptions_edit_customer")}
+                    </button>
                     {s.status !== "cancelled" && (
                       <button
                         onClick={() => handleReminder(s)}
@@ -516,6 +540,25 @@ export default function SubscriptionsPage() {
                     )}
                   </div>
                 </div>
+                {editNameId === s.id && (
+                  <div className="mt-3 pt-3 border-t border-ink/10 dark:border-dark-border space-y-2">
+                    <label className="block">
+                      <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">{t("subscriptions_customer_name")}</span>
+                      <input value={nameDraft} onChange={(e) => setNameDraft(e.target.value)} className={inputClass} maxLength={100} autoFocus />
+                    </label>
+                    <label className="block">
+                      <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">{t("subscriptions_customer_phone")}</span>
+                      <input type="tel" inputMode="tel" value={namePhoneDraft} onChange={(e) => setNamePhoneDraft(e.target.value)} className={inputClass} maxLength={30} />
+                    </label>
+                    <button
+                      onClick={() => saveCustomer(s.id)}
+                      disabled={working === s.id || !nameDraft.trim()}
+                      className="rounded-md bg-ink text-white px-4 py-2 text-sm font-medium disabled:opacity-50"
+                    >
+                      {t("ub_price_save")}
+                    </button>
+                  </div>
+                )}
                 {editPhoneId === s.id && (
                   <div className="mt-3 pt-3 border-t border-ink/10 dark:border-dark-border flex items-end gap-2">
                     <label className="flex-1 block">

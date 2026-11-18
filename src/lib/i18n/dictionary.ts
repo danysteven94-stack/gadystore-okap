@@ -298,6 +298,7 @@ export const dictionary = {
     en: "Hello {name}, a quick reminder: your {product}{profile} subscription is due on {date}. Amount: {price}. Thank you!",
   },
   notif_type_subscription_due: { ht: "Abònman ap rive nan dat", fr: "Abonnement bientôt dû", en: "Subscription due" },
+  subscriptions_edit_customer: { ht: "Chanje kliyan", fr: "Modifier le client", en: "Edit customer" },
   subscriptions_delete: { ht: "Efase", fr: "Supprimer", en: "Delete" },
   subscriptions_delete_confirm: { ht: "Efase abònman sa a?", fr: "Supprimer cet abonnement ?", en: "Delete this subscription?" },
   choose_business_prompt: { ht: "Chwazi yon antrepriz anwo a pou kontinye.", fr: "Choisissez une entreprise ci-dessus pour continuer.", en: "Choose a business above to continue." },
