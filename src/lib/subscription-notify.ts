@@ -1,6 +1,6 @@
 import { redis } from "@/lib/upstash";
 import { sendToUser } from "@/lib/push";
-import { pushNotification } from "@/lib/notifications";
+import { pushNotification, storeUserNotification } from "@/lib/notifications";
 import { ymd, daysBetween } from "@/lib/user-billing";
 import type { Subscription } from "@/app/api/subscriptions/route";
 
@@ -59,6 +59,7 @@ export async function sendSubscriptionReminders(now: Date = new Date()) {
       if (s.businessId) {
         await pushNotification(String(s.businessId), "subscription_due", message);
       } else if (s.ownerEmail) {
+        await storeUserNotification(String(s.ownerEmail), "⏰ Abònman ap rive nan dat", message, "/subscriptions", "subscription_due").catch(() => {});
         await sendToUser(String(s.ownerEmail), {
           title: "⏰ Abònman ap rive nan dat",
           body: message,

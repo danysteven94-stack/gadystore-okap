@@ -10,6 +10,7 @@ import { LogoutButton } from "@/components/nav/logout-button";
 import { PushToggle } from "@/components/nav/push-toggle";
 import { InstallButton } from "@/components/nav/install-button";
 import { NAV_ITEMS, isNavActive } from "@/lib/nav-items";
+import { useUnreadNotifications } from "@/lib/use-unread-notifications";
 import { useSuperInfo } from "@/lib/use-super-info";
 
 interface Props {
@@ -20,6 +21,7 @@ interface Props {
 export function MobileDrawer({ open, onClose }: Props) {
   const pathname = usePathname();
   const kind = useSearchParams().get("kind");
+  const unreadCount = useUnreadNotifications();
   const { theme, toggleTheme } = useTheme();
   const { lang, setLang, t } = useLanguage();
   const { isSuper, alertCount, shopAllowed } = useSuperInfo();
@@ -78,6 +80,9 @@ export function MobileDrawer({ open, onClose }: Props) {
                           {href === "/user-billing" && alertCount > 0 && (
                             <span className="min-w-5 h-5 px-1.5 rounded-full bg-brick text-white text-[11px] font-bold flex items-center justify-center">{alertCount}</span>
                           )}
+                {href === "/notifications" && unreadCount > 0 && (
+                  <span className="min-w-5 h-5 px-1.5 rounded-full bg-brick text-white text-[11px] font-bold flex items-center justify-center">{unreadCount > 99 ? "99+" : unreadCount}</span>
+                )}
                 {active && <ChevronRight size={18} />}
               </Link>
             );
