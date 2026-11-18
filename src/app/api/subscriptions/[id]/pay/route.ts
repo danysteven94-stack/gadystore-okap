@@ -31,9 +31,18 @@ export async function POST(
   if (r.error) return r.error;
   const { session, id, sub } = r;
 
+  // Dat ak lè moun nan peye (opsyonèl, default = kounye a)
+  const body = (await req.json().catch(() => null)) as { paidAt?: string } | null;
+  const paidAtDate = body?.paidAt ? new Date(body.paidAt) : new Date();
+  if (isNaN(paidAtDate.getTime())) {
+    return NextResponse.json({ error: "Dat peman an envalid." }, { status: 400 });
+  }
+  const paidAt = paidAtDate.toISOString();
+
   const paymentsCount = paymentsOf(sub) + 1;
   const nextPaymentDate = nextPaymentFor(sub, paymentsCount);
   const saleIds = parseIds(sub.saleIds);
+  const paidDates = parseIds(sub.paidDates);
 
   // Chak peman mansyèl kontabilize kòm yon vant (revni/rapò/dashboard),
   // sèlman si abònman an anba yon antrepriz.
@@ -45,6 +54,7 @@ export async function POST(
       amount: sub.monthlyPrice,
       customerId: sub.customerId,
       cashierId: session.userId,
+      paidAt,
     });
     saleIds.push(sale.id);
   } else {
@@ -56,6 +66,7 @@ export async function POST(
     paymentsCount,
     nextPaymentDate,
     saleIds: JSON.stringify(saleIds),
+    paidDates: JSON.stringify([...paidDates, paidAt]),
   };
   await redis.hset(`subscription:${id}`, updates);
 
@@ -82,6 +93,8 @@ export async function DELETE(
   const paymentsCount = current - 1;
   const saleIds = parseIds(sub.saleIds);
   const lastSaleId = saleIds.pop();
+  const paidDates = parseIds(sub.paidDates);
+  paidDates.pop();
   // Ansyen peman (anvan mizajou sa a) pa t sove ID vant la: nan ka sa a vant la rete.
   const saleRemoved = lastSaleId ? await undoSubscriptionSale(lastSaleId) : false;
 
@@ -89,6 +102,7 @@ export async function DELETE(
     paymentsCount,
     nextPaymentDate: nextPaymentFor(sub, paymentsCount),
     saleIds: JSON.stringify(saleIds),
+    paidDates: JSON.stringify(paidDates),
   };
   await redis.hset(`subscription:${id}`, updates);
 

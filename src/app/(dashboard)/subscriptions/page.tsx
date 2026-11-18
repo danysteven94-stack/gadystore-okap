@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { MonitorPlay, Plus, Loader2, CheckCircle2, XCircle, Undo2, Trash2, Store } from "lucide-react";
+import { MonitorPlay, Plus, Loader2, CheckCircle2, XCircle, Undo2, Trash2, Store, UserRound } from "lucide-react";
 import { useLanguage } from "@/lib/i18n/language-provider";
 import type { Business } from "@/types";
 import type { Subscription } from "@/app/api/subscriptions/route";
@@ -20,6 +20,32 @@ const chip = (on: boolean) =>
   `flex items-center gap-2 whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold transition-colors border ${on ? ACTIVE : INACTIVE}`;
 
 type Sub = Subscription & { paymentsCount?: number };
+
+/** Valè pou <input type="datetime-local"> (lè lokal aparèy la). */
+function nowLocal() {
+  const d = new Date();
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  return d.toISOString().slice(0, 16);
+}
+
+function lastPaidAt(s: Sub): string {
+  let arr: unknown = s.paidDates;
+  if (typeof arr === "string") {
+    try {
+      arr = JSON.parse(arr);
+    } catch {
+      arr = [];
+    }
+  }
+  return Array.isArray(arr) && arr.length ? String(arr[arr.length - 1]) : "";
+}
+
+function fmtDateTime(iso: string) {
+  const d = new Date(iso);
+  return isNaN(d.getTime())
+    ? ""
+    : d.toLocaleString("fr-FR", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+}
 
 export default function SubscriptionsPage() {
   const { t } = useLanguage();
@@ -45,9 +71,13 @@ export default function SubscriptionsPage() {
 
   const [customerName, setCustomerName] = useState("");
   const [productName, setProductName] = useState("");
+  const [profile, setProfile] = useState("");
   const [monthlyPrice, setMonthlyPrice] = useState(0);
   const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 10));
   const [paid, setPaid] = useState(true);
+  const [paidAt, setPaidAt] = useState(nowLocal());
+  const [payingId, setPayingId] = useState<string | null>(null);
+  const [payAt, setPayAt] = useState(nowLocal());
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -89,9 +119,11 @@ export default function SubscriptionsPage() {
           businessId: businessId || undefined,
           customerName,
           productName,
+          profile: profile.trim() || undefined,
           monthlyPrice,
           startDate,
           paid,
+          paidAt: paid && paidAt ? new Date(paidAt).toISOString() : undefined,
         }),
       });
       const data = await res.json();
@@ -102,8 +134,10 @@ export default function SubscriptionsPage() {
       }
       setCustomerName("");
       setProductName("");
+      setProfile("");
       setMonthlyPrice(0);
       setPaid(true);
+      setPaidAt(nowLocal());
       setShowForm(false);
       await load();
     } catch {
@@ -128,7 +162,14 @@ export default function SubscriptionsPage() {
     setWorking(null);
   }
 
-  const handleMarkPaid = (id: string) => call(id, `/api/subscriptions/${id}/pay`, { method: "POST" });
+  const handleMarkPaid = async (id: string) => {
+    await call(id, `/api/subscriptions/${id}/pay`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ paidAt: payAt ? new Date(payAt).toISOString() : undefined }),
+    });
+    setPayingId(null);
+  };
 
   const handleUndoPay = (id: string) => {
     if (!confirm(t("subscriptions_undo_confirm"))) return;
@@ -138,6 +179,16 @@ export default function SubscriptionsPage() {
   const handleDelete = (id: string) => {
     if (!confirm(t("subscriptions_delete_confirm"))) return;
     return call(id, `/api/subscriptions/${id}`, { method: "DELETE" });
+  };
+
+  const handleEditProfile = (s: Sub) => {
+    const next = prompt(t("subscriptions_profile"), s.profile ?? "");
+    if (next === null) return;
+    return call(s.id, `/api/subscriptions/${s.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ profile: next }),
+    });
   };
 
   const handleCancel = (id: string) => {
@@ -232,6 +283,12 @@ export default function SubscriptionsPage() {
               </button>
             </div>
             {!paid && <p className="text-xs text-ink/50 dark:text-white/50 mt-1.5">{t("subscriptions_paid_no_hint")}</p>}
+            {paid && (
+              <label className="block mt-3">
+                <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">{t("subscriptions_paid_at")}</span>
+                <input type="datetime-local" value={paidAt} onChange={(e) => setPaidAt(e.target.value)} className={inputClass} required />
+              </label>
+            )}
           </fieldset>
 
           <button
@@ -269,6 +326,11 @@ export default function SubscriptionsPage() {
                     <p className="text-xs text-ink/50 dark:text-white/50">
                       {t("subscriptions_started")}: {new Date(`${s.startDate}T12:00:00`).toLocaleDateString("fr-FR")}
                     </p>
+                    {lastPaidAt(s) && fmtDateTime(lastPaidAt(s)) && (
+                      <p className="text-xs text-ink/50 dark:text-white/50">
+                        {t("subscriptions_last_paid")}: {fmtDateTime(lastPaidAt(s))}
+                      </p>
+                    )}
                     <p className="text-xs text-ink/50 dark:text-white/50">
                       {t("subscriptions_next_payment")}: {new Date(`${s.nextPaymentDate}T12:00:00`).toLocaleDateString("fr-FR")}
                     </p>
@@ -289,7 +351,10 @@ export default function SubscriptionsPage() {
                   <div className="flex flex-wrap justify-end gap-x-3 gap-y-1">
                     {s.status !== "cancelled" && (
                       <button
-                        onClick={() => handleMarkPaid(s.id)}
+                        onClick={() => {
+                          setPayAt(nowLocal());
+                          setPayingId(payingId === s.id ? null : s.id);
+                        }}
                         disabled={working === s.id}
                         className="flex items-center gap-1 text-xs font-medium text-forest disabled:opacity-40"
                       >
@@ -325,6 +390,21 @@ export default function SubscriptionsPage() {
                     )}
                   </div>
                 </div>
+                {payingId === s.id && (
+                  <div className="mt-3 pt-3 border-t border-ink/10 dark:border-dark-border flex items-end gap-2">
+                    <label className="flex-1 block">
+                      <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">{t("subscriptions_paid_at")}</span>
+                      <input type="datetime-local" value={payAt} onChange={(e) => setPayAt(e.target.value)} className={inputClass} />
+                    </label>
+                    <button
+                      onClick={() => handleMarkPaid(s.id)}
+                      disabled={working === s.id || !payAt}
+                      className="rounded-md bg-forest text-white px-4 py-2 text-sm font-medium disabled:opacity-50"
+                    >
+                      {t("subscriptions_confirm_pay")}
+                    </button>
+                  </div>
+                )}
               </div>
             );
           })}

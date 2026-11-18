@@ -16,12 +16,14 @@ export interface Subscription {
   customerName: string;
   customerId?: string;
   productName: string; // ex: Netflix, IPTV, Spotify
+  profile?: string; // profil moun nan sou kont lan (ex: "Profil 2", "Ti Jan")
   monthlyPrice: number;
   status: "active" | "expired" | "cancelled";
   startDate: string;
   nextPaymentDate: string; // = startDate + paymentsCount mwa
   paymentsCount?: number; // konbyen mwa ki peye (0 = pa peye ankò)
   saleIds?: string[] | string; // vant ki asosye ak peman yo (pou ka anile dènye a)
+  paidDates?: string[] | string; // dat ak lè chak peman (ISO), menm lòd ak saleIds
   createdAt: string;
 }
 
@@ -30,9 +32,11 @@ const subscriptionSchema = z.object({
   customerName: z.string().min(1),
   customerId: z.string().optional(),
   productName: z.string().min(1),
+  profile: z.string().trim().max(60).optional(),
   monthlyPrice: z.number().positive(),
   startDate: z.string().min(1),
   paid: z.boolean().default(true), // eske moun nan peye deja lè l pran abònman an?
+  paidAt: z.string().optional(), // dat ak lè moun nan peye (ISO); default = kounye a
 });
 
 async function getSession(req: NextRequest) {
@@ -86,9 +90,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const { customerName, customerId, productName, monthlyPrice, paid } = parsed.data;
+  const { customerName, customerId, productName, monthlyPrice, paid, profile } = parsed.data;
   const businessId = parsed.data.businessId || "";
   const startDate = parsed.data.startDate.slice(0, 10);
+  const paidAtDate = parsed.data.paidAt ? new Date(parsed.data.paidAt) : new Date();
+  if (isNaN(paidAtDate.getTime())) {
+    return NextResponse.json({ error: "Dat peman an envalid." }, { status: 400 });
+  }
+  const paidAt = paidAtDate.toISOString();
   if (businessId && !(await userOwnsBusiness(session.email, businessId))) {
     return NextResponse.json({ error: "Aksè refize." }, { status: 403 });
   }
@@ -101,6 +110,7 @@ export async function POST(req: NextRequest) {
     customerName,
     customerId,
     productName,
+    profile: profile || undefined,
     monthlyPrice,
     status: "active",
     startDate,
@@ -108,6 +118,7 @@ export async function POST(req: NextRequest) {
     // Si pa peye: peman an dwe depi dat kòmansman an
     nextPaymentDate: addMonthsYmd(startDate, paymentsCount),
     saleIds: "[]",
+    paidDates: paid ? JSON.stringify([paidAt]) : "[]",
     createdAt: new Date().toISOString(),
   };
 
@@ -121,6 +132,7 @@ export async function POST(req: NextRequest) {
       amount: monthlyPrice,
       customerId,
       cashierId: session.userId,
+      paidAt,
     });
     subscription.saleIds = JSON.stringify([sale.id]);
   }

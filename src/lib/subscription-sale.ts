@@ -10,6 +10,8 @@ interface RecordSubscriptionSaleArgs {
   amount: number;
   customerId?: string;
   cashierId: string;
+  /** Dat ak lè moun nan te peye (ISO). Si pa bay, se kounye a. */
+  paidAt?: string;
 }
 
 /**
@@ -24,6 +26,7 @@ export async function recordSubscriptionSale({
   amount,
   customerId,
   cashierId,
+  paidAt,
 }: RecordSubscriptionSaleArgs): Promise<Sale> {
   const sale: Sale = {
     id: randomUUID(),
@@ -43,7 +46,7 @@ export async function recordSubscriptionSale({
     paymentMethod: "cash",
     customerId,
     cashierId,
-    createdAt: new Date().toISOString(),
+    createdAt: paidAt || new Date().toISOString(),
   };
 
   await hsetClean(`sale:${sale.id}`, sale as unknown as Record<string, unknown>);

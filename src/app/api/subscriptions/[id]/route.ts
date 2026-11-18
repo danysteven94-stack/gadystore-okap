@@ -24,6 +24,14 @@ export async function PATCH(
   }
 
   const body = await req.json();
+
+  // Chanje profil moun nan sou kont lan
+  if (typeof body.profile === "string") {
+    const profile = body.profile.trim().slice(0, 60);
+    await redis.hset(`subscription:${id}`, { profile });
+    return NextResponse.json({ subscription: { ...sub, profile } });
+  }
+
   if (body.status !== "cancelled" && body.status !== "active") {
     return NextResponse.json({ error: "Estati envalid." }, { status: 400 });
   }
