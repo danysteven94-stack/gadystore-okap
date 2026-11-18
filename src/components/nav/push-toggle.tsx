@@ -3,37 +3,12 @@
 import { useEffect, useState } from "react";
 import { Bell, BellOff, BellRing } from "lucide-react";
 import { useLanguage } from "@/lib/i18n/language-provider";
+import * as push from "@/lib/push-client";
+import { PUSH_CHANGED } from "@/lib/push-client";
 
 type State = "loading" | "unsupported" | "off" | "on" | "denied";
 
-function isNative() {
-  return typeof window !== "undefined" && !!(window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.();
-}
-function platform(): "ios" | "android" {
-  return (window as unknown as { Capacitor: { getPlatform: () => string } }).Capacitor.getPlatform() === "ios" ? "ios" : "android";
-}
-function b64ToUint8(b64: string) {
-  const pad = "=".repeat((4 - (b64.length % 4)) % 4);
-  const raw = atob((b64 + pad).replace(/-/g, "+").replace(/_/g, "/"));
-  return Uint8Array.from(raw, (c) => c.charCodeAt(0));
-}
-const post = (body: unknown) =>
-  fetch("/api/push", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-
-let nativeListenerAdded = false;
-async function registerNative() {
-  const { FirebaseMessaging } = await import("@capacitor-firebase/messaging");
-  const { token } = await FirebaseMessaging.getToken();
-  await post({ kind: "native", token, platform: platform() });
-  if (!nativeListenerAdded) {
-    nativeListenerAdded = true;
-    FirebaseMessaging.addListener("notificationActionPerformed", (ev) => {
-      const url = (ev.notification?.data as { url?: string } | undefined)?.url;
-      if (url && url.startsWith("/")) window.location.href = url;
-    });
-  }
-  return token;
-}
+const { isNative, registerNative, post } = push;
 
 export function PushToggle({ className }: { className?: string }) {
   const { t } = useLanguage();
@@ -41,7 +16,7 @@ export function PushToggle({ className }: { className?: string }) {
   const [msg, setMsg] = useState("");
 
   useEffect(() => {
-    (async () => {
+    const run = async () => {
       try {
         if (isNative()) {
           const { FirebaseMessaging } = await import("@capacitor-firebase/messaging");
@@ -64,33 +39,19 @@ export function PushToggle({ className }: { className?: string }) {
       } catch {
         setState("unsupported");
       }
-    })();
+    };
+    void run();
+    window.addEventListener(PUSH_CHANGED, run);
+    return () => window.removeEventListener(PUSH_CHANGED, run);
   }, []);
 
   async function enable() {
     setMsg("");
-    try {
-      if (isNative()) {
-        const { FirebaseMessaging } = await import("@capacitor-firebase/messaging");
-        const p = await FirebaseMessaging.requestPermissions();
-        if (p.receive !== "granted") return setState("denied");
-        await registerNative();
-        return setState("on");
-      }
-      const perm = await Notification.requestPermission();
-      if (perm !== "granted") return setState(perm === "denied" ? "denied" : "off");
-      const cfg = await (await fetch("/api/push")).json();
-      if (!cfg.webPublicKey) return setMsg("Sèvè a poko konfigire pou notifikasyon.");
-      const reg = await navigator.serviceWorker.ready;
-      const sub =
-        (await reg.pushManager.getSubscription()) ||
-        (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToUint8(cfg.webPublicKey) }));
-      const res = await post({ kind: "web", subscription: sub.toJSON() });
-      if (!res.ok) return setMsg("Erè — eseye ankò.");
-      setState("on");
-    } catch {
-      setMsg("Erè — eseye ankò.");
-    }
+    const res = await push.enablePush();
+    if (res === "on") return setState("on");
+    if (res === "denied") return setState("denied");
+    if (res === "error") return setMsg("Erè — eseye ankò.");
+    setState("off");
   }
 
   async function disable() {

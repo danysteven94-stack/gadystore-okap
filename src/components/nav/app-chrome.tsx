@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { Sidebar } from "@/components/nav/sidebar";
 import { MobileTopbar } from "@/components/nav/mobile-topbar";
 import { MobileDrawer } from "@/components/nav/mobile-drawer";
+import { AutoPushSetup } from "@/components/providers/auto-push";
 import { BottomNav } from "@/components/nav/bottom-nav";
 
 const HIDE_NAV_PREFIXES = ["/login", "/verify", "/boutik", "/change-password", "/privacy", "/terms", "/account-deletion"];
@@ -24,6 +25,7 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="lg:flex">
+      <AutoPushSetup />
       <Suspense fallback={null}>
         <Sidebar />
       </Suspense>
