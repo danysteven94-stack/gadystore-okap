@@ -284,6 +284,8 @@ export const dictionary = {
   subscriptions_profile: { ht: "Profil moun nan (ex: Profil 2, Ti Jan)", fr: "Profil du client (ex : Profil 2, Ti Jan)", en: "Customer profile (e.g. Profile 2, Ti Jan)" },
   subscriptions_profile_short: { ht: "Profil", fr: "Profil", en: "Profile" },
   subscriptions_profile_edit: { ht: "Chanje profil", fr: "Modifier le profil", en: "Edit profile" },
+  subscriptions_edit_paid_at: { ht: "Chanje lè peman", fr: "Modifier l'heure du paiement", en: "Edit payment time" },
+  ub_paid_at: { ht: "Dat ak lè moun nan peye", fr: "Date et heure du paiement", en: "Payment date and time" },
   subscriptions_delete: { ht: "Efase", fr: "Supprimer", en: "Delete" },
   subscriptions_delete_confirm: { ht: "Efase abònman sa a?", fr: "Supprimer cet abonnement ?", en: "Delete this subscription?" },
   choose_business_prompt: { ht: "Chwazi yon antrepriz anwo a pou kontinye.", fr: "Choisissez une entreprise ci-dessus pour continuer.", en: "Choose a business above to continue." },

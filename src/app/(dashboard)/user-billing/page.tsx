@@ -29,6 +29,12 @@ export default function UserBillingPage() {
   const [busy, setBusy] = useState<string | null>(null);
   const [prices, setPrices] = useState<Record<string, string>>({});
   const [months, setMonths] = useState<Record<string, number>>({});
+  const [paidAt, setPaidAt] = useState<Record<string, string>>({});
+  const nowLocal = () => {
+    const d = new Date();
+    d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+    return d.toISOString().slice(0, 16);
+  };
 
   const locale = lang === "en" ? "en-US" : "fr-FR";
   const fmtDate = (ymd: string) =>
@@ -234,6 +240,15 @@ export default function UserBillingPage() {
                     )}
                   </div>
 
+                  <label className="block">
+                    <span className={labelClass}>{t("ub_paid_at")}</span>
+                    <input
+                      type="datetime-local"
+                      value={paidAt[u.email] ?? nowLocal()}
+                      onChange={(e) => setPaidAt((p) => ({ ...p, [u.email]: e.target.value }))}
+                      className={inputClass}
+                    />
+                  </label>
                   <div className="flex items-center gap-2">
                     <select
                       value={months[u.email] ?? 1}
@@ -248,7 +263,11 @@ export default function UserBillingPage() {
                     </select>
                     <button
                       disabled={busy === u.email}
-                      onClick={() => patch(u.email, { action: "pay", months: months[u.email] ?? 1 })}
+                      onClick={() => {
+                        const at = paidAt[u.email] ?? nowLocal();
+                        patch(u.email, { action: "pay", months: months[u.email] ?? 1, paidAt: new Date(at).toISOString() });
+                        setPaidAt((p) => { const n = { ...p }; delete n[u.email]; return n; });
+                      }}
                       className="rounded-xl bg-forest text-paper px-4 py-2 text-sm font-semibold disabled:opacity-50"
                     >
                       {t("ub_mark_paid")}

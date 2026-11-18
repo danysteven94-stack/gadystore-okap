@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { redis } from "@/lib/upstash";
 import { verifySession } from "@/lib/auth";
 import type { Subscription } from "@/app/api/subscriptions/route";
-import { canAccessSub, paymentsOf, scopeKey } from "@/lib/subscriptions";
+import { canAccessSub, parseIds, paymentsOf, scopeKey } from "@/lib/subscriptions";
+import { moveSaleDate } from "@/lib/subscription-sale";
 
 async function getSession(req: NextRequest) {
   const token = req.cookies.get("session")?.value;
@@ -30,6 +31,21 @@ export async function PATCH(
     const profile = body.profile.trim().slice(0, 60);
     await redis.hset(`subscription:${id}`, { profile });
     return NextResponse.json({ subscription: { ...sub, profile } });
+  }
+
+  // Korije dat ak lè DÈNYE peman an
+  if (typeof body.paidAt === "string") {
+    const d = new Date(body.paidAt);
+    if (isNaN(d.getTime())) return NextResponse.json({ error: "Dat peman an envalid." }, { status: 400 });
+    if (paymentsOf(sub) <= 0) return NextResponse.json({ error: "Pa gen peman pou chanje." }, { status: 400 });
+    const iso = d.toISOString();
+    const paidDates = parseIds(sub.paidDates);
+    if (paidDates.length) paidDates[paidDates.length - 1] = iso;
+    else paidDates.push(iso);
+    const saleId = parseIds(sub.saleIds).pop();
+    if (saleId) await moveSaleDate(saleId, iso);
+    await redis.hset(`subscription:${id}`, { paidDates: JSON.stringify(paidDates) });
+    return NextResponse.json({ subscription: { ...sub, paidDates } });
   }
 
   if (body.status !== "cancelled" && body.status !== "active") {

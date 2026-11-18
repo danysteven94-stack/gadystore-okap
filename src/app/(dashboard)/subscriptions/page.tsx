@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { MonitorPlay, Plus, Loader2, CheckCircle2, XCircle, Undo2, Trash2, Store, UserRound } from "lucide-react";
+import { MonitorPlay, Plus, Loader2, CheckCircle2, XCircle, Undo2, Trash2, Store, UserRound, CalendarClock } from "lucide-react";
 import { useLanguage } from "@/lib/i18n/language-provider";
 import type { Business } from "@/types";
 import type { Subscription } from "@/app/api/subscriptions/route";
@@ -76,6 +76,10 @@ export default function SubscriptionsPage() {
   const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 10));
   const [paid, setPaid] = useState(true);
   const [paidAt, setPaidAt] = useState(nowLocal());
+  const [editProfileId, setEditProfileId] = useState<string | null>(null);
+  const [profileDraft, setProfileDraft] = useState("");
+  const [editPaidId, setEditPaidId] = useState<string | null>(null);
+  const [paidDraft, setPaidDraft] = useState(nowLocal());
   const [payingId, setPayingId] = useState<string | null>(null);
   const [payAt, setPayAt] = useState(nowLocal());
   const [saving, setSaving] = useState(false);
@@ -181,14 +185,29 @@ export default function SubscriptionsPage() {
     return call(id, `/api/subscriptions/${id}`, { method: "DELETE" });
   };
 
-  const handleEditProfile = (s: Sub) => {
-    const next = prompt(t("subscriptions_profile"), s.profile ?? "");
-    if (next === null) return;
-    return call(s.id, `/api/subscriptions/${s.id}`, {
+  const saveProfile = async (id: string) => {
+    await call(id, `/api/subscriptions/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ profile: next }),
+      body: JSON.stringify({ profile: profileDraft }),
     });
+    setEditProfileId(null);
+  };
+
+  const savePaidAt = async (id: string) => {
+    await call(id, `/api/subscriptions/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ paidAt: new Date(paidDraft).toISOString() }),
+    });
+    setEditPaidId(null);
+  };
+
+  const toLocalInput = (iso: string) => {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return nowLocal();
+    d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+    return d.toISOString().slice(0, 16);
   };
 
   const handleCancel = (id: string) => {
@@ -253,6 +272,10 @@ export default function SubscriptionsPage() {
               placeholder="Netflix, IPTV, Spotify..."
               required
             />
+          </label>
+          <label className="block">
+            <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">{t("subscriptions_profile")}</span>
+            <input value={profile} onChange={(e) => setProfile(e.target.value)} className={inputClass} maxLength={60} />
           </label>
           <div className="grid grid-cols-2 gap-3">
             <label className="block">
@@ -323,6 +346,11 @@ export default function SubscriptionsPage() {
                     <p className="text-sm font-medium">
                       {s.customerName} — {s.productName}
                     </p>
+                    {s.profile && (
+                      <p className="text-xs font-medium text-ink/70 dark:text-white/70">
+                        {t("subscriptions_profile_short")}: {s.profile}
+                      </p>
+                    )}
                     <p className="text-xs text-ink/50 dark:text-white/50">
                       {t("subscriptions_started")}: {new Date(`${s.startDate}T12:00:00`).toLocaleDateString("fr-FR")}
                     </p>
@@ -361,6 +389,28 @@ export default function SubscriptionsPage() {
                         <CheckCircle2 size={13} /> {t("subscriptions_mark_paid")}
                       </button>
                     )}
+                    <button
+                      onClick={() => {
+                        setProfileDraft(s.profile ?? "");
+                        setEditProfileId(editProfileId === s.id ? null : s.id);
+                      }}
+                      disabled={working === s.id}
+                      className="flex items-center gap-1 text-xs font-medium text-ink/60 dark:text-white/60 disabled:opacity-40"
+                    >
+                      <UserRound size={13} /> {t("subscriptions_profile_edit")}
+                    </button>
+                    {!unpaid && (
+                      <button
+                        onClick={() => {
+                          setPaidDraft(lastPaidAt(s) ? toLocalInput(lastPaidAt(s)) : nowLocal());
+                          setEditPaidId(editPaidId === s.id ? null : s.id);
+                        }}
+                        disabled={working === s.id}
+                        className="flex items-center gap-1 text-xs font-medium text-ink/60 dark:text-white/60 disabled:opacity-40"
+                      >
+                        <CalendarClock size={13} /> {t("subscriptions_edit_paid_at")}
+                      </button>
+                    )}
                     {!unpaid && (
                       <button
                         onClick={() => handleUndoPay(s.id)}
@@ -390,6 +440,36 @@ export default function SubscriptionsPage() {
                     )}
                   </div>
                 </div>
+                {editProfileId === s.id && (
+                  <div className="mt-3 pt-3 border-t border-ink/10 dark:border-dark-border flex items-end gap-2">
+                    <label className="flex-1 block">
+                      <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">{t("subscriptions_profile")}</span>
+                      <input value={profileDraft} onChange={(e) => setProfileDraft(e.target.value)} className={inputClass} maxLength={60} autoFocus />
+                    </label>
+                    <button
+                      onClick={() => saveProfile(s.id)}
+                      disabled={working === s.id}
+                      className="rounded-md bg-ink text-white px-4 py-2 text-sm font-medium disabled:opacity-50"
+                    >
+                      {t("ub_price_save")}
+                    </button>
+                  </div>
+                )}
+                {editPaidId === s.id && (
+                  <div className="mt-3 pt-3 border-t border-ink/10 dark:border-dark-border flex items-end gap-2">
+                    <label className="flex-1 block">
+                      <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">{t("subscriptions_paid_at")}</span>
+                      <input type="datetime-local" value={paidDraft} onChange={(e) => setPaidDraft(e.target.value)} className={inputClass} />
+                    </label>
+                    <button
+                      onClick={() => savePaidAt(s.id)}
+                      disabled={working === s.id || !paidDraft}
+                      className="rounded-md bg-ink text-white px-4 py-2 text-sm font-medium disabled:opacity-50"
+                    >
+                      {t("ub_price_save")}
+                    </button>
+                  </div>
+                )}
                 {payingId === s.id && (
                   <div className="mt-3 pt-3 border-t border-ink/10 dark:border-dark-border flex items-end gap-2">
                     <label className="flex-1 block">

@@ -86,7 +86,7 @@ export async function GET(req: NextRequest) {
 }
 
 const patchSchema = z.discriminatedUnion("action", [
-  z.object({ action: z.literal("pay"), email: z.string(), months: z.number().int().min(1).max(36) }),
+  z.object({ action: z.literal("pay"), email: z.string(), months: z.number().int().min(1).max(36), paidAt: z.string().optional() }),
   z.object({ action: z.literal("undo"), email: z.string() }),
   z.object({ action: z.literal("set_price"), email: z.string(), price: z.number().min(0).max(100000000) }),
 ]);
@@ -110,9 +110,12 @@ export async function PATCH(req: NextRequest) {
   if (body.action === "set_price") {
     await redis.hset(`user:${email}`, { monthlyPrice: Math.round(body.price) });
   } else if (body.action === "pay") {
+    const paidAtDate = body.paidAt ? new Date(body.paidAt) : new Date();
+    if (isNaN(paidAtDate.getTime())) return NextResponse.json({ error: "Dat peman an envalid." }, { status: 400 });
+    const paidAtIso = paidAtDate.toISOString();
     await redis.hset(`user:${email}`, {
       paidMonths: paidMonths + body.months,
-      lastPaymentAt: new Date().toISOString(),
+      lastPaymentAt: paidAtIso,
       lastPaymentMonths: body.months,
     });
     // Notification (push) à l'utilisateur : paiement reçu + prochaine échéance.

@@ -71,3 +71,17 @@ export async function undoSubscriptionSale(saleId: string): Promise<boolean> {
   await redis.del(`sale:${saleId}`);
   return true;
 }
+
+/** Chanje dat/lè yon vant abònman (lè w korije kilè moun nan te peye). */
+export async function moveSaleDate(saleId: string, paidAtIso: string): Promise<boolean> {
+  const sale = await redis.hgetall<Sale>(`sale:${saleId}`);
+  if (!sale) return false;
+  const oldDay = String(sale.createdAt).slice(0, 10);
+  const newDay = paidAtIso.slice(0, 10);
+  if (oldDay !== newDay) {
+    await redis.lrem(`business:${sale.businessId}:sales:${oldDay}`, 0, saleId);
+    await redis.lpush(`business:${sale.businessId}:sales:${newDay}`, saleId);
+  }
+  await redis.hset(`sale:${saleId}`, { createdAt: paidAtIso });
+  return true;
+}
