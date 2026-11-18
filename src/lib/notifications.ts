@@ -8,7 +8,8 @@ export type NotificationType =
   | "new_sale"
   | "new_purchase"
   | "product_return"
-  | "large_expense";
+  | "large_expense"
+  | "subscription_due";
 
 export interface AppNotification {
   [key: string]: unknown;
@@ -29,6 +30,7 @@ function pushMeta(type: NotificationType, message: string) {
       : { title: "💰 Nouvo vant", url: "/dashboard" };
   }
   if (type === "low_stock") return { title: "⚠️ Stok ba", url: "/products" };
+  if (type === "subscription_due") return { title: "⏰ Abònman ap rive nan dat", url: "/subscriptions" };
   if (type === "large_expense") return { title: "💸 Depans enpòtan", url: "/expenses" };
   if (type === "product_return") return { title: "↩️ Retounen pwodwi", url: "/returns" };
   if (type === "new_purchase") return { title: "📦 Nouvo acha", url: "/dashboard" };

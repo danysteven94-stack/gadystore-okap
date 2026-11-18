@@ -26,6 +26,13 @@ export async function PATCH(
 
   const body = await req.json();
 
+  // Chanje nimewo telefòn/WhatsApp moun nan
+  if (typeof body.customerPhone === "string") {
+    const customerPhone = body.customerPhone.trim().slice(0, 30);
+    await redis.hset(`subscription:${id}`, { customerPhone });
+    return NextResponse.json({ subscription: { ...sub, customerPhone } });
+  }
+
   // Chanje profil moun nan sou kont lan
   if (typeof body.profile === "string") {
     const profile = body.profile.trim().slice(0, 60);

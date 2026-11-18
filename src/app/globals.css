@@ -66,3 +66,6 @@
 /* Bann kategori meni restoran: defile san bara */
 .no-scrollbar { scrollbar-width: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
+
+/* Mòd sonb: vè fonse (text-forest) pa t vizib sou fon nwa — nou ekleresi l pou tout app la */
+.dark .text-forest { color: #4ade80; }

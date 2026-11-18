@@ -15,6 +15,7 @@ export interface Subscription {
   ownerEmail?: string; // itilizatè ki kreye l (itilize pou abònman pèsonèl)
   customerName: string;
   customerId?: string;
+  customerPhone?: string; // nimewo WhatsApp/telefòn moun nan (pou voye rapèl)
   productName: string; // ex: Netflix, IPTV, Spotify
   profile?: string; // profil moun nan sou kont lan (ex: "Profil 2", "Ti Jan")
   monthlyPrice: number;
@@ -31,6 +32,7 @@ const subscriptionSchema = z.object({
   businessId: z.string().optional(),
   customerName: z.string().min(1),
   customerId: z.string().optional(),
+  customerPhone: z.string().trim().max(30).optional(),
   productName: z.string().min(1),
   profile: z.string().trim().max(60).optional(),
   monthlyPrice: z.number().positive(),
@@ -90,7 +92,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const { customerName, customerId, productName, monthlyPrice, paid, profile } = parsed.data;
+  const { customerName, customerId, customerPhone, productName, monthlyPrice, paid, profile } = parsed.data;
   const businessId = parsed.data.businessId || "";
   const startDate = parsed.data.startDate.slice(0, 10);
   const paidAtDate = parsed.data.paidAt ? new Date(parsed.data.paidAt) : new Date();
@@ -109,6 +111,7 @@ export async function POST(req: NextRequest) {
     ownerEmail: session.email.toLowerCase(),
     customerName,
     customerId,
+    customerPhone: customerPhone || undefined,
     productName,
     profile: profile || undefined,
     monthlyPrice,
