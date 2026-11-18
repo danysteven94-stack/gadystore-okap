@@ -331,7 +331,7 @@ function SearchBox() {
               <Link href={`${base}/p/${p.id}`} onClick={() => setFocus(false)} className="flex items-center gap-3 px-3 py-2.5 hover:bg-black/5">
                 {p.imageUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={p.imageUrl} alt="" className="w-10 h-10 rounded-lg object-cover shrink-0" />
+                  <img loading="lazy" decoding="async" src={p.imageUrl} alt="" className="w-10 h-10 rounded-lg object-cover shrink-0" />
                 ) : (
                   <span className="w-10 h-10 rounded-lg shrink-0" style={{ background: C.soft }} />
                 )}
@@ -369,7 +369,7 @@ function CartDrawer() {
               {remaining > 0 ? <>{t("Ajoute {amount} pou livrezon gratis", { amount: money(remaining) })}</> : <span style={{ color: C.ok }}>{t("✓ Ou gen livrezon gratis!")}</span>}
             </p>
             <div className="h-1.5 rounded-full overflow-hidden" style={{ background: C.line }}>
-              <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(100, (subtotal / min) * 100)}%`, background: remaining > 0 ? C.red : C.ok }} />
+              <div className="h-full rounded-full transition-[width,background-color]" style={{ width: `${Math.min(100, (subtotal / min) * 100)}%`, background: remaining > 0 ? C.red : C.ok }} />
             </div>
           </div>
         )}
@@ -389,7 +389,7 @@ function CartDrawer() {
                 <Link href={`${base}/p/${p.id}`} onClick={close} className="shrink-0">
                   {p.imageUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={p.imageUrl} alt="" className="w-[72px] h-[72px] rounded-xl object-cover" />
+                    <img loading="lazy" decoding="async" src={p.imageUrl} alt="" className="w-[72px] h-[72px] rounded-xl object-cover" />
                   ) : (
                     <div className="w-[72px] h-[72px] rounded-xl" style={{ background: C.soft }} />
                   )}

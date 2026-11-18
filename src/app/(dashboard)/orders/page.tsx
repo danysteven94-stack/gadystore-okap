@@ -372,7 +372,7 @@ export default function OrdersPage() {
                     <div key={`${it.productId}-${idx}`} className="flex items-center gap-3">
                       {it.imageUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={it.imageUrl} alt={String(it.name)} className="w-14 h-14 rounded-lg object-cover shrink-0 border border-ink/10 dark:border-dark-border" />
+                        <img loading="lazy" decoding="async" src={it.imageUrl} alt={String(it.name)} className="w-14 h-14 rounded-lg object-cover shrink-0 border border-ink/10 dark:border-dark-border" />
                       ) : (
                         <span className="w-14 h-14 rounded-lg shrink-0 bg-ink/5 dark:bg-white/10 flex items-center justify-center text-ink/30">
                           <Package size={20} />

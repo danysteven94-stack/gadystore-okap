@@ -113,6 +113,18 @@ export async function GET(req: NextRequest) {
     .filter((r): r is ReturnRecordLite => !!r && r.createdAt?.startsWith(currentMonth))
     .reduce((sum, r) => sum + (r.refundAmount ?? 0), 0);
 
+  // 7 dènye jou yo (vant net de retou − depans), pou grafik pwofi a
+  const returnsByDate: Record<string, number> = {};
+  for (const r of returns) {
+    if (!r?.createdAt) continue;
+    const d = String(r.createdAt).slice(0, 10);
+    returnsByDate[d] = (returnsByDate[d] ?? 0) + (r.refundAmount ?? 0);
+  }
+  const weekly = dayResults.slice(-7).map((d) => {
+    const net = d.revenue - (returnsByDate[d.date] ?? 0);
+    return { date: d.date, revenue: net, profit: net - d.expenses };
+  });
+
   const monthRevenue = monthRevenueGross - monthReturns; // net de retou, tankou "Net des retours"
   const monthProfit = monthRevenue - monthExpenses;
 
@@ -152,5 +164,6 @@ export async function GET(req: NextRequest) {
     stockValue,
     lowStock,
     recentSales,
+    weekly,
   });
 }

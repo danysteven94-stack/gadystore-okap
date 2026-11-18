@@ -69,3 +69,10 @@
 
 /* Mòd sonb: vè fonse (text-forest) pa t vizib sou fon nwa — nou ekleresi l pou tout app la */
 .dark .text-forest { color: #4ade80; }
+
+/* Fliidite: bar anba a sou pwòp kouch GPU, respekte "redwi mouvman" */
+html { scroll-behavior: auto; }
+nav[aria-label="Navigasyon prensipal"] { transform: translateZ(0); }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}

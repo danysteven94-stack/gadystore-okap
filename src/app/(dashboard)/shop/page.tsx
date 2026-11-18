@@ -589,7 +589,7 @@ export default function ShopPage() {
                     <div key={p.id} className="flex items-center gap-3 rounded-card border border-ink/10 dark:border-dark-border bg-white dark:bg-dark-surface p-3">
                       {p.imageUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={p.imageUrl} alt="" className="w-12 h-12 rounded-lg object-cover shrink-0" />
+                        <img loading="lazy" decoding="async" src={p.imageUrl} alt="" className="w-12 h-12 rounded-lg object-cover shrink-0" />
                       ) : (
                         <div className="w-12 h-12 rounded-lg bg-ink/5 shrink-0" />
                       )}

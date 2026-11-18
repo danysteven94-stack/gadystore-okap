@@ -27,6 +27,7 @@ export function ProductCard({ p, index = 0 }: { p: PublicProduct; index?: number
             src={p.imageUrl}
             alt={p.name}
             loading="lazy"
+            decoding="async"
             className={`w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 ${out && !p.comingSoon ? "grayscale opacity-60" : ""}`}
           />
         ) : (

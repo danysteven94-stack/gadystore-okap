@@ -38,7 +38,7 @@ export function HeroSlides({ covers, seconds }: { covers: string[]; seconds: num
               type="button"
               aria-label={`Imaj ${idx + 1}`}
               onClick={() => setI(idx)}
-              className="h-1.5 rounded-full transition-all"
+              className="h-1.5 rounded-full transition-[width,background-color,opacity]"
               style={{ width: idx === i ? 20 : 6, background: idx === i ? "#fff" : "rgba(255,255,255,.5)" }}
             />
           ))}

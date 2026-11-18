@@ -24,7 +24,7 @@ export function BottomNav({ onMore }: { onMore: () => void }) {
   return (
     <nav
       aria-label="Navigasyon prensipal"
-      className="lg:hidden fixed inset-x-0 bottom-0 z-40 flex bg-ink/95 backdrop-blur text-white border-t border-white/10 pb-[env(safe-area-inset-bottom)]"
+      className="lg:hidden fixed inset-x-0 bottom-0 z-40 flex bg-ink text-white border-t border-white/10 pb-[env(safe-area-inset-bottom)]"
     >
       {TABS.map(({ href, match, icon: Icon, key }) => {
         const active = pathname.startsWith(match) && !(match === "/contacts" && kind === "supplier");

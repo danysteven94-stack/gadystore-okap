@@ -203,7 +203,7 @@ export function Checkout() {
               <div key={key} className="flex items-center gap-3 py-3" style={{ borderColor: C.line }}>
                 {p.imageUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={p.imageUrl} alt="" className="w-14 h-14 rounded-lg object-cover shrink-0" />
+                  <img loading="lazy" decoding="async" src={p.imageUrl} alt="" className="w-14 h-14 rounded-lg object-cover shrink-0" />
                 ) : (
                   <div className="w-14 h-14 rounded-lg shrink-0" style={{ background: C.soft }} />
                 )}

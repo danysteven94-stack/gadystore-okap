@@ -29,7 +29,7 @@ export function StockBar({ stock, minStock }: Props) {
       </div>
       <div className="h-1.5 bg-ink/8 rounded-full overflow-hidden">
         <div
-          className="h-full rounded-md transition-all"
+          className="h-full rounded-md transition-[width]"
           style={{ width: `${pct}%`, backgroundColor: color }}
         />
       </div>

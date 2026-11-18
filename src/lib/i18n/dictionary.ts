@@ -450,6 +450,9 @@ export const dictionary = {
   notif_type_large_expense: { ht: "Depans enpòtan", fr: "Dépense importante", en: "Large expense" },
   notif_type_billing: { ht: "Abònman", fr: "Abonnement", en: "Subscription" },
 
+  dash_weekly_profit: { ht: "Pwofi 7 dènye jou yo", fr: "Bénéfice des 7 derniers jours", en: "Profit, last 7 days" },
+  dash_weekly_revenue: { ht: "Vant", fr: "Ventes", en: "Sales" },
+  dash_weekly_profit_short: { ht: "Pwofi", fr: "Bénéfice", en: "Profit" },
   dash_group_revenue: { ht: "Revni", fr: "Revenus", en: "Revenue" },
   dash_group_activity: { ht: "Aktivite", fr: "Activité", en: "Activity" },
   dash_group_stock: { ht: "Stòk", fr: "Stock", en: "Stock" },

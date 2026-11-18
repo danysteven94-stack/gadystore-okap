@@ -26,6 +26,7 @@ import { HeroCard } from "@/components/dashboard/hero-card";
 import { BusinessSwitcher } from "@/components/dashboard/business-switcher";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { BusinessBreakdown } from "@/components/dashboard/business-breakdown";
+import { WeeklyProfitChart } from "@/components/dashboard/weekly-profit-chart";
 import { BusinessForm, type BusinessFormValues } from "@/components/business/business-form";
 import { useLanguage } from "@/lib/i18n/language-provider";
 import { useSuperInfo } from "@/lib/use-super-info";
@@ -257,6 +258,19 @@ function DashboardInner() {
     stockValue: Object.values(statsByBusiness).reduce((s, b) => s + (b?.stockValue ?? 0), 0),
   };
 
+  // Grafik 7 jou pou tout antrepriz yo: nou adisyone pa dat
+  const empireWeekly = (() => {
+    const byDate: Record<string, { date: string; revenue: number; profit: number }> = {};
+    for (const b of Object.values(statsByBusiness)) {
+      for (const d of b?.weekly ?? []) {
+        const cur = (byDate[d.date] ??= { date: d.date, revenue: 0, profit: 0 });
+        cur.revenue += d.revenue;
+        cur.profit += d.profit;
+      }
+    }
+    return Object.values(byDate).sort((a, b) => a.date.localeCompare(b.date));
+  })();
+
   const switcherBusinesses = businesses.map((b) => ({ id: b.id, name: b.name, icon: b.icon }));
 
   if (activeId === "all") {
@@ -293,6 +307,12 @@ function DashboardInner() {
           </div>
         ) : (
           <StatsGrid s={empireStats} t={t} />
+        )}
+
+        {!loadingStats && empireWeekly.length > 0 && (
+          <div className="mb-8">
+            <WeeklyProfitChart data={empireWeekly} />
+          </div>
         )}
 
         <h2 className="text-sm font-semibold text-ink/70 dark:text-white/70 mb-2.5">{t("dashboard_breakdown")}</h2>
@@ -357,6 +377,12 @@ function DashboardInner() {
       ) : (
         <>
           <StatsGrid s={{ ...stats, ordersCount: stats.ordersCount ?? 0, newOrdersCount: stats.newOrdersCount ?? 0, lowStockCount: stats.lowStock.length }} t={t} />
+
+          {stats.weekly && stats.weekly.length > 0 && (
+            <div className="mb-8">
+              <WeeklyProfitChart data={stats.weekly} />
+            </div>
+          )}
 
           <section className="mb-8">
             <p className="text-xs font-medium text-ink/50 dark:text-white/40 mb-2">

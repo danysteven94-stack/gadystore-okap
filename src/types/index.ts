@@ -141,4 +141,6 @@ export interface DashboardStats {
   stockValue: number;
   lowStock: Pick<Product, "id" | "name" | "stock" | "minStock">[];
   recentSales: Pick<Sale, "id" | "total" | "createdAt">[];
+  /** 7 dènye jou yo: revni net ak pwofi pa jou (YYYY-MM-DD) */
+  weekly?: { date: string; revenue: number; profit: number }[];
 }
