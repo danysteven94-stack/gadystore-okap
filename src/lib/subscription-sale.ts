@@ -55,3 +55,16 @@ export async function recordSubscriptionSale({
 
   return sale;
 }
+
+/**
+ * Anile yon vant abònman (lè moun nan make yon peman pa erè):
+ * retire l nan lis vant jou a epi efase l, konsa revni/rapò yo korije.
+ */
+export async function undoSubscriptionSale(saleId: string): Promise<boolean> {
+  const sale = await redis.hgetall<Sale>(`sale:${saleId}`);
+  if (!sale) return false;
+  const day = String(sale.createdAt).slice(0, 10);
+  await redis.lrem(`business:${sale.businessId}:sales:${day}`, 0, saleId);
+  await redis.del(`sale:${saleId}`);
+  return true;
+}

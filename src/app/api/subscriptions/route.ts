@@ -5,28 +5,34 @@ import { randomUUID } from "crypto";
 import { redis, hsetClean } from "@/lib/upstash";
 import { verifySession } from "@/lib/auth";
 import { recordSubscriptionSale } from "@/lib/subscription-sale";
+import { scopeKey, paymentsOf } from "@/lib/subscriptions";
+import { addMonthsYmd } from "@/lib/user-billing";
 
 export interface Subscription {
   [key: string]: unknown;
   id: string;
-  businessId: string;
+  businessId: string; // "" = abònman pèsonèl (san antrepriz)
+  ownerEmail?: string; // itilizatè ki kreye l (itilize pou abònman pèsonèl)
   customerName: string;
   customerId?: string;
   productName: string; // ex: Netflix, IPTV, Spotify
   monthlyPrice: number;
   status: "active" | "expired" | "cancelled";
   startDate: string;
-  nextPaymentDate: string;
+  nextPaymentDate: string; // = startDate + paymentsCount mwa
+  paymentsCount?: number; // konbyen mwa ki peye (0 = pa peye ankò)
+  saleIds?: string[] | string; // vant ki asosye ak peman yo (pou ka anile dènye a)
   createdAt: string;
 }
 
 const subscriptionSchema = z.object({
-  businessId: z.string(),
+  businessId: z.string().optional(),
   customerName: z.string().min(1),
   customerId: z.string().optional(),
   productName: z.string().min(1),
   monthlyPrice: z.number().positive(),
   startDate: z.string().min(1),
+  paid: z.boolean().default(true), // eske moun nan peye deja lè l pran abònman an?
 });
 
 async function getSession(req: NextRequest) {
@@ -34,30 +40,24 @@ async function getSession(req: NextRequest) {
   return token ? verifySession(token) : null;
 }
 
-function addOneMonth(dateStr: string): string {
-  const d = new Date(dateStr);
-  d.setMonth(d.getMonth() + 1);
-  return d.toISOString().slice(0, 10);
-}
-
 export async function GET(req: NextRequest) {
   const session = await getSession(req);
   if (!session) return NextResponse.json({ error: "Pa otorize." }, { status: 401 });
 
-  const businessId = req.nextUrl.searchParams.get("businessId");
+  // Pa gen businessId = abònman pèsonèl (pa bezwen antrepriz)
+  const businessId = req.nextUrl.searchParams.get("businessId") || "";
   if (businessId && !(await userOwnsBusiness(session.email, businessId))) {
     return NextResponse.json({ error: "Aksè refize." }, { status: 403 });
   }
-  if (!businessId) {
-    return NextResponse.json({ error: "businessId obligatwa." }, { status: 400 });
-  }
 
-  const ids = await redis.smembers(`business:${businessId}:subscriptions`);
+  const ids = await redis.smembers(scopeKey(businessId, session.email));
   const subs = ids.length
     ? await Promise.all(ids.map((id) => redis.hgetall<Subscription>(`subscription:${id}`)))
     : [];
 
-  const validSubs = subs.filter((s): s is Subscription => !!s);
+  const validSubs = subs
+    .filter((s): s is Subscription => !!s)
+    .map((s) => ({ ...s, paymentsCount: paymentsOf(s) }));
   const today = new Date().toISOString().slice(0, 10);
 
   // Mete estati "expired" otomatikman si dat peman an pase
@@ -67,8 +67,11 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  validSubs.sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
+
+  // Yon abònman ki poko peye pa konte nan revni an
   const monthlyRevenue = validSubs
-    .filter((s) => s.status === "active")
+    .filter((s) => s.status === "active" && (s.paymentsCount ?? 0) > 0)
     .reduce((sum, s) => sum + s.monthlyPrice, 0);
 
   return NextResponse.json({ subscriptions: validSubs, monthlyRevenue });
@@ -78,46 +81,53 @@ export async function POST(req: NextRequest) {
   const session = await getSession(req);
   if (!session) return NextResponse.json({ error: "Pa otorize." }, { status: 401 });
 
-  const body = await req.json();
-  const parsed = subscriptionSchema.safeParse(body);
-  if (parsed.success && !(await userOwnsBusiness(session.email, parsed.data.businessId))) {
-    return NextResponse.json({ error: "Aksè refize." }, { status: 403 });
-  }
+  const parsed = subscriptionSchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const { businessId, customerName, customerId, productName, monthlyPrice, startDate } =
-    parsed.data;
+  const { customerName, customerId, productName, monthlyPrice, paid } = parsed.data;
+  const businessId = parsed.data.businessId || "";
+  const startDate = parsed.data.startDate.slice(0, 10);
+  if (businessId && !(await userOwnsBusiness(session.email, businessId))) {
+    return NextResponse.json({ error: "Aksè refize." }, { status: 403 });
+  }
 
+  const paymentsCount = paid ? 1 : 0;
   const subscription: Subscription = {
     id: randomUUID(),
     businessId,
+    ownerEmail: session.email.toLowerCase(),
     customerName,
     customerId,
     productName,
     monthlyPrice,
     status: "active",
     startDate,
-    nextPaymentDate: addOneMonth(startDate),
+    paymentsCount,
+    // Si pa peye: peman an dwe depi dat kòmansman an
+    nextPaymentDate: addMonthsYmd(startDate, paymentsCount),
+    saleIds: "[]",
     createdAt: new Date().toISOString(),
   };
 
-  await hsetClean(
-    `subscription:${subscription.id}`,
-    subscription as unknown as Record<string, unknown>
-  );
-  await redis.sadd(`business:${businessId}:subscriptions`, subscription.id);
+  // Premye peman an (si moun nan peye deja) kontabilize kòm yon vant, men sèlman
+  // si abònman an anba yon antrepriz (yon abònman pèsonèl pa gen rapò vant).
+  if (paid && businessId) {
+    const sale = await recordSubscriptionSale({
+      businessId,
+      subscriptionId: subscription.id,
+      productName,
+      amount: monthlyPrice,
+      customerId,
+      cashierId: session.userId,
+    });
+    subscription.saleIds = JSON.stringify([sale.id]);
+  }
 
-  // Premye peman an (dat kòmansman) kontabilize kòm yon vant tou de swit.
-  await recordSubscriptionSale({
-    businessId,
-    subscriptionId: subscription.id,
-    productName,
-    amount: monthlyPrice,
-    customerId,
-    cashierId: session.userId,
-  });
+  await hsetClean(`subscription:${subscription.id}`, subscription as unknown as Record<string, unknown>);
+  await redis.sadd(scopeKey(businessId, session.email), subscription.id);
 
   return NextResponse.json({ subscription }, { status: 201 });
 }
+

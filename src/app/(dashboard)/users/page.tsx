@@ -401,8 +401,6 @@ export default function UsersPage() {
             const isSuper = u.email.toLowerCase() === SUPER_ADMIN_EMAIL;
             const canAssign = u.role !== "admin" && !isSuper && u.createdBy.toLowerCase() === (currentEmail ?? "").toLowerCase();
             const canReset = !isSuper && !u.disabled && (u.role !== "admin" || isSuperAdmin);
-            // Dezaktive/efase: kont prensipal la, oswa admin ki kreye kont lan
-            const canRemove = !isSuper && (isSuperAdmin || u.createdBy.toLowerCase() === (currentEmail ?? "").toLowerCase());
             return (
               <div
                 key={u.id}
@@ -451,7 +449,7 @@ export default function UsersPage() {
                   </div>
                 )}
 
-                {(canReset || canAssign || canRemove) && (
+                {(canReset || canAssign || (isSuperAdmin && !isSuper)) && (
                   <div className="flex items-center gap-5 mt-3 pt-3 border-t border-ink/8 dark:border-dark-border/60">
                     {canAssign && (
                       <button onClick={() => openAssign(u)} className="text-sm font-semibold">
@@ -467,7 +465,7 @@ export default function UsersPage() {
                         {t("users_reset_password")}
                       </button>
                     )}
-                    {canRemove && (
+                    {isSuperAdmin && !isSuper && (
                       <button
                         onClick={() => handleToggleActive(u)}
                         disabled={busyEmail === u.email}
@@ -476,7 +474,7 @@ export default function UsersPage() {
                         {u.disabled ? t("users_activate") : t("users_deactivate")}
                       </button>
                     )}
-                    {canRemove && (
+                    {isSuperAdmin && !isSuper && (
                       <button
                         onClick={() => handleDelete(u.email)}
                         disabled={busyEmail === u.email}

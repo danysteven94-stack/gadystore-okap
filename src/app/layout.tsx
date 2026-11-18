@@ -4,7 +4,6 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { LanguageProvider } from "@/lib/i18n/language-provider";
 import { AppChrome } from "@/components/nav/app-chrome";
-import { ViewportLock } from "@/components/providers/viewport-lock";
 import { OfflineProvider } from "@/components/providers/offline-provider";
 
 const sans = Manrope({ subsets: ["latin"], variable: "--font-sans", weight: ["400", "500", "600", "700", "800"] });
@@ -28,8 +27,6 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  maximumScale: 1, // pa gen zoom: app la rete stab sou telefòn
-  userScalable: false,
   themeColor: "#111111",
 };
 
@@ -43,7 +40,6 @@ export default function RootLayout({
       <body
         className={`${sans.variable} ${mono.variable} font-sans bg-canvas text-ink dark:bg-dark-bg dark:text-white antialiased transition-colors`}
       >
-        <ViewportLock />
         <ThemeProvider>
           <LanguageProvider>
             <OfflineProvider>

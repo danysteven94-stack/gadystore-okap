@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useCallback, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Search, Plus, Users, Phone, Loader2 } from "lucide-react";
 import { BusinessSwitcher } from "@/components/dashboard/business-switcher";
 import { ContactForm, type ContactFormValues } from "@/components/contacts/contact-form";
@@ -12,7 +12,6 @@ type Contact = Customer | Supplier;
 
 function ContactsPageInner() {
   const { t } = useLanguage();
-  const router = useRouter();
   const searchParams = useSearchParams();
   const initialKind = searchParams.get("kind") === "supplier" ? "supplier" : "customer";
 
@@ -24,24 +23,6 @@ function ContactsPageInner() {
   const [query, setQuery] = useState("");
   const [formTarget, setFormTarget] = useState<"new" | Contact | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  // Lè URL la chanje (ex: klike "Founisè" nan meni a), paj la swiv — kliyan ak founisè pa janm melanje.
-  const urlKind = searchParams.get("kind") === "supplier" ? "supplier" : "customer";
-  useEffect(() => {
-    setKind(urlKind);
-    setContacts([]);
-    setQuery("");
-    setFormTarget(null);
-  }, [urlKind]);
-
-  function switchKind(next: "customer" | "supplier") {
-    if (next === kind) return;
-    setKind(next);
-    setContacts([]);
-    setQuery("");
-    setFormTarget(null);
-    router.replace(`/contacts?kind=${next}`, { scroll: false });
-  }
 
   useEffect(() => {
     fetch("/api/businesses")
@@ -163,7 +144,7 @@ function ContactsPageInner() {
 
       <div className="flex gap-2 mb-4">
         <button
-          onClick={() => switchKind("customer")}
+          onClick={() => setKind("customer")}
           className={`flex-1 py-2.5 rounded-md text-sm font-medium border ${
             kind === "customer" ? "bg-ink text-paper border-ink" : "border-ink/15 dark:border-dark-border text-ink/70 dark:text-white/70"
           }`}
@@ -171,7 +152,7 @@ function ContactsPageInner() {
           {t("contacts_customers")}
         </button>
         <button
-          onClick={() => switchKind("supplier")}
+          onClick={() => setKind("supplier")}
           className={`flex-1 py-2.5 rounded-md text-sm font-medium border ${
             kind === "supplier" ? "bg-ink text-paper border-ink" : "border-ink/15 dark:border-dark-border text-ink/70 dark:text-white/70"
           }`}

@@ -1,9 +1,7 @@
 import { redis } from "@/lib/upstash";
 import { sendToUser } from "@/lib/push";
-import { storeUserNotification } from "@/lib/notifications";
 import { billingInfo } from "@/lib/user-billing";
 import { isTrue } from "@/lib/password";
-import { isBillableAccount } from "@/lib/user-scope";
 import { SUPER_ADMIN_EMAIL } from "@/lib/session";
 
 // Notifications d'abonnement (en français) envoyées à l'utilisateur concerné.
@@ -24,24 +22,8 @@ export async function notifyPaymentReceived(email: string, months: number, nextD
   const body =
     `Votre paiement de ${months} mois a bien été reçu. Merci ! ` +
     `Prochaine échéance : ${frDate(nextDue)}.`;
-  await storeUserNotification(email, "✅ Paiement reçu", body).catch((e) => console.error("billing inbox error", e));
   try {
     await sendToUser(email, { title: "✅ Paiement reçu", body, url: "/dashboard", tag: `billing-paid-${Date.now()}` });
-  } catch (e) {
-    console.error("billing push error", e);
-  }
-}
-
-/**
- * Envoyée au compte principal après que le paiement d'un compte a été enregistré :
- * confirmation que le paiement est vérifié. (Le compte payé reçoit sa propre notification, plus haut.)
- */
-export async function notifyPaymentVerified(superEmail: string, who: string, months: number, nextDue: string) {
-  const title = "✅ Paiement vérifié";
-  const body = `Le paiement de ${who} (${months} mois) a été vérifié. Prochaine échéance : ${frDate(nextDue)}.`;
-  await storeUserNotification(superEmail, title, body, "/user-billing").catch((e) => console.error("billing inbox error", e));
-  try {
-    await sendToUser(superEmail, { title, body, url: "/user-billing", tag: `billing-verified-${Date.now()}` });
   } catch (e) {
     console.error("billing push error", e);
   }
@@ -55,7 +37,7 @@ export async function sendDueSoonReminders(now: Date = new Date()) {
     const email = raw.toLowerCase();
     if (email === SUPER_ADMIN_EMAIL) continue;
     const r = await redis.hgetall<Record<string, unknown>>(`user:${email}`);
-    if (!r || !r.id || isTrue(r.disabled) || !isBillableAccount(r)) continue;
+    if (!r || !r.id || isTrue(r.disabled)) continue;
     const paidMonths = r.paidMonths === undefined || r.paidMonths === null ? 1 : Number(r.paidMonths) || 0;
     const info = billingInfo(r.createdAt ? String(r.createdAt) : "", paidMonths, now);
     if (!info || info.monthsOverdue > 0 || !REMINDER_DAYS.includes(info.daysUntil)) continue;
@@ -65,14 +47,16 @@ export async function sendDueSoonReminders(now: Date = new Date()) {
     const ok = await redis.set(`billing:reminded:${email}:${info.nextDue}:${days}`, "1", { nx: true, ex: 60 * 60 * 24 * 10 });
     if (!ok) continue;
 
-    const title = days === 1 ? "⚠️ Échéance demain" : "⏰ Échéance proche";
-    const body =
-      days === 1
-        ? `Votre abonnement arrive à échéance demain (${frDate(info.nextDue)}). Pensez à effectuer votre paiement.`
-        : `Votre abonnement arrive à échéance dans ${days} jours (${frDate(info.nextDue)}). Pensez à effectuer votre paiement.`;
-    await storeUserNotification(email, title, body).catch((e) => console.error("billing inbox error", e));
     try {
-      await sendToUser(email, { title, body, url: "/dashboard", tag: `billing-due-${info.nextDue}-${days}` });
+      await sendToUser(email, {
+        title: days === 1 ? "⚠️ Échéance demain" : "⏰ Échéance proche",
+        body:
+          days === 1
+            ? `Votre abonnement arrive à échéance demain (${frDate(info.nextDue)}). Pensez à effectuer votre paiement.`
+            : `Votre abonnement arrive à échéance dans ${days} jours (${frDate(info.nextDue)}). Pensez à effectuer votre paiement.`,
+        url: "/dashboard",
+        tag: `billing-due-${info.nextDue}-${days}`,
+      });
       sent.push(email);
     } catch (e) {
       console.error("billing reminder error", e);

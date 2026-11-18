@@ -1,91 +1,50 @@
 import { NextRequest, NextResponse } from "next/server";
-import { userOwnsBusiness, getUserBusinessIds } from "@/lib/shop";
+import { userOwnsBusiness } from "@/lib/shop";
 import { z } from "zod";
 import { redis } from "@/lib/upstash";
 import { verifySession } from "@/lib/auth";
 import type { AppNotification } from "@/lib/notifications";
-import type { Business } from "@/types";
-
-const isRead = (n: { read?: unknown }) => n.read === true || n.read === "true";
-
-async function getSession(req: NextRequest) {
-  const token = req.cookies.get("session")?.value;
-  return token ? await verifySession(token) : null;
-}
-
-/** Tout notifikasyon itilizatè a: yo nan antrepriz li yo + notifikasyon pèsonèl li yo (abònman). Pi resan an premye. */
-async function collectAll(email: string) {
-  const businessIds = await getUserBusinessIds(email);
-  const [businessLists, userIds, businesses] = await Promise.all([
-    Promise.all(businessIds.map((id) => redis.lrange(`business:${id}:notifications`, 0, 49))),
-    redis.lrange(`user:${email.toLowerCase()}:notifications`, 0, 49),
-    Promise.all(businessIds.map((id) => redis.hgetall<Business>(`business:${id}`))),
-  ]);
-  const names = new Map<string, string>();
-  businesses.forEach((b, i) => b && names.set(businessIds[i], String(b.name ?? "")));
-
-  const ids = Array.from(new Set([...businessLists.flat(), ...userIds].map(String)));
-  const rows = ids.length ? await Promise.all(ids.map((id) => redis.hgetall<AppNotification>(`notification:${id}`))) : [];
-  const all = rows
-    .filter((n): n is AppNotification => !!n && !!n.id)
-    .map((n) => ({ ...n, read: isRead(n), businessName: n.businessId ? names.get(String(n.businessId)) ?? "" : "" }));
-  all.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
-  return all;
-}
 
 export async function GET(req: NextRequest) {
-  const session = await getSession(req);
+  const token = req.cookies.get("session")?.value;
+  const session = token ? await verifySession(token) : null;
   if (!session) return NextResponse.json({ error: "Pa otorize." }, { status: 401 });
 
   const businessId = req.nextUrl.searchParams.get("businessId");
-
-  // Mòd ansyen: notifikasyon yon sèl antrepriz.
-  if (businessId) {
-    if (!(await userOwnsBusiness(session.email, businessId))) {
-      return NextResponse.json({ error: "Aksè refize." }, { status: 403 });
-    }
-    const ids = await redis.lrange(`business:${businessId}:notifications`, 0, 49);
-    const notifications = ids.length
-      ? await Promise.all(ids.map((id) => redis.hgetall<AppNotification>(`notification:${id}`)))
-      : [];
-    const unreadCount = notifications.filter((n) => n && !isRead(n)).length;
-    return NextResponse.json({ notifications, unreadCount });
+  if (businessId && !(await userOwnsBusiness(session.email, businessId))) {
+    return NextResponse.json({ error: "Aksè refize." }, { status: 403 });
+  }
+  if (!businessId) {
+    return NextResponse.json({ error: "businessId obligatwa." }, { status: 400 });
   }
 
-  // Mòd nouvo: tout notifikasyon itilizatè a (pou paj Notifikasyon an ak badj la).
-  const all = await collectAll(session.email);
-  const unreadCount = all.filter((n) => !n.read).length;
-  if (req.nextUrl.searchParams.get("count")) return NextResponse.json({ unreadCount });
-  const notifications = req.nextUrl.searchParams.get("unread") ? all.filter((n) => !n.read) : all;
+  const ids = await redis.lrange(`business:${businessId}:notifications`, 0, 49);
+  const notifications = ids.length
+    ? await Promise.all(ids.map((id) => redis.hgetall<AppNotification>(`notification:${id}`)))
+    : [];
+
+  const unreadCount = notifications.filter((n) => n && !n.read).length;
+
   return NextResponse.json({ notifications, unreadCount });
 }
 
-const patchSchema = z.union([
-  z.object({ notificationId: z.string() }),
-  z.object({ all: z.literal(true) }),
-]);
+const markReadSchema = z.object({ notificationId: z.string() });
 
 export async function PATCH(req: NextRequest) {
-  const session = await getSession(req);
+  const token = req.cookies.get("session")?.value;
+  const session = token ? await verifySession(token) : null;
   if (!session) return NextResponse.json({ error: "Pa otorize." }, { status: 401 });
 
-  const parsed = patchSchema.safeParse(await req.json().catch(() => null));
+  const body = await req.json();
+  const parsed = markReadSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: "notificationId obligatwa." }, { status: 400 });
   }
 
-  if ("all" in parsed.data) {
-    const unread = (await collectAll(session.email)).filter((n) => !n.read);
-    await Promise.all(unread.map((n) => redis.hset(`notification:${n.id}`, { read: true })));
-    return NextResponse.json({ ok: true, marked: unread.length });
+  const notif = await redis.hgetall<{ businessId?: string }>(`notification:${parsed.data.notificationId}`);
+  if (!notif?.businessId || !(await userOwnsBusiness(session.email, notif.businessId))) {
+    return NextResponse.json({ error: "Aksè refize." }, { status: 403 });
   }
-
-  const id = parsed.data.notificationId;
-  const notif = await redis.hgetall<{ businessId?: string; email?: string }>(`notification:${id}`);
-  const mine = notif?.email
-    ? String(notif.email).toLowerCase() === session.email.toLowerCase()
-    : !!notif?.businessId && (await userOwnsBusiness(session.email, String(notif.businessId)));
-  if (!mine) return NextResponse.json({ error: "Aksè refize." }, { status: 403 });
-  await redis.hset(`notification:${id}`, { read: true });
+  await redis.hset(`notification:${parsed.data.notificationId}`, { read: true });
   return NextResponse.json({ ok: true });
 }

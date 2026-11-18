@@ -6,7 +6,6 @@ import { verifySession, hashPassword, can, isSuperAdmin, type UserRole } from "@
 import { generateTempPassword, isTrue } from "@/lib/password";
 import { getUserPlan } from "@/lib/plan-access";
 import { isPlanId, type PlanId } from "@/lib/plans";
-import { isDirectAccount } from "@/lib/user-scope";
 
 async function getSession(req: NextRequest) {
   const token = req.cookies.get("session")?.value;
@@ -42,8 +41,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Sèl Administrateur ka jere itilizatè." }, { status: 403 });
   }
 
-  // Chak kont wè SÈLMAN kont li menm li kreye. Kont prensipal la wè admin li kreye yo
-  // (ak anplwaye li menm li kreye), men PA anplwaye ke lòt admin yo kreye pou yo.
+  // Sèl kont prensipal la wè TOUT kont yo. Lòt administratè yo wè SÈLMAN
+  // kont segondè yo menm yo kreye (pou anplwaye yo) — pa gen lòt kont ki parèt.
   const isSuper = isSuperAdmin(session.email);
   const me = session.email.toLowerCase();
   const emails = await redis.smembers("users:all");
@@ -54,7 +53,7 @@ export async function GET(req: NextRequest) {
             const record = await redis.hgetall<Record<string, unknown>>(`user:${email}`);
             if (!record || !record.id) return null;
             const createdBy = record.createdBy ? String(record.createdBy).toLowerCase() : "";
-            if (isSuper ? !isDirectAccount(record) : createdBy !== me) return null;
+            if (!isSuper && createdBy !== me) return null;
             const rawIds = record.businessIds as string | string[] | undefined;
             const businessIds: string[] = Array.isArray(rawIds)
               ? rawIds

@@ -11,8 +11,6 @@ import { PushToggle } from "@/components/nav/push-toggle";
 import { InstallButton } from "@/components/nav/install-button";
 import { NAV_ITEMS } from "@/lib/nav-items";
 import { useSuperInfo } from "@/lib/use-super-info";
-import { useIsNavActive } from "@/lib/nav-active";
-import { useUnreadNotifications } from "@/lib/use-unread-notifications";
 
 interface Props {
   open: boolean;
@@ -24,8 +22,6 @@ export function MobileDrawer({ open, onClose }: Props) {
   const { theme, toggleTheme } = useTheme();
   const { lang, setLang, t } = useLanguage();
   const { isSuper, alertCount, shopAllowed } = useSuperInfo();
-  const unreadCount = useUnreadNotifications();
-  const isActive = useIsNavActive();
 
   return (
     <div
@@ -64,7 +60,7 @@ export function MobileDrawer({ open, onClose }: Props) {
 
         <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
           {NAV_ITEMS.filter((i) => (!i.superOnly || isSuper) && (!i.needsShop || shopAllowed)).map(({ href, icon: Icon, key }) => {
-            const active = isActive(href);
+            const active = pathname === href.split("?")[0];
             return (
               <Link
                 key={href}
@@ -81,10 +77,7 @@ export function MobileDrawer({ open, onClose }: Props) {
                           {href === "/user-billing" && alertCount > 0 && (
                             <span className="min-w-5 h-5 px-1.5 rounded-full bg-brick text-white text-[11px] font-bold flex items-center justify-center">{alertCount}</span>
                           )}
-                {href === "/notifications" && unreadCount > 0 && (
-                <span className="min-w-5 h-5 px-1.5 rounded-full bg-brick text-white text-[11px] font-bold flex items-center justify-center">{unreadCount > 99 ? "99+" : unreadCount}</span>
-              )}
-              {active && <ChevronRight size={18} />}
+                {active && <ChevronRight size={18} />}
               </Link>
             );
           })}

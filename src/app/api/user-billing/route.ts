@@ -3,9 +3,8 @@ import { z } from "zod";
 import { redis } from "@/lib/upstash";
 import { verifySession, isSuperAdmin, SUPER_ADMIN_EMAIL } from "@/lib/auth";
 import { isTrue } from "@/lib/password";
-import { isBillableAccount } from "@/lib/user-scope";
 import { billingInfo, addMonthsYmd, ymd, type BillingStatus } from "@/lib/user-billing";
-import { notifyPaymentReceived, notifyPaymentVerified } from "@/lib/billing-notify";
+import { notifyPaymentReceived } from "@/lib/billing-notify";
 
 async function getSuperSession(req: NextRequest) {
   const token = req.cookies.get("session")?.value;
@@ -44,7 +43,6 @@ export async function GET(req: NextRequest) {
       if (email.toLowerCase() === SUPER_ADMIN_EMAIL) return null;
       const r = await redis.hgetall<Record<string, unknown>>(`user:${email}`);
       if (!r || !r.id) return null;
-      if (!isBillableAccount(r)) return null; // anplwaye (jesyonè/kesye) pa peye epi pa parèt isit la
       const createdAt = r.createdAt ? String(r.createdAt) : "";
       const paidMonths = r.paidMonths === undefined || r.paidMonths === null ? 1 : Number(r.paidMonths) || 0;
       const info = billingInfo(createdAt, paidMonths);
@@ -105,7 +103,7 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "Kont prensipal la pa gen abònman." }, { status: 400 });
   }
   const user = await redis.hgetall<Record<string, unknown>>(`user:${email}`);
-  if (!user || !user.id || !isBillableAccount(user)) return NextResponse.json({ error: "Itilizatè pa jwenn." }, { status: 404 });
+  if (!user || !user.id) return NextResponse.json({ error: "Itilizatè pa jwenn." }, { status: 404 });
 
   const paidMonths = user.paidMonths === undefined || user.paidMonths === null ? 1 : Number(user.paidMonths) || 0;
 
@@ -121,12 +119,7 @@ export async function PATCH(req: NextRequest) {
     const createdAt = user.createdAt ? String(user.createdAt) : "";
     const d = new Date(createdAt);
     if (createdAt && !isNaN(d.getTime())) {
-      const nextDue = addMonthsYmd(ymd(d), paidMonths + body.months);
-      // 1) Le compte qui a payé reçoit « Paiement reçu » — lui seul.
-      await notifyPaymentReceived(email, body.months, nextDue);
-      // 2) Ensuite le compte principal reçoit « Paiement vérifié ».
-      const who = String(user.fullName ?? "").trim() || email;
-      await notifyPaymentVerified(auth.session.email, who, body.months, nextDue);
+      await notifyPaymentReceived(email, body.months, addMonthsYmd(ymd(d), paidMonths + body.months));
     }
   } else {
     await redis.hset(`user:${email}`, { paidMonths: Math.max(0, paidMonths - 1) });

@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LayoutDashboard, ShoppingCart, Package, Users, Menu } from "lucide-react";
-import { useIsNavActive } from "@/lib/nav-active";
 import { useLanguage } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/dictionary";
 
@@ -17,7 +16,6 @@ const TABS: { href: string; match: string; icon: React.ElementType; key: Transla
 /** Navigasyon anba, style app natif — sèlman sou telefòn/tablèt (< lg). */
 export function BottomNav({ onMore }: { onMore: () => void }) {
   const pathname = usePathname();
-  const isActive = useIsNavActive();
   const { t } = useLanguage();
 
   const base = "flex-1 flex flex-col items-center justify-center gap-0.5 min-h-14 text-[11px] font-medium active:bg-white/10";
@@ -28,8 +26,7 @@ export function BottomNav({ onMore }: { onMore: () => void }) {
       className="lg:hidden fixed inset-x-0 bottom-0 z-40 flex bg-ink/95 backdrop-blur text-white border-t border-white/10 pb-[env(safe-area-inset-bottom)]"
     >
       {TABS.map(({ href, match, icon: Icon, key }) => {
-        // Onglè Kliyan an pa dwe limen sou paj Founisè a (menm paj /contacts, kind diferan)
-        const active = href.includes("?") ? isActive(href) : pathname.startsWith(match);
+        const active = pathname.startsWith(match);
         return (
           <Link key={href} href={href} className={`${base} ${active ? "text-white font-semibold" : "text-white/60"}`}>
             <span className={`px-4 py-1 rounded-full ${active ? "bg-brick" : ""}`}>
