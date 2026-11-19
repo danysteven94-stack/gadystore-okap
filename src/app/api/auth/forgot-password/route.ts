@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createHash, randomBytes } from "crypto";
-import { Resend } from "resend";
+import { sendSecurityMail, mailConfigured } from "@/lib/mailer";
 import { redis } from "@/lib/upstash";
 import { rateLimit } from "@/lib/shop";
 
 const schema = z.object({ email: z.string().trim().toLowerCase().email().max(200) });
-const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 const TTL = 30 * 60; // 30 minit
 
 // Repons la ITILIZE MENM MESAJ kèlkeswa si imèl la egziste — pa gen fuit kont (user enumeration).
@@ -33,8 +32,8 @@ export async function POST(req: NextRequest) {
     }
 
     const base = process.env.APP_URL;
-    if (!resend || !base) {
-      console.error("forgot-password: RESEND_API_KEY oswa APP_URL manke — pa kapab voye imèl la.");
+    if (!mailConfigured() || !base) {
+      console.error("forgot-password: GMAIL_USER/GMAIL_APP_PASSWORD (oswa RESEND_API_KEY) oswa APP_URL manke — pa kapab voye imèl la.");
       return NextResponse.json(GENERIC);
     }
 
@@ -52,8 +51,7 @@ export async function POST(req: NextRequest) {
       `Si se pa ou ki fè demann lan, inyore imèl sa a — modpas ou pa chanje.\n\n` +
       `Vous avez demandé la réinitialisation de votre mot de passe Platfomnou. Lien valable 30 minutes :\n${link}\n` +
       `Si vous n'êtes pas à l'origine de cette demande, ignorez ce message.`;
-    await resend.emails.send({
-      from: `Platfomnou <sekirite@${process.env.SEND_DOMAIN ?? "example.com"}>`,
+    await sendSecurityMail({
       to: email,
       subject: "Chanje modpas ou · Réinitialisation du mot de passe",
       text,
