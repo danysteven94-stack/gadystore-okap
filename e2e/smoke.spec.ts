@@ -22,7 +22,8 @@ test.describe("paj piblik", () => {
 
   test("reset-password san token: mesaj 'lyen pa valid' + bouton nouvo lyen", async ({ page }) => {
     await page.goto("/reset-password");
-    await expect(page.getByRole("alert")).toContainText("Lyen an pa valid");
+    // Next.js gen deja yon <div role="alert"> pou anons wout yo: nou vize <p> nou an sèlman.
+    await expect(page.locator("p[role=alert]")).toContainText("Lyen an pa valid");
     await expect(page.locator('a[href="/forgot-password"]')).toBeVisible();
   });
 
