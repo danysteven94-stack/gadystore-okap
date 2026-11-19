@@ -33,8 +33,9 @@ export type StoredImage =
   | { kind: "data"; contentType: string; buffer: Buffer; dataUrl: string };
 
 export async function loadImage(id: string): Promise<StoredImage | null> {
-  const v = await redis.get<string>(`productimg:${id}`);
+  // `unknown` pou TypeScript pa redui v a "null" apre type guard la.
+  const v: unknown = await redis.get<string>(`productimg:${id}`);
   if (isTrustedBlobUrl(v)) return { kind: "url", url: v };
   const parsed = parseDataUrl(v);
-  return parsed ? { kind: "data", ...parsed, dataUrl: v as string } : null;
+  return parsed ? { kind: "data", ...parsed, dataUrl: String(v) } : null;
 }
