@@ -13,3 +13,8 @@ ios/App/Pods/
 .env.*
 !.env.example
 *.pem
+
+# tès
+coverage/
+playwright-report/
+test-results/
