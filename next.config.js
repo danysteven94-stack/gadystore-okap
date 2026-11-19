@@ -13,7 +13,10 @@ const nextConfig = {
   productionBrowserSourceMaps: false, // pa pibliye source maps (kòd orijinal) bay navigatè a
   compiler: { removeConsole: { exclude: ["error"] } },
   images: {
-    remotePatterns: [{ protocol: "https", hostname: "**" }],
+    // Sèlman Vercel Blob (foto yo). Ansyen "**" te fè /_next/image sèvi kòm pwoksi pou nenpòt sit (abi, kou, vulnérabilités).
+    remotePatterns: [{ protocol: "https", hostname: "*.public.blob.vercel-storage.com" }],
+    // AVIF dezaktive: Next 15.5.24+ fè sa tou akoz yon vulnérabilité libheif.
+    formats: ["image/webp"],
   },
   async headers() {
     return [

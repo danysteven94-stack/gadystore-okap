@@ -1,20 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { userOwnsBusiness } from "@/lib/shop";
-import * as XLSX from "xlsx";
-import { redis } from "@/lib/upstash";
+import ExcelJS from "exceljs";
+import { redis, hgetallMany } from "@/lib/upstash";
+import { eachDate, validateRange } from "@/lib/date-range";
 import { verifySession } from "@/lib/auth";
 import type { Expense, Sale } from "@/types";
-
-function eachDate(from: string, to: string): string[] {
-  const dates: string[] = [];
-  const cur = new Date(from);
-  const end = new Date(to);
-  while (cur <= end) {
-    dates.push(cur.toISOString().slice(0, 10));
-    cur.setDate(cur.getDate() + 1);
-  }
-  return dates;
-}
 
 export async function GET(req: NextRequest) {
   const token = req.cookies.get("session")?.value;
@@ -36,6 +26,9 @@ export async function GET(req: NextRequest) {
     );
   }
 
+  const rangeError = validateRange(from, to);
+  if (rangeError) return NextResponse.json({ error: rangeError }, { status: 400 });
+
   const rows: {
     date: string;
     revenue: number;
@@ -43,25 +36,31 @@ export async function GET(req: NextRequest) {
     profit: number;
   }[] = [];
 
-  for (const date of eachDate(from, to)) {
-    const saleIds = await redis.lrange(`business:${businessId}:sales:${date}`, 0, -1);
-    const sales = saleIds.length
-      ? await Promise.all(saleIds.map((id) => redis.hgetall<Sale>(`sale:${id}`)))
-      : [];
-    const revenue = sales.reduce((sum, s) => sum + (s?.total ?? 0), 0);
-
-    const expenseIds = await redis.lrange(
-      `business:${businessId}:expenses:${date}`,
-      0,
-      -1
-    );
-    const expenseRecords = expenseIds.length
-      ? await Promise.all(expenseIds.map((id) => redis.hgetall<Expense>(`expense:${id}`)))
-      : [];
-    const expenses = expenseRecords.reduce((sum, e) => sum + (e?.amount ?? 0), 0);
-
-    rows.push({ date, revenue, expenses, profit: revenue - expenses });
+  // Tout lis yo nan YON sèl demann (pipeline), epi tout hash yo nan yon lòt — pa 4 demann pa jou.
+  const dates = eachDate(from, to);
+  const listPipe = redis.pipeline();
+  for (const date of dates) {
+    listPipe.lrange(`business:${businessId}:sales:${date}`, 0, -1);
+    listPipe.lrange(`business:${businessId}:expenses:${date}`, 0, -1);
   }
+  const lists = (await listPipe.exec()) as string[][];
+  const saleIdsByDay = dates.map((_, i) => lists[i * 2] ?? []);
+  const expenseIdsByDay = dates.map((_, i) => lists[i * 2 + 1] ?? []);
+
+  const [saleRecs, expenseRecs] = await Promise.all([
+    hgetallMany<Sale>(saleIdsByDay.flat().map((id) => `sale:${id}`)),
+    hgetallMany<Expense>(expenseIdsByDay.flat().map((id) => `expense:${id}`)),
+  ]);
+
+  let si = 0;
+  let ei = 0;
+  dates.forEach((date, d) => {
+    let revenue = 0;
+    for (let k = 0; k < saleIdsByDay[d].length; k++) revenue += Number(saleRecs[si++]?.total) || 0;
+    let expenses = 0;
+    for (let k = 0; k < expenseIdsByDay[d].length; k++) expenses += Number(expenseRecs[ei++]?.amount) || 0;
+    rows.push({ date, revenue, expenses, profit: revenue - expenses });
+  });
 
   const totals = rows.reduce(
     (acc, r) => ({
@@ -73,22 +72,22 @@ export async function GET(req: NextRequest) {
   );
 
   if (format === "excel") {
-    const worksheet = XLSX.utils.json_to_sheet(
-      [...rows, { date: "TOTAL", ...totals }].map((r) => ({
-        Dat: r.date,
-        Revni: r.revenue,
-        Depans: r.expenses,
-        Pwofi: r.profit,
-      }))
-    );
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Rapò Finansye");
-    const buffer = XLSX.write(workbook, { type: "buffer", bookType: "xlsx" });
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet("Rapò Finansye");
+    sheet.columns = [
+      { header: "Dat", key: "date", width: 14 },
+      { header: "Revni", key: "revenue", width: 16 },
+      { header: "Depans", key: "expenses", width: 16 },
+      { header: "Pwofi", key: "profit", width: 16 },
+    ];
+    sheet.addRows([...rows, { date: "TOTAL", ...totals }]);
+    sheet.getRow(1).font = { bold: true };
+    sheet.getRow(sheet.rowCount).font = { bold: true };
+    const buffer = await workbook.xlsx.writeBuffer();
 
-    return new NextResponse(new Uint8Array(buffer), {
+    return new NextResponse(new Uint8Array(buffer as ArrayBuffer), {
       headers: {
-        "Content-Type":
-          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         "Content-Disposition": `attachment; filename="rapo-finansye-${from}-${to}.xlsx"`,
       },
     });

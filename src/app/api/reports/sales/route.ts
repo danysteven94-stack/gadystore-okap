@@ -1,19 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { userOwnsBusiness } from "@/lib/shop";
-import { redis } from "@/lib/upstash";
+import { redis, hgetallMany } from "@/lib/upstash";
+import { eachDate, validateRange } from "@/lib/date-range";
 import { verifySession } from "@/lib/auth";
 import type { Sale } from "@/types";
-
-function eachDate(from: string, to: string): string[] {
-  const dates: string[] = [];
-  const cur = new Date(from);
-  const end = new Date(to);
-  while (cur <= end) {
-    dates.push(cur.toISOString().slice(0, 10));
-    cur.setDate(cur.getDate() + 1);
-  }
-  return dates;
-}
 
 export async function GET(req: NextRequest) {
   const token = req.cookies.get("session")?.value;
@@ -34,14 +24,17 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  const allSales: Sale[] = [];
-  for (const date of eachDate(from, to)) {
-    const ids = await redis.lrange(`business:${businessId}:sales:${date}`, 0, -1);
-    if (ids.length) {
-      const sales = await Promise.all(ids.map((id) => redis.hgetall<Sale>(`sale:${id}`)));
-      allSales.push(...sales.filter((s): s is Sale => !!s));
-    }
-  }
+  const rangeError = validateRange(from, to);
+  if (rangeError) return NextResponse.json({ error: rangeError }, { status: 400 });
+
+  // Lis jou yo nan YON demann (pipeline), epi tout vant yo nan yon lòt.
+  const dates = eachDate(from, to);
+  const pipe = redis.pipeline();
+  for (const date of dates) pipe.lrange(`business:${businessId}:sales:${date}`, 0, -1);
+  const idLists = (await pipe.exec()) as string[][];
+  const records = await hgetallMany<Sale>(idLists.flat().map((id) => `sale:${id}`));
+  const allSales: Sale[] = records.filter((s): s is Sale => !!s);
+
 
   // Pi bon pwodwi vandi (kantite ak revni pa pwodwi)
   const byProduct = new Map<string, { name: string; qty: number; revenue: number }>();
