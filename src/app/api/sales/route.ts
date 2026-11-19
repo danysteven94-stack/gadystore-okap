@@ -3,7 +3,8 @@ import { userOwnsBusiness } from "@/lib/shop";
 import { withIdempotency } from "@/lib/idempotency";
 import { z } from "zod";
 import { randomUUID } from "crypto";
-import { redis, hsetClean } from "@/lib/upstash";
+import { redis, hsetClean, hgetallMany } from "@/lib/upstash";
+import { releaseStock, reserveStock, type StockLine } from "@/lib/stock";
 import { verifySession, can } from "@/lib/auth";
 import { notifyLowStock, notifyNewSale } from "@/lib/notifications";
 import type { Product, Sale } from "@/types";
@@ -15,7 +16,7 @@ const saleSchema = z.object({
       z.object({
         productId: z.string(),
         name: z.string(),
-        qty: z.number().positive(),
+        qty: z.number().int().positive().max(100000),
         unitPrice: z.number().nonnegative(),
       })
     )
@@ -54,27 +55,42 @@ async function postHandler(req: NextRequest) {
         ? new Date(claimed).toISOString()
         : new Date().toISOString();
 
-    // Verifye epi debite stok la pou chak atik
-    for (const item of items) {
-      const product = await redis.hgetall<Product>(`product:${item.productId}`);
-      if (!product) {
-        return NextResponse.json(
-          { error: `Pwodwi ${item.name} pa jwenn.` },
-          { status: 404 }
-        );
+    // Chak pwodwi dwe pou biznis sa a (pa ka vann/debite pwodwi yon lòt biznis).
+    const productIds = [...new Set(items.map((i) => i.productId))];
+    const ownPipe = redis.pipeline();
+    for (const id of productIds) ownPipe.sismember(`business:${businessId}:products`, id);
+    const owned = (await ownPipe.exec()) as number[];
+    const products = await hgetallMany<Product>(productIds.map((id) => `product:${id}`));
+    const productById = new Map<string, Product>();
+    for (let k = 0; k < productIds.length; k++) {
+      const p = products[k];
+      if (!owned[k] || !p) {
+        const name = items.find((i) => i.productId === productIds[k])?.name ?? productIds[k];
+        return NextResponse.json({ error: `Pwodwi ${name} pa jwenn.` }, { status: 404 });
       }
-      if (!["digital", "dish"].includes(String(product.productType)) && product.stock < item.qty) {
-        return NextResponse.json(
-          { error: `Stok ${item.name} pa sifi (${product.stock} rete).` },
-          { status: 409 }
-        );
-      }
+      productById.set(productIds[k], p);
     }
 
     const subtotal = items.reduce((sum, i) => sum + i.qty * i.unitPrice, 0);
+    if (discount > subtotal) {
+      return NextResponse.json({ error: "Rabè a pa ka pi gwo pase sou-total la." }, { status: 400 });
+    }
     const afterDiscount = subtotal - discount;
     const tax = (afterDiscount * taxRate) / 100;
     const total = afterDiscount + tax;
+
+    // Rezève stok la ATOMIKMAN (digital/dish pa gen stok). Si pa sifi → 409, anyen pa debite.
+    const tracked: StockLine[] = items
+      .filter((i) => !["digital", "dish"].includes(String(productById.get(i.productId)?.productType)))
+      .map((i) => ({ productId: i.productId, qty: i.qty }));
+    const reservation = await reserveStock(redis, tracked);
+    if (!reservation.ok) {
+      const name = items.find((i) => i.productId === reservation.productId)?.name ?? reservation.productId;
+      return NextResponse.json(
+        { error: `Stok ${name} pa sifi (${Math.max(reservation.available, 0)} rete).` },
+        { status: 409 }
+      );
+    }
 
     const sale: Sale = {
       id: randomUUID(),
@@ -90,23 +106,21 @@ async function postHandler(req: NextRequest) {
       createdAt,
     };
 
-    await hsetClean(`sale:${sale.id}`, sale as unknown as Record<string, unknown>);
+    try {
+      await hsetClean(`sale:${sale.id}`, sale as unknown as Record<string, unknown>);
+      const today = sale.createdAt.slice(0, 10); // YYYY-MM-DD
+      await redis.lpush(`business:${businessId}:sales:${today}`, sale.id);
+    } catch (err) {
+      // Vant la pa anrejistre: remèt stok la pou pa pèdi mache.
+      await releaseStock(redis, tracked).catch(() => {});
+      throw err;
+    }
 
-    const today = sale.createdAt.slice(0, 10); // YYYY-MM-DD
-    await redis.lpush(`business:${businessId}:sales:${today}`, sale.id);
-
-    // Soti stok otomatikman epi verifye si sa deklannche yon alèt stok fèb
-    for (const item of items) {
-      const pr = await redis.hgetall<Product>(`product:${item.productId}`);
-      if (pr && ["digital", "dish"].includes(String(pr.productType))) continue; // pa gen stok pou pwodwi online
-      const updatedStock = await redis.hincrby(
-        `product:${item.productId}`,
-        "stock",
-        -item.qty
-      );
-      const product = await redis.hgetall<Product>(`product:${item.productId}`);
-      if (product && updatedStock <= product.minStock) {
-        await notifyLowStock(businessId, item.name);
+    // Alèt stok fèb
+    for (const [productId, left] of Object.entries(reservation.left)) {
+      const pr = productById.get(productId);
+      if (pr && left <= pr.minStock) {
+        await notifyLowStock(businessId, items.find((i) => i.productId === productId)?.name ?? productId);
       }
     }
 
