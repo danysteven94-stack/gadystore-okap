@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ImageResponse } from "next/og";
-import { redis } from "@/lib/upstash";
+import { loadImage } from "@/lib/image-store";
 import { getBusinessBySlug } from "@/lib/shop";
 
 export const runtime = "nodejs";
@@ -9,12 +9,21 @@ export const runtime = "nodejs";
 //   ?size=192|512|180|1024|2732   ?kind=any (default) | maskable | splash
 const SIZES = new Set([180, 192, 512, 1024, 2732]);
 
-/** Logo a sove kòm data URL nan Redis. Satori (ImageResponse) li sèlman JPEG/PNG. */
+/** Logo a ka nan Redis (data URL) oswa sou Vercel Blob. Satori (ImageResponse) li sèlman JPEG/PNG. */
 async function logoDataUrl(shopLogo: unknown): Promise<string | null> {
   const m = String(shopLogo ?? "").match(/\/api\/img\/([0-9a-f-]{36})/i);
   if (!m) return null;
-  const dataUrl = await redis.get<string>(`productimg:${m[1]}`);
-  return dataUrl && /^data:image\/(jpeg|png);base64,/.test(dataUrl) ? dataUrl : null;
+  const img = await loadImage(m[1]);
+  if (!img) return null;
+  if (img.kind === "data") return /^data:image\/(jpeg|png);base64,/.test(img.dataUrl) ? img.dataUrl : null;
+  try {
+    const r = await fetch(img.url);
+    const ct = r.headers.get("content-type") ?? "";
+    if (!r.ok || !/^image\/(jpeg|png)/.test(ct)) return null;
+    return `data:${ct.split(";")[0]};base64,${Buffer.from(await r.arrayBuffer()).toString("base64")}`;
+  } catch {
+    return null;
+  }
 }
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {

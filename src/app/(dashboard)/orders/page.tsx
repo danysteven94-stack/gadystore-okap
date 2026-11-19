@@ -52,6 +52,8 @@ export default function OrdersPage() {
   const [businessId, setBusinessId] = useState<string | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [totalOutstanding, setTotalOutstanding] = useState(0);
+  const [nextOffset, setNextOffset] = useState<number | null>(null);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
 
@@ -84,11 +86,32 @@ export default function OrdersPage() {
       const data = await res.json();
       setOrders((data.orders ?? []).filter(Boolean));
       setTotalOutstanding(data.totalOutstanding ?? 0);
+      setNextOffset(typeof data.nextOffset === "number" ? data.nextOffset : null);
     } catch {
       setOrders([]);
+      setNextOffset(null);
     }
     setLoading(false);
   }, [businessId]);
+
+  async function loadMore() {
+    if (!businessId || nextOffset === null || loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const res = await fetch(`/api/orders?businessId=${businessId}&offset=${nextOffset}`);
+      const data = await res.json();
+      const more = ((data.orders ?? []) as Order[]).filter(Boolean);
+      // pa double: yon nouvo kòmand ka deplase lis la pandan w ap chaje plis
+      setOrders((prev) => {
+        const seen = new Set(prev.map((o) => o.id));
+        return [...prev, ...more.filter((o) => !seen.has(o.id))];
+      });
+      setNextOffset(typeof data.nextOffset === "number" ? data.nextOffset : null);
+    } catch {
+      /* rete sou lis aktyèl la */
+    }
+    setLoadingMore(false);
+  }
 
   useEffect(() => {
     load();
@@ -474,6 +497,15 @@ export default function OrdersPage() {
               )}
             </div>
           ))}
+          {nextOffset !== null && (
+            <button
+              onClick={loadMore}
+              disabled={loadingMore}
+              className="w-full rounded-card border border-ink/15 dark:border-dark-border py-2.5 text-sm font-medium disabled:opacity-60"
+            >
+              {loadingMore ? "…" : "Chaje plis · Charger plus · Load more"}
+            </button>
+          )}
         </div>
       )}
 

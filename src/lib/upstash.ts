@@ -43,3 +43,23 @@ export async function hsetClean(
   );
   await redis.hset(key, clean);
 }
+
+/**
+ * Li plizyè hash nan YON SÈL demann HTTP (pipeline) olye de N demann paralèl.
+ * Retounen yon tab menm lòd ak `keys` (null si kle a pa egziste).
+ */
+export async function hgetallMany<T = Record<string, unknown>>(keys: string[]): Promise<(T | null)[]> {
+  if (keys.length === 0) return [];
+  const pipe = redis.pipeline();
+  for (const k of keys) pipe.hgetall(k);
+  const res = (await pipe.exec()) as (T | null)[];
+  return res.map((r) => (r && typeof r === "object" && Object.keys(r).length ? r : null));
+}
+
+/** Menm bagay pou kèk chan sèlman (HMGET) — rapid pou kalkil total yo. */
+export async function hmgetMany(keys: string[], fields: string[]): Promise<(Record<string, unknown> | null)[]> {
+  if (keys.length === 0) return [];
+  const pipe = redis.pipeline();
+  for (const k of keys) pipe.hmget(k, ...fields);
+  return (await pipe.exec()) as (Record<string, unknown> | null)[];
+}

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { randomUUID } from "crypto";
-import { redis, hsetClean } from "@/lib/upstash";
+import { redis, hsetClean, hgetallMany } from "@/lib/upstash";
+import { pageMeta, parsePage } from "@/lib/pagination";
 import { verifySession } from "@/lib/auth";
 import { userOwnsBusiness } from "@/lib/shop";
 import type { Product } from "@/types";
@@ -51,14 +52,21 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Aksè refize." }, { status: 403 });
   }
 
-  const ids = await redis.smembers(`business:${businessId}:products`);
-  const products = ids.length
-    ? await Promise.all(ids.map((id) => redis.hgetall<Product>(`product:${id}`)))
-    : [];
+  const allIds = (await redis.smembers(`business:${businessId}:products`)).sort(); // lòd stab
+  const sp = req.nextUrl.searchParams;
+  // Konpatib: san ?limit, li retounen TOUT pwodwi yo (POS/envantè bezwen lis konplè a). Avèk ?limit=&offset=, li pajinen.
+  const paged = sp.has("limit");
+  const { limit, offset } = parsePage(sp, { defaultLimit: 50, maxLimit: 200 });
+  const ids = paged ? allIds.slice(offset, offset + limit) : allIds;
+  const products = await hgetallMany<Product>(ids.map((id) => `product:${id}`));
 
   const lowStock = products.filter((p) => p && p.stock <= p.minStock);
 
-  return NextResponse.json({ products, lowStock });
+  return NextResponse.json({
+    products,
+    lowStock,
+    ...(paged ? pageMeta(allIds.length, offset, ids.length) : { total: allIds.length, hasMore: false, nextOffset: null }),
+  });
 }
 
 export async function POST(req: NextRequest) {

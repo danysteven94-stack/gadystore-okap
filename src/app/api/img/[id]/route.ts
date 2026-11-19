@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { redis } from "@/lib/upstash";
+import { loadImage } from "@/lib/image-store";
+
+const IMMUTABLE = "public, max-age=31536000, immutable";
 
 export async function GET(
   _req: NextRequest,
@@ -8,15 +10,16 @@ export async function GET(
   const { id } = await params;
   if (!/^[0-9a-f-]{36}$/i.test(id)) return new NextResponse("Not found", { status: 404 });
 
-  const dataUrl = await redis.get<string>(`productimg:${id}`);
-  const m = dataUrl?.match(/^data:(image\/(?:jpeg|png|webp));base64,(.+)$/);
-  if (!m) return new NextResponse("Not found", { status: 404 });
+  const img = await loadImage(id);
+  if (!img) return new NextResponse("Not found", { status: 404 });
 
-  return new NextResponse(Buffer.from(m[2], "base64"), {
-    headers: {
-      "Content-Type": m[1],
-      // ID a se yon UUID inik: yon foto ki chanje jwenn yon nouvo ID, kidonk kach la ka rete pou tout tan.
-      "Cache-Control": "public, max-age=31536000, immutable",
-    },
+  // Foto sou Vercel Blob: redireksyon (CDN a sèvi fichye a, fonksyon an pa pase bandwidth).
+  if (img.kind === "url") {
+    return new NextResponse(null, { status: 307, headers: { Location: img.url, "Cache-Control": IMMUTABLE } });
+  }
+
+  // Ansyen foto (data URL nan Redis) — ID a se yon UUID inik, kidonk kach la ka rete pou tout tan.
+  return new NextResponse(new Uint8Array(img.buffer), {
+    headers: { "Content-Type": img.contentType, "Cache-Control": IMMUTABLE },
   });
 }

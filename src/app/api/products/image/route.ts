@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { randomUUID } from "crypto";
-import { redis } from "@/lib/upstash";
+import { storeImage } from "@/lib/image-store";
 import { getSessionFromReq } from "@/lib/shop";
 
-// Foto a konprese sou telefòn/navigatè a anvan (~800px JPEG), epi li estoke nan
-// Upstash kòm yon data URL. Limit sekirite: 600 KB pou chak foto.
+// Foto a konprese sou telefòn/navigatè a anvan (~800px JPEG). Li ale sou Vercel Blob
+// (si BLOB_READ_WRITE_TOKEN defini), sinon nan Upstash. Limit sekirite: 600 KB pou chak foto.
 const MAX_BYTES = 600 * 1024;
 const DATA_URL = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/;
 
@@ -21,7 +20,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Foto a two gwo (max 600 KB)." }, { status: 413 });
   }
 
-  const id = randomUUID();
-  await redis.set(`productimg:${id}`, dataUrl);
-  return NextResponse.json({ url: `/api/img/${id}` }, { status: 201 });
+  try {
+    return NextResponse.json({ url: await storeImage(dataUrl) }, { status: 201 });
+  } catch (err) {
+    console.error("image upload error", err);
+    return NextResponse.json({ error: "Pa ka sove foto a. Eseye ankò." }, { status: 502 });
+  }
 }

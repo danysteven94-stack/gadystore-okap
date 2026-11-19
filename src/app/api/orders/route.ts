@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { userOwnsBusiness } from "@/lib/shop";
 import { z } from "zod";
 import { randomUUID } from "crypto";
-import { redis, hsetClean } from "@/lib/upstash";
+import { redis, hsetClean, hgetallMany, hmgetMany } from "@/lib/upstash";
+import { pageMeta, parsePage } from "@/lib/pagination";
 import { verifySession } from "@/lib/auth";
 import { pushNotification } from "@/lib/notifications";
 import { recordOrderSaleIfReady } from "@/lib/order-sale";
@@ -70,10 +71,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "businessId obligatwa." }, { status: 400 });
   }
 
-  const ids = await redis.lrange(`business:${businessId}:orders`, 0, 99);
-  const orders = ids.length
-    ? await Promise.all(ids.map((id) => redis.hgetall<Order>(`order:${id}`)))
-    : [];
+  // Pajinasyon: ?limit= (defo 100, max 100) & ?offset=. Pi resan an anvan.
+  const { limit, offset } = parsePage(req.nextUrl.searchParams, { defaultLimit: 100, maxLimit: 100 });
+  const listKey = `business:${businessId}:orders`;
+  const [ids, total] = await Promise.all([redis.lrange(listKey, offset, offset + limit - 1), redis.llen(listKey)]);
+  const orders = await hgetallMany<Order>(ids.map((id) => `order:${id}`));
 
   // Upstash dezeriyalize valè ki sanble nimewo (ex: telefòn "50937123456" vin tounen nimewo).
   // Nou fòse chan tèks yo tounen string pou paj la pa kraze (.replace sou yon nimewo).
@@ -105,11 +107,13 @@ export async function GET(req: NextRequest) {
   );
   const imgById = new Map<string, string>();
   if (productIds.length) {
-    const prods = await Promise.all(
-      productIds.map((id) => redis.hgetall<{ imageUrl?: string }>(`product:${id}`).catch(() => null))
+    const prods = await hmgetMany(productIds.map((id) => `product:${id}`), ["imageUrl"]).catch(() =>
+      productIds.map(() => null)
     );
     productIds.forEach((id, i) => {
-      const u = prods[i]?.imageUrl;
+      const raw = prods[i] as unknown;
+      // HMGET retounen yon tab [imageUrl] (oswa yon objè {imageUrl} selon vèsyon kliyan an)
+      const u = Array.isArray(raw) ? raw[0] : (raw as { imageUrl?: unknown } | null)?.imageUrl;
       if (u) imgById.set(id, String(u));
     });
   }
@@ -119,11 +123,17 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  const totalOutstanding = validOrders
-    .filter((o) => o.status !== "cancelled")
-    .reduce((sum, o) => sum + o.balance, 0);
+  // Total dè a kalkile sou TOUT kòmand yo (pa sèlman paj la) — HMGET an pipeline, 2 chan sèlman.
+  const allIds = total > ids.length ? await redis.lrange(listKey, 0, -1) : ids;
+  const rows = total > ids.length ? await hmgetMany(allIds.map((id) => `order:${id}`), ["status", "balance"]) : null;
+  const totalOutstanding = rows
+    ? rows.reduce<number>((sum, r) => {
+        const [status, balance] = (Array.isArray(r) ? r : [(r as Record<string, unknown> | null)?.status, (r as Record<string, unknown> | null)?.balance]) as unknown[];
+        return String(status) === "cancelled" ? sum : sum + (Number(balance) || 0);
+      }, 0)
+    : validOrders.filter((o) => o.status !== "cancelled").reduce((sum, o) => sum + o.balance, 0);
 
-  return NextResponse.json({ orders: validOrders, totalOutstanding });
+  return NextResponse.json({ orders: validOrders, totalOutstanding, ...pageMeta(total, offset, ids.length) });
 }
 
 export async function POST(req: NextRequest) {
