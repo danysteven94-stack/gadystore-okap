@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { redis } from "@/lib/upstash";
-import { verifyPassword, signSession, signPwChangeToken, type SessionPayload } from "@/lib/auth";
+import { verifyPassword, signSession, signPwChangeToken, signMfaToken, type SessionPayload } from "@/lib/auth";
 import { isTrue } from "@/lib/password";
 import { rateLimit } from "@/lib/shop";
 
@@ -68,6 +68,19 @@ export async function POST(req: NextRequest) {
         secure: true,
         sameSite: "lax",
         maxAge: 60 * 15,
+        path: "/api/auth",
+      });
+      return res;
+    }
+
+    // 2FA: modpas la bon, men sesyon an pa bay anvan kòd TOTP la verifye.
+    if (isTrue(user.totpEnabled)) {
+      const res = NextResponse.json({ ok: true, mfaRequired: true });
+      res.cookies.set("mfa", await signMfaToken(email), {
+        httpOnly: true,
+        secure: true,
+        sameSite: "lax",
+        maxAge: 60 * 5,
         path: "/api/auth",
       });
       return res;

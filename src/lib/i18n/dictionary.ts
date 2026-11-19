@@ -38,6 +38,7 @@ export const dictionary = {
   inventory_discrepancies: { ht: "diferans jwenn", fr: "écarts trouvés", en: "discrepancies found" },
   inventory_no_discrepancy: { ht: "Okenn diferans — tout bagay matche.", fr: "Aucun écart — tout correspond.", en: "No discrepancy — everything matched." },
   nav_users: { ht: "Itilizatè", fr: "Utilisateurs", en: "Users" },
+  nav_security: { ht: "Sekirite", fr: "Sécurité", en: "Security" },
   nav_logout: { ht: "Dekonekte", fr: "Déconnexion", en: "Log out" },
   nav_dark_mode: { ht: "Mòd fonse", fr: "Mode sombre", en: "Dark mode" },
   nav_light_mode: { ht: "Mòd klè", fr: "Mode clair", en: "Light mode" },

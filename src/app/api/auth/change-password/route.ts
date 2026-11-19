@@ -5,6 +5,8 @@ import {
   hashPassword,
   verifyPassword,
   signSession,
+  signMfaToken,
+  revokeSessions,
   verifyPwChangeToken,
   type SessionPayload,
 } from "@/lib/auth";
@@ -63,6 +65,16 @@ export async function POST(req: NextRequest) {
     passwordChangedAt: now,
     lastLoginAt: now,
   });
+
+  await revokeSessions(email);
+
+  // Si 2FA aktif, modpas la chanje men sesyon an pa bay anvan kòd la verifye.
+  if (isTrue(user.totpEnabled)) {
+    const res = NextResponse.json({ ok: true, mfaRequired: true });
+    res.cookies.set("mfa", await signMfaToken(email), { httpOnly: true, secure: true, sameSite: "lax", maxAge: 60 * 5, path: "/api/auth" });
+    res.cookies.set("pwchange", "", { httpOnly: true, secure: true, sameSite: "lax", maxAge: 0, path: "/api/auth" });
+    return res;
+  }
 
   const rawIds = user.businessIds as string | string[] | undefined;
   const session: SessionPayload = {

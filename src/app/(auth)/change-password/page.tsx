@@ -37,6 +37,10 @@ export default function ChangePasswordPage() {
         setLoading(false);
         return;
       }
+      if (data.mfaRequired) {
+        router.push("/login?step=mfa");
+        return;
+      }
       router.push("/dashboard");
       router.refresh();
     } catch {

@@ -17,6 +17,7 @@ import {
   Store,
   WalletCards,
   Bell,
+  ShieldCheck,
 } from "lucide-react";
 import type { TranslationKey } from "@/lib/i18n/dictionary";
 
@@ -49,5 +50,6 @@ export const NAV_ITEMS: { href: string; icon: React.ElementType; key: Translatio
   { href: "/reports", icon: BarChart3, key: "nav_reports" },
   { href: "/backup", icon: DatabaseBackup, key: "nav_backup" },
   { href: "/users", icon: UserCog, key: "nav_users" },
+  { href: "/security", icon: ShieldCheck, key: "nav_security" },
   { href: "/user-billing", icon: WalletCards, key: "nav_user_billing", superOnly: true },
 ];

@@ -51,7 +51,14 @@ export async function verifySession(
     if (payload.purpose) return null;
     // Kont dezaktive: sesyon an invalid imedyatman (pa bezwen tann 7 jou JWT la fini).
     const email = String((payload as { email?: string }).email ?? "").toLowerCase();
-    if (!email || (await redis.sismember("users:disabled", email))) return null;
+    if (!email) return null;
+    const [disabled, after] = await Promise.all([
+      redis.sismember("users:disabled", email),
+      redis.get<number | string>(`sess:after:${email}`),
+    ]);
+    if (disabled) return null;
+    // Apre yon reyinisyalizasyon modpas, tout sesyon ki te kreye anvan an revoke.
+    if (after && (payload.iat ?? 0) < Number(after)) return null;
     return payload as unknown as SessionPayload;
   } catch {
     return null;
@@ -90,4 +97,28 @@ export async function verifyPwChangeToken(token: string): Promise<string | null>
   } catch {
     return null;
   }
+}
+
+/** Token kout (5 min) bay APRE modpas la bon, SÈLMAN pou antre kòd 2FA a. Pa gen sesyon konplè anvan. */
+export async function signMfaToken(email: string): Promise<string> {
+  return new SignJWT({ email, purpose: "mfa" })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime("5m")
+    .sign(getSecret());
+}
+
+export async function verifyMfaToken(token: string): Promise<string | null> {
+  try {
+    const { payload } = await jwtVerify(token, getSecret());
+    if (payload.purpose !== "mfa" || typeof payload.email !== "string") return null;
+    return payload.email;
+  } catch {
+    return null;
+  }
+}
+
+/** Revoke tout sesyon ki egziste deja pou yon itilizatè (apre chanjman/reyinisyalizasyon modpas). */
+export async function revokeSessions(email: string): Promise<void> {
+  await redis.set(`sess:after:${email.toLowerCase()}`, Math.floor(Date.now() / 1000), { ex: 8 * 24 * 3600 });
 }
