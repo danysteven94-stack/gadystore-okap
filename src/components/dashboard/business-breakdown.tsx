@@ -5,6 +5,8 @@ import { useLanguage } from "@/lib/i18n/language-provider";
 
 interface Props {
   businesses: { id: string; name: string; revenue: number }[];
+  /** Tit sou total la (ex: "Revni mwa a"). Pa defo: "Revni". */
+  label?: string;
 }
 
 function fmt(n: number) {
@@ -21,7 +23,7 @@ const COLORS = [
   "bg-ink/30 dark:bg-white/30",
 ];
 
-export function BusinessBreakdown({ businesses }: Props) {
+export function BusinessBreakdown({ businesses, label }: Props) {
   const { t } = useLanguage();
   const [ready, setReady] = useState(false);
   useEffect(() => {
@@ -36,7 +38,7 @@ export function BusinessBreakdown({ businesses }: Props) {
     <div className="rounded-card border border-line dark:border-dark-border bg-white dark:bg-dark-surface shadow-card dark:shadow-none p-4 sm:p-5">
       <div className="flex items-end justify-between gap-3 mb-4">
         <div>
-          <p className="text-xs font-medium text-ink/55 dark:text-white/55">{t("dash_group_revenue")}</p>
+          <p className="text-xs font-medium text-ink/55 dark:text-white/55">{label ?? t("dash_group_revenue")}</p>
           <p className="stat-figure mt-1 text-2xl font-extrabold leading-none">{fmt(total)}</p>
         </div>
         <span className="text-[11px] font-medium text-ink/50 dark:text-white/50 bg-mist dark:bg-white/10 rounded-full px-2.5 py-1">

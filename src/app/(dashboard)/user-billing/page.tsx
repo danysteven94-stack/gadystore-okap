@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { WalletCards, Loader2, ShieldCheck, RefreshCw, AlertTriangle, CalendarClock } from "lucide-react";
 import { useLanguage } from "@/lib/i18n/language-provider";
 import type { BillingUser } from "@/app/api/user-billing/route";
+import type { Business } from "@/types";
 
 interface Summary {
   total: number;
@@ -30,6 +31,8 @@ export default function UserBillingPage() {
   const [prices, setPrices] = useState<Record<string, string>>({});
   const [months, setMonths] = useState<Record<string, number>>({});
   const [paidAt, setPaidAt] = useState<Record<string, string>>({});
+  const [businesses, setBusinesses] = useState<Business[]>([]);
+  const [billingBizId, setBillingBizId] = useState(""); // antrepriz ki resevwa vant peman yo
   const nowLocal = () => {
     const d = new Date();
     d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
@@ -58,6 +61,7 @@ export default function UserBillingPage() {
       const data = await res.json();
       setUsers(data.users ?? []);
       setSummary(data.summary ?? null);
+      setBillingBizId((cur) => cur || data.billingBusinessId || "");
       setPrices(Object.fromEntries((data.users ?? []).map((u: BillingUser) => [u.email, String(u.monthlyPrice)])));
     } catch {
       setUsers([]);
@@ -66,7 +70,14 @@ export default function UserBillingPage() {
 
   useEffect(() => {
     load();
+    fetch("/api/businesses")
+      .then((r) => r.json())
+      .then((d) => setBusinesses(d.businesses ?? []))
+      .catch(() => {});
   }, []);
+
+  // Si poko gen chwa, nou pran premye antrepriz la pa defo
+  const effectiveBizId = billingBizId || businesses[0]?.id || "";
 
   async function patch(email: string, body: Record<string, unknown>) {
     setBusy(email);
@@ -126,6 +137,19 @@ export default function UserBillingPage() {
       </div>
 
       {error && <p className="text-sm text-brick mb-4">{error}</p>}
+
+      {businesses.length > 0 && (
+        <label className="block mb-5">
+          <span className={labelClass}>Antrepriz ki resevwa vant peman yo</span>
+          <select value={effectiveBizId} onChange={(e) => setBillingBizId(e.target.value)} className={inputClass}>
+            {businesses.map((b) => (
+              <option key={b.id} value={b.id}>
+                {b.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
 
       {summary && (summary.overdue > 0 || summary.dueToday > 0 || summary.soon > 0) && (
         <div className="rounded-2xl border-2 border-brick/40 bg-brick/5 p-4 mb-5 space-y-1.5 text-sm">
@@ -265,7 +289,7 @@ export default function UserBillingPage() {
                       disabled={busy === u.email}
                       onClick={() => {
                         const at = paidAt[u.email] ?? nowLocal();
-                        patch(u.email, { action: "pay", months: months[u.email] ?? 1, paidAt: new Date(at).toISOString() });
+                        patch(u.email, { action: "pay", months: months[u.email] ?? 1, paidAt: new Date(at).toISOString(), businessId: effectiveBizId || undefined });
                         setPaidAt((p) => { const n = { ...p }; delete n[u.email]; return n; });
                       }}
                       className="rounded-xl bg-forest text-paper px-4 py-2 text-sm font-semibold disabled:opacity-50"

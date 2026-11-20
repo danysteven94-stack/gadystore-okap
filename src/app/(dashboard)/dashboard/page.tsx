@@ -29,7 +29,6 @@ import { BusinessBreakdown } from "@/components/dashboard/business-breakdown";
 import { WeeklyProfitChart } from "@/components/dashboard/weekly-profit-chart";
 import { BusinessForm, type BusinessFormValues } from "@/components/business/business-form";
 import { useLanguage } from "@/lib/i18n/language-provider";
-import { useSuperInfo } from "@/lib/use-super-info";
 import type { Business, DashboardStats } from "@/types";
 
 function fmt(n: number) {
@@ -105,12 +104,11 @@ function StatsGrid({ s, t }: { s: StatsLike; t: (k: any) => string }) {
 
 function DashboardInner() {
   const { t } = useLanguage();
-  // Revni abònman itilizatè yo: rekèt separe ki rapid, pou kont prensipal la sèlman (0 pou lòt yo).
-  const { periodRevenue: subscriptionRevenue } = useSuperInfo();
   const [businesses, setBusinesses] = useState<Business[] | null>(null);
   const [activeId, setActiveId] = useState("all");
   const [statsByBusiness, setStatsByBusiness] = useState<Record<string, DashboardStats>>({});
   const [loadingStats, setLoadingStats] = useState(false);
+  const [breakdownPeriod, setBreakdownPeriod] = useState<"month" | "today">("month");
   const [showForm, setShowForm] = useState(false);
   const [savingBusiness, setSavingBusiness] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -241,16 +239,15 @@ function DashboardInner() {
     );
   }
 
-  // subscriptionRevenue (anwo a) = peman abònman itilizatè yo, pa pou yon antrepriz. Chak peman konte sèlman
-  // nan jou, mwa ak ane li te peye a (pa total mansyèl la), epi nou ajoute l yon sèl fwa.
+  // Peman abònman itilizatè yo antre kòm vant nan antrepriz yo chwazi a, kidonk yo deja nan stats chak antrepriz.
   const empireStats = {
-    todayRevenue: Object.values(statsByBusiness).reduce((s, b) => s + (b?.todayRevenue ?? 0), 0) + subscriptionRevenue.today,
-    monthRevenue: Object.values(statsByBusiness).reduce((s, b) => s + (b?.monthRevenue ?? 0), 0) + subscriptionRevenue.month,
-    yearRevenue: Object.values(statsByBusiness).reduce((s, b) => s + (b?.yearRevenue ?? 0), 0) + subscriptionRevenue.year,
+    todayRevenue: Object.values(statsByBusiness).reduce((s, b) => s + (b?.todayRevenue ?? 0), 0),
+    monthRevenue: Object.values(statsByBusiness).reduce((s, b) => s + (b?.monthRevenue ?? 0), 0),
+    yearRevenue: Object.values(statsByBusiness).reduce((s, b) => s + (b?.yearRevenue ?? 0), 0),
     monthSales: Object.values(statsByBusiness).reduce((s, b) => s + (b?.monthSales ?? 0), 0),
     monthReturns: Object.values(statsByBusiness).reduce((s, b) => s + (b?.monthReturns ?? 0), 0),
     monthExpenses: Object.values(statsByBusiness).reduce((s, b) => s + (b?.monthExpenses ?? 0), 0),
-    monthProfit: Object.values(statsByBusiness).reduce((s, b) => s + (b?.monthProfit ?? 0), 0) + subscriptionRevenue.month,
+    monthProfit: Object.values(statsByBusiness).reduce((s, b) => s + (b?.monthProfit ?? 0), 0),
     outOfStockCount: Object.values(statsByBusiness).reduce((s, b) => s + (b?.outOfStockCount ?? 0), 0),
     lowStockCount: Object.values(statsByBusiness).reduce((s, b) => s + (b?.lowStock.length ?? 0), 0),
     ordersCount: Object.values(statsByBusiness).reduce((s, b) => s + (b?.ordersCount ?? 0), 0),
@@ -315,12 +312,30 @@ function DashboardInner() {
           </div>
         )}
 
-        <h2 className="text-sm font-semibold text-ink/70 dark:text-white/70 mb-2.5">{t("dashboard_breakdown")}</h2>
+        <div className="flex items-center justify-between gap-3 mb-2.5">
+          <h2 className="text-sm font-semibold text-ink/70 dark:text-white/70">{t("dashboard_breakdown")}</h2>
+          <div className="flex rounded-full bg-mist dark:bg-white/10 p-0.5 text-[11px] font-semibold">
+            {(["month", "today"] as const).map((p) => (
+              <button
+                key={p}
+                type="button"
+                onClick={() => setBreakdownPeriod(p)}
+                className={`rounded-full px-3 py-1 transition-colors ${
+                  breakdownPeriod === p ? "bg-ink text-paper dark:bg-white dark:text-ink" : "text-ink/60 dark:text-white/60"
+                }`}
+              >
+                {p === "month" ? t("dashboard_month_revenue") : t("dashboard_today_revenue")}
+              </button>
+            ))}
+          </div>
+        </div>
         <BusinessBreakdown
+          label={breakdownPeriod === "month" ? t("dashboard_month_revenue") : t("dashboard_today_revenue")}
           businesses={businesses.map((b) => ({
             id: b.id,
             name: b.name,
-            revenue: statsByBusiness[b.id]?.todayRevenue ?? 0,
+            revenue:
+              (breakdownPeriod === "month" ? statsByBusiness[b.id]?.monthRevenue : statsByBusiness[b.id]?.todayRevenue) ?? 0,
           }))}
         />
 

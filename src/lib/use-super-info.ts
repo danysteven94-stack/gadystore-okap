@@ -7,7 +7,6 @@ export function useSuperInfo() {
   const [isSuper, setIsSuper] = useState(false);
   const [alertCount, setAlertCount] = useState(0);
   const [monthlyRevenue, setMonthlyRevenue] = useState(0); // revni abònman itilizatè yo (kont prensipal la sèlman)
-  const [periodRevenue, setPeriodRevenue] = useState({ today: 0, month: 0, year: 0 }); // peman abònman yo pa jou/mwa/ane
   const [shopAllowed, setShopAllowed] = useState(true); // montre pandan l ap chaje; kache si plan an pa gen boutik
 
   useEffect(() => {
@@ -28,8 +27,6 @@ export function useSuperInfo() {
         if (cancelled) return;
         setAlertCount((summary?.overdue ?? 0) + (summary?.dueToday ?? 0));
         setMonthlyRevenue(summary?.monthlyRevenue ?? 0);
-        const pr = body.periodRevenue;
-        if (pr) setPeriodRevenue({ today: Number(pr.today) || 0, month: Number(pr.month) || 0, year: Number(pr.year) || 0 });
       } catch {
         /* silans */
       }
@@ -39,5 +36,5 @@ export function useSuperInfo() {
     };
   }, []);
 
-  return { isSuper, alertCount, shopAllowed, monthlyRevenue, periodRevenue };
+  return { isSuper, alertCount, shopAllowed, monthlyRevenue };
 }
