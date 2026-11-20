@@ -1,8 +1,8 @@
 "use client";
 
 import { useT } from "./shop-context";
-import { useEffect } from "react";
-import { Star, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ShoppingBag, Star, X } from "lucide-react";
 import type { PublicProduct } from "@/lib/shop";
 
 // Palèt: blan, nwa ak rouj
@@ -180,3 +180,84 @@ export const FULFILLMENT_STEPS = [
   { id: "shipped", label: "Nan wout", labelPickup: "Pare pou ranmase" },
   { id: "delivered", label: "Livre", labelPickup: "Ranmase||status" },
 ] as const;
+
+/**
+ * Foto manje: pa gen fon gri ki parèt, pa gen rekòp brital.
+ *  - Anvan foto a chaje: yon fon cho ak yon "shimmer" dous.
+ *  - Lè l chaje: fondi (fade-in) — pa gen flash.
+ *  - mode "cover"  → foto a ranpli tout kare a (kat, ti vinyèt).
+ *  - mode "contain" → foto a parèt antye sou yon fon flou ki pran koulè foto a menm
+ *    (pa gen bann blan/nwa, kèlkeswa fòma foto a: vètikal, orizontal, kare).
+ */
+export function FoodImage({
+  src,
+  alt = "",
+  mode = "cover",
+  className = "",
+  imgClassName = "",
+  eager,
+  dim,
+  onClick,
+}: {
+  src: string | null | undefined;
+  alt?: string;
+  mode?: "cover" | "contain";
+  className?: string;
+  imgClassName?: string;
+  eager?: boolean;
+  dim?: boolean; // grise (plat fini)
+  onClick?: () => void;
+}) {
+  const [loaded, setLoaded] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const ref = useRef<HTMLImageElement>(null);
+
+  useEffect(() => {
+    setLoaded(false);
+    setFailed(false);
+    const el = ref.current;
+    if (el && el.complete && el.naturalWidth > 0) setLoaded(true);
+  }, [src]);
+
+  const fade = `transition-opacity duration-500 ${loaded ? "opacity-100" : "opacity-0"}`;
+
+  return (
+    <div
+      className={`relative overflow-hidden ${className}`}
+      style={{ background: "linear-gradient(135deg,#F4F1EC,#EAE5DE)" }}
+      onClick={onClick}
+    >
+      {!loaded && !failed && <span className="absolute inset-0 food-shimmer" aria-hidden />}
+      {src && !failed ? (
+        <>
+          {mode === "contain" && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={src}
+              alt=""
+              aria-hidden
+              decoding="async"
+              className={`absolute inset-0 w-full h-full object-cover scale-125 blur-2xl saturate-150 ${fade} ${dim ? "grayscale" : ""}`}
+              style={{ opacity: loaded ? 0.9 : 0 }}
+            />
+          )}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            ref={ref}
+            src={src}
+            alt={alt}
+            loading={eager ? "eager" : "lazy"}
+            decoding="async"
+            onLoad={() => setLoaded(true)}
+            onError={() => setFailed(true)}
+            className={`relative w-full h-full ${mode === "contain" ? "object-contain" : "object-cover"} ${fade} ${dim ? "grayscale opacity-60" : ""} ${imgClassName}`}
+          />
+        </>
+      ) : (
+        <span className="absolute inset-0 flex items-center justify-center" style={{ color: "#CFC8BD" }}>
+          <ShoppingBag size={32} />
+        </span>
+      )}
+    </div>
+  );
+}

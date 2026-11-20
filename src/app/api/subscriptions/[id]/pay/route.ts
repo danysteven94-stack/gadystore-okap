@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { redis } from "@/lib/upstash";
 import { verifySession } from "@/lib/auth";
 import { recordSubscriptionSale, undoSubscriptionSale } from "@/lib/subscription-sale";
-import { canAccessSub, nextPaymentFor, parseIds, paymentsOf } from "@/lib/subscriptions";
+import { canAccessSub, nextPaymentFor, parseIds, paymentsOf, salesBusinessFor } from "@/lib/subscriptions";
 import type { Subscription } from "@/app/api/subscriptions/route";
 
 async function getSession(req: NextRequest) {
@@ -43,12 +43,15 @@ export async function POST(
   const nextPaymentDate = nextPaymentFor(sub, paymentsCount);
   const saleIds = parseIds(sub.saleIds);
   const paidDates = parseIds(sub.paidDates);
+  // Kenbe saleIds aliyen ak peman yo ("" = peman ki pa gen vant)
+  while (saleIds.length < paymentsCount - 1) saleIds.push("");
 
-  // Chak peman mansyèl kontabilize kòm yon vant (revni/rapò/dashboard),
-  // sèlman si abònman an anba yon antrepriz.
-  if (sub.businessId) {
+  // Chak peman mansyèl kontabilize kòm yon vant (revni/rapò/dashboard).
+  // Abònman pèsonèl yo antre nan antrepriz streaming itilizatè a (oswa premye antrepriz li a).
+  const salesBizId = await salesBusinessFor(session.email, sub);
+  if (salesBizId) {
     const sale = await recordSubscriptionSale({
-      businessId: String(sub.businessId),
+      businessId: salesBizId,
       subscriptionId: id,
       productName: sub.productName,
       amount: sub.monthlyPrice,

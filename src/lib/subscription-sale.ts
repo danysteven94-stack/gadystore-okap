@@ -12,6 +12,8 @@ interface RecordSubscriptionSaleArgs {
   cashierId: string;
   /** Dat ak lè moun nan te peye (ISO). Si pa bay, se kounye a. */
   paidAt?: string;
+  /** Pa voye notifikasyon (rattrapage ansyen peman yo). */
+  silent?: boolean;
 }
 
 /**
@@ -27,6 +29,7 @@ export async function recordSubscriptionSale({
   customerId,
   cashierId,
   paidAt,
+  silent,
 }: RecordSubscriptionSaleArgs): Promise<Sale> {
   const sale: Sale = {
     id: randomUUID(),
@@ -54,7 +57,7 @@ export async function recordSubscriptionSale({
   const today = sale.createdAt.slice(0, 10);
   await redis.lpush(`business:${businessId}:sales:${today}`, sale.id);
 
-  await notifyNewSale(businessId, sale.total);
+  if (!silent) await notifyNewSale(businessId, sale.total);
 
   return sale;
 }

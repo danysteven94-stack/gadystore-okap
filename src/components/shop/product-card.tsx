@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Bell, Heart, Plus, ShoppingBag } from "lucide-react";
 import type { PublicProduct } from "@/lib/shop";
 import { useShop, useT } from "./shop-context";
-import { C, Price, Stars, clamp2, discountPct, isNew } from "./ui";
+import { C, FoodImage, Price, Stars, clamp2, discountPct, isNew } from "./ui";
 
 export function ProductCard({ p, index = 0 }: { p: PublicProduct; index?: number }) {
   const t = useT();
@@ -21,20 +21,13 @@ export function ProductCard({ p, index = 0 }: { p: PublicProduct; index?: number
       style={{ borderColor: C.line, animation: `fadeUp .45s ease-out ${Math.min(index, 8) * 50}ms both` }}
     >
       <Link href={`${base}/p/${p.id}`} className="relative block aspect-square w-full overflow-hidden" style={{ background: C.soft }} aria-label={p.name}>
-        {p.imageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={p.imageUrl}
-            alt={p.name}
-            loading="lazy"
-            decoding="async"
-            className={`w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 ${out && !p.comingSoon ? "grayscale opacity-60" : ""}`}
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center" style={{ color: C.line }}>
-            <ShoppingBag size={44} />
-          </div>
-        )}
+        <FoodImage
+          src={p.imageUrl}
+          alt={p.name}
+          dim={out && !p.comingSoon}
+          className="w-full h-full"
+          imgClassName="transition-transform duration-300 group-hover:scale-105"
+        />
         <div className="absolute top-2 left-2 flex flex-col gap-1 items-start">
           {out && p.comingSoon && <Badge bg="#B45309">{t("BYENTO")}</Badge>}
           {out && !p.comingSoon && <Badge bg={C.ink}>{t("FINI")}</Badge>}

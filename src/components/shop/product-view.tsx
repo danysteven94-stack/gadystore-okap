@@ -1,13 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Bell, Check, ChevronLeft, ChevronRight, Heart, Loader2, MessageCircle, Minus, Package, Plus, Share2, ShieldCheck, ShoppingBag, Star, Truck, X } from "lucide-react";
 import { useShop, useT } from "./shop-context";
 import { shopEta } from "@/lib/delivery-eta";
 import { ProductRow } from "./product-card";
-import { C, Price, StockLine, Stars, discountPct, fieldClass, fieldStyle } from "./ui";
+import { C, FoodImage, Price, StockLine, Stars, discountPct, fieldClass, fieldStyle } from "./ui";
 
 interface Review {
   id: string;
@@ -27,6 +27,8 @@ export function ProductView({ productId }: { productId: string }) {
   const [color, setColor] = useState("");
   const [idx, setIdx] = useState(0);
   const [zoom, setZoom] = useState(false);
+  const [missing, setMissing] = useState<"size" | "color" | null>(null);
+  const touchX = useRef<number | null>(null);
   const [shareUrl, setShareUrl] = useState("");
   useEffect(() => setShareUrl(window.location.href), [productId]);
 
@@ -37,8 +39,10 @@ export function ProductView({ productId }: { productId: string }) {
   useEffect(() => {
     setIdx(0);
     setQ(1);
-    setSize("");
-    setColor("");
+    setMissing(null);
+    // Si pa gen yon sèl chwa (ex: yon sèl gwosè), nou chwazi l otomatikman — kliyan an pa bezwen klike.
+    setSize(p && p.sizes.length === 1 ? p.sizes[0] : "");
+    setColor(p && p.colors.length === 1 ? p.colors[0] : "");
     window.scrollTo({ top: 0 });
   }, [productId]);
 
@@ -80,12 +84,11 @@ export function ProductView({ productId }: { productId: string }) {
 
   // Si pwodwi a gen gwosè/koulè, kliyan an dwe chwazi yo anvan
   function tryAdd(): boolean {
-    if (p!.sizes.length > 0 && !size) {
-      showToast("Chwazi yon gwosè.");
-      return false;
-    }
-    if (p!.colors.length > 0 && !color) {
-      showToast("Chwazi yon koulè.");
+    const need = p!.colors.length > 0 && !color ? "color" : p!.sizes.length > 0 && !size ? "size" : null;
+    if (need) {
+      setMissing(need);
+      showToast(need === "color" ? (p!.dish ? "Chwazi yon opsyon." : "Chwazi yon koulè.") : "Chwazi yon gwosè.");
+      document.getElementById(`opt-${need}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
       return false;
     }
     addToCart(p!, qty, { size, color });
@@ -110,33 +113,54 @@ export function ProductView({ productId }: { productId: string }) {
 
       <div className="grid md:grid-cols-2 gap-6 lg:gap-12">
         {/* ---------- Galri ---------- */}
-        <div>
-          <div className="relative aspect-square rounded-2xl overflow-hidden border" style={{ background: C.soft, borderColor: C.line }}>
-            {imgs.length ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={imgs[idx]}
-                alt={p.name}
-                onClick={() => setZoom(true)}
-                className={`w-full h-full object-cover cursor-zoom-in ${out && !p.comingSoon ? "grayscale opacity-70" : ""}`}
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center" style={{ color: C.line }}><ShoppingBag size={72} /></div>
-            )}
+        <div className="md:sticky md:top-[calc(var(--shop-header-h,64px)+16px)] md:self-start">
+          <div
+            className="relative aspect-[4/3] sm:aspect-square rounded-3xl overflow-hidden border shadow-sm"
+            style={{ borderColor: C.line }}
+            onTouchStart={(e) => { touchX.current = e.touches[0].clientX; }}
+            onTouchEnd={(e) => {
+              const x0 = touchX.current;
+              touchX.current = null;
+              if (x0 === null || imgs.length < 2) return;
+              const dx = e.changedTouches[0].clientX - x0;
+              if (Math.abs(dx) > 45) setIdx((i) => (dx < 0 ? (i + 1) % imgs.length : (i - 1 + imgs.length) % imgs.length));
+            }}
+          >
+            <FoodImage
+              key={imgs[idx] ?? "none"}
+              src={imgs[idx]}
+              alt={p.name}
+              mode="contain"
+              eager
+              dim={out && !p.comingSoon}
+              onClick={imgs.length ? () => setZoom(true) : undefined}
+              className={`w-full h-full ${imgs.length ? "cursor-zoom-in" : ""}`}
+            />
             {pct > 0 && !out && <span className="absolute top-3 left-3 rounded-md px-2.5 py-1 text-xs font-bold text-white" style={{ background: C.red }}>-{pct}%</span>}
             {imgs.length > 1 && (
               <>
-                <button aria-label={t("Anvan")} onClick={() => setIdx((i) => (i - 1 + imgs.length) % imgs.length)} className="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 shadow flex items-center justify-center"><ChevronLeft size={20} /></button>
-                <button aria-label={t("Apre")} onClick={() => setIdx((i) => (i + 1) % imgs.length)} className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 shadow flex items-center justify-center"><ChevronRight size={20} /></button>
+                <button aria-label={t("Anvan")} onClick={() => setIdx((i) => (i - 1 + imgs.length) % imgs.length)} className="hidden sm:flex absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 shadow items-center justify-center"><ChevronLeft size={20} /></button>
+                <button aria-label={t("Apre")} onClick={() => setIdx((i) => (i + 1) % imgs.length)} className="hidden sm:flex absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 shadow items-center justify-center"><ChevronRight size={20} /></button>
+                <div className="sm:hidden absolute bottom-3 inset-x-0 flex justify-center gap-1.5 pointer-events-none">
+                  {imgs.map((u, i) => (
+                    <span key={u} className="h-1.5 rounded-full transition-all" style={{ width: i === idx ? 18 : 6, background: i === idx ? "#fff" : "rgba(255,255,255,.65)", boxShadow: "0 0 3px rgba(0,0,0,.4)" }} />
+                  ))}
+                </div>
               </>
             )}
           </div>
           {imgs.length > 1 && (
-            <div className="flex gap-2 mt-3 overflow-x-auto [scrollbar-width:none]">
+            <div className="flex gap-2.5 mt-3 overflow-x-auto no-scrollbar p-1">
               {imgs.map((u, i) => (
-                <button key={u} onClick={() => setIdx(i)} className="w-16 h-16 shrink-0 rounded-xl overflow-hidden border-2" style={{ borderColor: i === idx ? C.ink : C.line }} aria-label={t("Foto {n}", { n: i + 1 })}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={u} alt="" className="w-full h-full object-cover" />
+                <button
+                  key={u}
+                  onClick={() => setIdx(i)}
+                  className="w-16 h-16 sm:w-20 sm:h-20 shrink-0 rounded-2xl overflow-hidden transition-all"
+                  style={{ boxShadow: i === idx ? `0 0 0 2px #fff, 0 0 0 4px ${C.ink}` : `0 0 0 1px ${C.line}`, opacity: i === idx ? 1 : 0.75 }}
+                  aria-label={t("Foto {n}", { n: i + 1 })}
+                  aria-current={i === idx}
+                >
+                  <FoodImage src={u} className="w-full h-full" />
                 </button>
               ))}
             </div>
@@ -163,8 +187,8 @@ export function ProductView({ productId }: { productId: string }) {
           )}
           {p.leadDays > 0 && <p className="mt-1 text-sm font-medium flex items-center gap-1.5"><Truck size={15} /> {t("Delè pou resevwa pwodwi sa a: {n} jou apre kòmand", { n: p.leadDays })}</p>}
 
-          {!out && p.colors.length > 0 && <OptionPicker label={t("Koulè")} value={color} options={p.colors} onPick={setColor} />}
-          {!out && p.sizes.length > 0 && <OptionPicker label={t("Gwosè")} value={size} options={p.sizes} onPick={setSize} />}
+          {!out && p.colors.length > 0 && <OptionPicker id="opt-color" label={p.dish ? t("Chwa ou") : t("Koulè")} value={color} options={p.colors} invalid={missing === "color" && !color} onPick={(v) => { setColor(v); setMissing(null); }} />}
+          {!out && p.sizes.length > 0 && <OptionPicker id="opt-size" label={t("Gwosè")} value={size} options={p.sizes} invalid={missing === "size" && !size} onPick={(v) => { setSize(v); setMissing(null); }} />}
 
           {!out && (
             <div className="mt-5 flex items-center gap-3">
@@ -205,7 +229,7 @@ export function ProductView({ productId }: { productId: string }) {
                 {shopEta(shop, t) ? ` · ${shopEta(shop, t)}` : ""}
               </Info>
             )}
-            {shop.pickupEnabled && <Info icon={<Package size={18} />} title={t("Ranmase nan boutik")}>{t("Gratis")}{shop.address ? ` · ${shop.address}` : ""}</Info>}
+            {shop.pickupEnabled && <Info icon={<Package size={18} />} title={p.dish ? t("Ranmase nan restoran") : t("Ranmase nan boutik")}>{t("Gratis")}{shop.address ? ` · ${shop.address}` : ""}</Info>}
             <Info icon={<ShieldCheck size={18} />} title={t("Peman")}>{t("MonCash, NatCash, transfè bank oswa kach lè w resevwa")}</Info>
           </div>
 
@@ -215,7 +239,7 @@ export function ProductView({ productId }: { productId: string }) {
               <p className="text-[15px] leading-relaxed whitespace-pre-line" style={{ color: "#3A3A3A" }}>{p.description}</p>
             </div>
           )}
-          <dl className="mt-5 grid grid-cols-[auto_1fr] gap-x-6 gap-y-1.5 text-sm">
+          <dl className={`mt-5 grid-cols-[auto_1fr] gap-x-6 gap-y-1.5 text-sm ${p.dish ? "hidden" : "grid"}`}>
             <dt style={{ color: C.muted }}>{t("Kategori")}</dt><dd>{p.category}</dd>
             {p.brand && (<><dt style={{ color: C.muted }}>{t("Mak")}</dt><dd>{p.brand}</dd></>)}
             {p.unit && (<><dt style={{ color: C.muted }}>{t("Inite")}</dt><dd>{p.unit}</dd></>)}
@@ -249,19 +273,19 @@ export function ProductView({ productId }: { productId: string }) {
         <div className="fixed inset-0 z-[80] bg-black/90 flex items-center justify-center p-4" onClick={() => setZoom(false)}>
           <button aria-label={t("Fèmen")} className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/15 text-white flex items-center justify-center" onClick={() => setZoom(false)}><X size={22} /></button>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={imgs[idx]} alt={p.name} className="max-w-full max-h-full object-contain" />
+          <img src={imgs[idx]} alt={p.name} className="max-w-full max-h-full object-contain rounded-xl" />
         </div>
       )}
     </main>
   );
 }
 
-function OptionPicker({ label, value, options, onPick }: { label: string; value: string; options: string[]; onPick: (v: string) => void }) {
+function OptionPicker({ id, label, value, options, invalid, onPick }: { id: string; label: string; value: string; options: string[]; invalid?: boolean; onPick: (v: string) => void }) {
   const t = useT();
   return (
-    <div className="mt-5">
-      <p className="text-sm font-semibold mb-2">
-        {label}: <span className="font-normal" style={{ color: value ? C.ink : C.muted }}>{value || t("chwazi youn")}</span>
+    <div id={id} className="mt-5 scroll-mt-40">
+      <p className="text-sm font-semibold mb-2" style={invalid ? { color: C.red } : undefined}>
+        {label}: <span className="font-normal" style={{ color: invalid ? C.red : value ? C.ink : C.muted }}>{value || t("chwazi youn")}</span>
       </p>
       <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={label}>
         {options.map((o) => {
@@ -273,8 +297,8 @@ function OptionPicker({ label, value, options, onPick }: { label: string; value:
               role="radio"
               aria-checked={on}
               onClick={() => onPick(o)}
-              className="min-w-[3rem] h-11 px-4 rounded-xl border-2 text-sm font-semibold"
-              style={on ? { background: C.ink, color: "#fff", borderColor: C.ink } : { background: "#fff", borderColor: C.line }}
+              className="min-w-[3rem] h-11 px-4 rounded-xl border-2 text-sm font-semibold transition-colors"
+              style={on ? { background: C.ink, color: "#fff", borderColor: C.ink } : { background: "#fff", borderColor: invalid ? C.red : C.line }}
             >
               {o}
             </button>

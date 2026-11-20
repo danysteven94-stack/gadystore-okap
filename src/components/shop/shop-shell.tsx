@@ -8,7 +8,7 @@ import {
   Minus, Package, Plus, Search, ShoppingBag, Trash2, Truck, User, X,
 } from "lucide-react";
 import { useShop, useT } from "./shop-context";
-import { C, Sheet, SheetHeader, clamp2, fieldClass, fieldStyle } from "./ui";
+import { C, FoodImage, Sheet, SheetHeader, clamp2, fieldClass, fieldStyle } from "./ui";
 import { InstallBanner } from "./install-app";
 import { shopEta } from "@/lib/delivery-eta";
 import { SHOP_LANGS, type ShopLang } from "@/lib/shop-i18n";
@@ -26,6 +26,21 @@ export function ShopShell({ children }: { children: React.ReactNode }) {
   const t = useT();
   const { shop, base, money, itemCount, subtotal, wish, cartOpen, setCartOpen, notifyFor, setNotifyFor, toast, account } = useShop();
   const pathname = usePathname();
+  const headerRef = useRef<HTMLElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const isRestaurant = shop.type === "restaurant";
+
+  // Wotè header a (ki chanje sou telefòn: gen yon ranje rechèch) → varyab CSS pou bar kategori kole a
+  useEffect(() => {
+    const h = headerRef.current;
+    const root = rootRef.current;
+    if (!h || !root) return;
+    const set = () => root.style.setProperty("--shop-header-h", `${Math.round(h.getBoundingClientRect().height)}px`);
+    set();
+    const ro = new ResizeObserver(set);
+    ro.observe(h);
+    return () => ro.disconnect();
+  }, []);
 
   const categories = useMemo(() => [...new Set(shop.products.map((p) => p.category))].sort(), [shop.products]);
   const hasSale = shop.products.some((p) => p.comparePrice);
@@ -44,7 +59,7 @@ export function ShopShell({ children }: { children: React.ReactNode }) {
   }, [pathname, setCartOpen]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-white text-[#111]" style={accentVars(shop.accent)}>
+    <div ref={rootRef} className="min-h-screen flex flex-col bg-white text-[#111]" style={accentVars(shop.accent)}>
       <style>{`
         @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
         @keyframes slideIn { from { transform: translateX(100%); } to { transform: none; } }
@@ -64,7 +79,7 @@ export function ShopShell({ children }: { children: React.ReactNode }) {
       )}
 
       {/* ---------- Header ---------- */}
-      <header className="sticky top-0 z-40 bg-white border-b" style={{ borderColor: C.line }}>
+      <header ref={headerRef} className="sticky top-0 z-40 bg-white border-b" style={{ borderColor: C.line }}>
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center gap-3 sm:gap-6">
           <Link href={base} className="flex items-center gap-2.5 shrink-0 min-w-0">
             <span
@@ -122,7 +137,7 @@ export function ShopShell({ children }: { children: React.ReactNode }) {
           </Suspense>
         </div>
 
-        {(categories.length > 1 || hasSale) && (
+        {!isRestaurant && (categories.length > 1 || hasSale) && (
           <div className="border-t" style={{ borderColor: C.line }}>
             <div className="max-w-6xl mx-auto px-4 flex gap-1 overflow-x-auto [scrollbar-width:none]">
               <Link href={base} className="whitespace-nowrap px-3 py-2.5 text-sm font-semibold">{t("Tout")}</Link>
@@ -313,7 +328,7 @@ function SearchBox() {
           value={q}
           onChange={(e) => setQ(e.target.value)}
           onFocus={() => setFocus(true)}
-          placeholder={t("Chèche yon pwodwi, yon mak...")}
+          placeholder={shop.type === "restaurant" ? t("Chèche yon plat...") : t("Chèche yon pwodwi, yon mak...")}
           enterKeyHint="search"
           className="w-full rounded-full border bg-[#F5F5F5] pl-11 pr-10 h-11 text-[15px] focus:outline-none focus:bg-white focus:ring-2 focus:ring-black/20"
           style={{ borderColor: C.line }}
@@ -387,12 +402,7 @@ function CartDrawer() {
             {cartLines.map(({ key, p, qty, size, color }) => (
               <div key={key} className="flex items-center gap-3 px-5 py-4" style={{ borderColor: C.line }}>
                 <Link href={`${base}/p/${p.id}`} onClick={close} className="shrink-0">
-                  {p.imageUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img loading="lazy" decoding="async" src={p.imageUrl} alt="" className="w-[72px] h-[72px] rounded-xl object-cover" />
-                  ) : (
-                    <div className="w-[72px] h-[72px] rounded-xl" style={{ background: C.soft }} />
-                  )}
+                  <FoodImage src={p.imageUrl} className="w-[72px] h-[72px] rounded-xl" />
                 </Link>
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-sm leading-snug" style={clamp2}>{p.name}</p>

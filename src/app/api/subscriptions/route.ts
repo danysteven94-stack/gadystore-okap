@@ -5,7 +5,7 @@ import { randomUUID } from "crypto";
 import { redis, hsetClean } from "@/lib/upstash";
 import { verifySession } from "@/lib/auth";
 import { recordSubscriptionSale } from "@/lib/subscription-sale";
-import { scopeKey, paymentsOf } from "@/lib/subscriptions";
+import { scopeKey, paymentsOf, salesBusinessFor, backfillPersonalSales } from "@/lib/subscriptions";
 import { addMonthsYmd } from "@/lib/user-billing";
 
 export interface Subscription {
@@ -64,6 +64,15 @@ export async function GET(req: NextRequest) {
   const validSubs = subs
     .filter((s): s is Subscription => !!s)
     .map((s) => ({ ...s, paymentsCount: paymentsOf(s) }));
+
+  // Ansyen peman pèsonèl ki pa t konte nan dashboard yo antre kounye a (yon sèl fwa chak)
+  if (!businessId) {
+    try {
+      await backfillPersonalSales(session.email, validSubs, session.userId);
+    } catch (e) {
+      console.error("subscription sales backfill", e);
+    }
+  }
   const today = new Date().toISOString().slice(0, 10);
 
   // Mete estati "expired" otomatikman si dat peman an pase
@@ -125,11 +134,12 @@ export async function POST(req: NextRequest) {
     createdAt: new Date().toISOString(),
   };
 
-  // Premye peman an (si moun nan peye deja) kontabilize kòm yon vant, men sèlman
-  // si abònman an anba yon antrepriz (yon abònman pèsonèl pa gen rapò vant).
-  if (paid && businessId) {
+  // Premye peman an (si moun nan peye deja) kontabilize kòm yon vant. Yon abònman pèsonèl
+  // antre nan antrepriz streaming itilizatè a (oswa premye antrepriz li a), si l gen youn.
+  const salesBizId = paid ? await salesBusinessFor(session.email, { businessId }) : "";
+  if (paid && salesBizId) {
     const sale = await recordSubscriptionSale({
-      businessId,
+      businessId: salesBizId,
       subscriptionId: subscription.id,
       productName,
       amount: monthlyPrice,
