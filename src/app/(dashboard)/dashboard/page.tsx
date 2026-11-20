@@ -106,7 +106,7 @@ function StatsGrid({ s, t }: { s: StatsLike; t: (k: any) => string }) {
 function DashboardInner() {
   const { t } = useLanguage();
   // Revni abònman itilizatè yo: rekèt separe ki rapid, pou kont prensipal la sèlman (0 pou lòt yo).
-  const { monthlyRevenue: subscriptionRevenue } = useSuperInfo();
+  const { periodRevenue: subscriptionRevenue } = useSuperInfo();
   const [businesses, setBusinesses] = useState<Business[] | null>(null);
   const [activeId, setActiveId] = useState("all");
   const [statsByBusiness, setStatsByBusiness] = useState<Record<string, DashboardStats>>({});
@@ -241,16 +241,16 @@ function DashboardInner() {
     );
   }
 
-  // subscriptionRevenue (anwo a) se youn pou tout kont lan, pa pou yon antrepriz: nou ajoute l yon sèl fwa
-  // nan revni jodi a, mwa a, ane a ak pwofi mwa a.
+  // subscriptionRevenue (anwo a) = peman abònman itilizatè yo, pa pou yon antrepriz. Chak peman konte sèlman
+  // nan jou, mwa ak ane li te peye a (pa total mansyèl la), epi nou ajoute l yon sèl fwa.
   const empireStats = {
-    todayRevenue: Object.values(statsByBusiness).reduce((s, b) => s + (b?.todayRevenue ?? 0), 0) + subscriptionRevenue,
-    monthRevenue: Object.values(statsByBusiness).reduce((s, b) => s + (b?.monthRevenue ?? 0), 0) + subscriptionRevenue,
-    yearRevenue: Object.values(statsByBusiness).reduce((s, b) => s + (b?.yearRevenue ?? 0), 0) + subscriptionRevenue,
+    todayRevenue: Object.values(statsByBusiness).reduce((s, b) => s + (b?.todayRevenue ?? 0), 0) + subscriptionRevenue.today,
+    monthRevenue: Object.values(statsByBusiness).reduce((s, b) => s + (b?.monthRevenue ?? 0), 0) + subscriptionRevenue.month,
+    yearRevenue: Object.values(statsByBusiness).reduce((s, b) => s + (b?.yearRevenue ?? 0), 0) + subscriptionRevenue.year,
     monthSales: Object.values(statsByBusiness).reduce((s, b) => s + (b?.monthSales ?? 0), 0),
     monthReturns: Object.values(statsByBusiness).reduce((s, b) => s + (b?.monthReturns ?? 0), 0),
     monthExpenses: Object.values(statsByBusiness).reduce((s, b) => s + (b?.monthExpenses ?? 0), 0),
-    monthProfit: Object.values(statsByBusiness).reduce((s, b) => s + (b?.monthProfit ?? 0), 0) + subscriptionRevenue,
+    monthProfit: Object.values(statsByBusiness).reduce((s, b) => s + (b?.monthProfit ?? 0), 0) + subscriptionRevenue.month,
     outOfStockCount: Object.values(statsByBusiness).reduce((s, b) => s + (b?.outOfStockCount ?? 0), 0),
     lowStockCount: Object.values(statsByBusiness).reduce((s, b) => s + (b?.lowStock.length ?? 0), 0),
     ordersCount: Object.values(statsByBusiness).reduce((s, b) => s + (b?.ordersCount ?? 0), 0),

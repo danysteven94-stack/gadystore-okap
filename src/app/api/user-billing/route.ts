@@ -33,11 +33,37 @@ export interface BillingUser {
   lastPaymentAt: string;
 }
 
+/** Yon peman abònman itilizatè ak dat reyèl li (pou revni jodi/mwa/ane yo). */
+interface BillingPayment {
+  amount: number;
+  paidAt: string; // ISO
+}
+
+const paymentsKey = (email: string) => `user:${email.toLowerCase()}:billing-payments`;
+
+function parsePayment(raw: unknown): BillingPayment | null {
+  try {
+    const v = typeof raw === "string" ? JSON.parse(raw) : raw;
+    if (!v || typeof v !== "object") return null;
+    const amount = Number((v as BillingPayment).amount);
+    const paidAt = String((v as BillingPayment).paidAt ?? "");
+    if (!isFinite(amount) || isNaN(new Date(paidAt).getTime())) return null;
+    return { amount, paidAt };
+  } catch {
+    return null;
+  }
+}
+
 export async function GET(req: NextRequest) {
   const auth = await getSuperSession(req);
   if (auth.error) return auth.error;
 
   const emails = await redis.smembers("users:all");
+  const todayYmd = ymd(new Date());
+  const monthPrefix = todayYmd.slice(0, 7);
+  const yearPrefix = todayYmd.slice(0, 4);
+  // Revni reyèl abònman yo, chak peman nan jou li te fèt la (lè Ayiti) — PA total mansyèl la.
+  const periodRevenue = { today: 0, month: 0, year: 0 };
   const rows = await Promise.all(
     emails.map(async (email) => {
       if (email.toLowerCase() === SUPER_ADMIN_EMAIL) return null;
@@ -45,6 +71,25 @@ export async function GET(req: NextRequest) {
       if (!r || !r.id) return null;
       const createdAt = r.createdAt ? String(r.createdAt) : "";
       const paidMonths = r.paidMonths === undefined || r.paidMonths === null ? 1 : Number(r.paidMonths) || 0;
+
+      // Peman yo ak dat yo. Si itilizatè a poko gen istorik (ansyen done), nou dedui yon sèl peman.
+      const logRaw = await redis.lrange(paymentsKey(String(r.email)), 0, -1);
+      let payments = logRaw.map(parsePayment).filter((x): x is BillingPayment => !!x);
+      if (!payments.length) {
+        const price = Number(r.monthlyPrice) || 0;
+        if (r.lastPaymentAt) {
+          const months = Number(r.lastPaymentMonths) || 1;
+          payments = [{ amount: price * months, paidAt: String(r.lastPaymentAt) }];
+        } else if (createdAt && paidMonths > 0) {
+          payments = [{ amount: price, paidAt: createdAt }];
+        }
+      }
+      for (const p of payments) {
+        const day = ymd(new Date(p.paidAt));
+        if (day === todayYmd) periodRevenue.today += p.amount;
+        if (day.startsWith(monthPrefix)) periodRevenue.month += p.amount;
+        if (day.startsWith(yearPrefix)) periodRevenue.year += p.amount;
+      }
       const info = billingInfo(createdAt, paidMonths);
       if (!info) return null;
       const monthlyPrice = Number(r.monthlyPrice) || 0;
@@ -78,11 +123,11 @@ export async function GET(req: NextRequest) {
     totalOwed: active.reduce((s, u) => s + u.amountOwed, 0),
   };
 
-  if (req.nextUrl.searchParams.get("summary")) return NextResponse.json({ summary });
+  if (req.nextUrl.searchParams.get("summary")) return NextResponse.json({ summary, periodRevenue });
   // Pi ijan an premye: an reta, jodi a, pwòch, apre sa peye.
   const order: Record<BillingStatus, number> = { overdue: 0, due_today: 1, soon: 2, paid: 3 };
   users.sort((a, b) => order[a.status] - order[b.status] || a.nextDue.localeCompare(b.nextDue));
-  return NextResponse.json({ users, summary });
+  return NextResponse.json({ users, summary, periodRevenue });
 }
 
 const patchSchema = z.discriminatedUnion("action", [
@@ -118,6 +163,9 @@ export async function PATCH(req: NextRequest) {
       lastPaymentAt: paidAtIso,
       lastPaymentMonths: body.months,
     });
+    // Sove peman an ak dat reyèl li, pou revni a konte nan bon jou a.
+    const price = Number(user.monthlyPrice) || 0;
+    await redis.lpush(paymentsKey(email), JSON.stringify({ amount: price * body.months, paidAt: paidAtIso }));
     // Notification (push) à l'utilisateur : paiement reçu + prochaine échéance.
     const createdAt = user.createdAt ? String(user.createdAt) : "";
     const d = new Date(createdAt);
@@ -126,6 +174,9 @@ export async function PATCH(req: NextRequest) {
     }
   } else {
     await redis.hset(`user:${email}`, { paidMonths: Math.max(0, paidMonths - 1) });
+    // Retire dènye peman an nan istorik la (si genyen) pou revni a korije.
+    const removed = await redis.lpop(paymentsKey(email));
+    if (!removed && user.lastPaymentAt) await redis.hset(`user:${email}`, { lastPaymentAt: "", lastPaymentMonths: 0 });
   }
   return NextResponse.json({ ok: true });
 }
