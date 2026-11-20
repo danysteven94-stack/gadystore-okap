@@ -97,6 +97,24 @@ export default function UserBillingPage() {
     setBusy(null);
   }
 
+  async function changeBusiness(id: string) {
+    setBillingBizId(id);
+    setError(null);
+    try {
+      const res = await fetch("/api/user-billing", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "set_business", businessId: id }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || "Erè — eseye ankò.");
+      }
+    } catch {
+      setError("Erè rezo — eseye ankò.");
+    }
+  }
+
   if (users === null) {
     return (
       <main className="max-w-3xl mx-auto px-4 py-16 flex flex-col items-center text-ink/40 dark:text-paper/40">
@@ -141,7 +159,7 @@ export default function UserBillingPage() {
       {businesses.length > 0 && (
         <label className="block mb-5">
           <span className={labelClass}>Antrepriz ki resevwa vant peman yo</span>
-          <select value={effectiveBizId} onChange={(e) => setBillingBizId(e.target.value)} className={inputClass}>
+          <select value={effectiveBizId} onChange={(e) => changeBusiness(e.target.value)} className={inputClass}>
             {businesses.map((b) => (
               <option key={b.id} value={b.id}>
                 {b.name}
@@ -273,6 +291,9 @@ export default function UserBillingPage() {
                       className={inputClass}
                     />
                   </label>
+                  {u.monthlyPrice <= 0 && (
+                    <p className="text-xs text-brick">Pri a se 0 G — mete yon pri pou peman an antre nan revni yo.</p>
+                  )}
                   <div className="flex items-center gap-2">
                     <select
                       value={months[u.email] ?? 1}

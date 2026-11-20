@@ -7,6 +7,8 @@ import { billingInfo, addMonthsYmd, ymd, type BillingStatus } from "@/lib/user-b
 import { notifyPaymentReceived } from "@/lib/billing-notify";
 import { userOwnsBusiness } from "@/lib/shop";
 import { recordSubscriptionSale, undoSubscriptionSale } from "@/lib/subscription-sale";
+import { getUserBusinessIds } from "@/lib/shop";
+import { paymentsKey, parsePayment, syncUserBillingSales, moveBillingSales } from "@/lib/user-billing-sales";
 
 async function getSuperSession(req: NextRequest) {
   const token = req.cookies.get("session")?.value;
@@ -35,34 +37,6 @@ export interface BillingUser {
   lastPaymentAt: string;
 }
 
-/** Yon peman abònman itilizatè ak dat reyèl li (pou revni jodi/mwa/ane yo). */
-interface BillingPayment {
-  amount: number;
-  paidAt: string; // ISO
-  months: number;
-  saleId: string; // vant ki kreye nan antrepriz la ("" = pa gen vant)
-}
-
-const paymentsKey = (email: string) => `user:${email.toLowerCase()}:billing-payments`;
-
-function parsePayment(raw: unknown): BillingPayment | null {
-  try {
-    const v = typeof raw === "string" ? JSON.parse(raw) : raw;
-    if (!v || typeof v !== "object") return null;
-    const amount = Number((v as BillingPayment).amount);
-    const paidAt = String((v as BillingPayment).paidAt ?? "");
-    if (!isFinite(amount) || isNaN(new Date(paidAt).getTime())) return null;
-    return {
-      amount,
-      paidAt,
-      months: Math.max(1, Number((v as BillingPayment).months) || 1),
-      saleId: String((v as BillingPayment).saleId ?? ""),
-    };
-  } catch {
-    return null;
-  }
-}
-
 /** Antrepriz ki resevwa vant peman abònman itilizatè yo (chwa kont prensipal la). */
 async function billingBusinessOf(email: string): Promise<string> {
   const pref = await redis.hget<string>(`user:${email.toLowerCase()}`, "billingBusinessId");
@@ -74,6 +48,11 @@ export async function GET(req: NextRequest) {
   if (auth.error) return auth.error;
 
   const emails = await redis.smembers("users:all");
+  const viewer = auth.session;
+  // Rattrapage vant yo (sèlman lè paj la louvri, pa nan rekèt rapid sidebar la)
+  const isSummary = !!req.nextUrl.searchParams.get("summary");
+  const effectiveBiz = (await billingBusinessOf(viewer.email)) || (await getUserBusinessIds(viewer.email))[0] || "";
+  const syncBizId = isSummary ? "" : effectiveBiz;
   const rows = await Promise.all(
     emails.map(async (email) => {
       if (email.toLowerCase() === SUPER_ADMIN_EMAIL) return null;
@@ -84,6 +63,13 @@ export async function GET(req: NextRequest) {
 
       const info = billingInfo(createdAt, paidMonths);
       if (!info) return null;
+      if (syncBizId) {
+        try {
+          await syncUserBillingSales({ email: String(r.email), user: r, businessId: syncBizId, cashierId: viewer.userId });
+        } catch (e) {
+          console.error("user billing sales sync", e);
+        }
+      }
       const monthlyPrice = Number(r.monthlyPrice) || 0;
       const u: BillingUser = {
         email: String(r.email),
@@ -119,12 +105,13 @@ export async function GET(req: NextRequest) {
   // Pi ijan an premye: an reta, jodi a, pwòch, apre sa peye.
   const order: Record<BillingStatus, number> = { overdue: 0, due_today: 1, soon: 2, paid: 3 };
   users.sort((a, b) => order[a.status] - order[b.status] || a.nextDue.localeCompare(b.nextDue));
-  return NextResponse.json({ users, summary, billingBusinessId: await billingBusinessOf(auth.session.email) });
+  return NextResponse.json({ users, summary, billingBusinessId: effectiveBiz });
 }
 
 const patchSchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("pay"), email: z.string(), months: z.number().int().min(1).max(36), paidAt: z.string().optional(), businessId: z.string().optional() }),
   z.object({ action: z.literal("undo"), email: z.string() }),
+  z.object({ action: z.literal("set_business"), businessId: z.string().min(1) }),
   z.object({ action: z.literal("set_price"), email: z.string(), price: z.number().min(0).max(100000000) }),
 ]);
 
@@ -135,6 +122,17 @@ export async function PATCH(req: NextRequest) {
   const parsed = patchSchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Done envalid." }, { status: 400 });
   const body = parsed.data;
+
+  // Chwazi antrepriz ki resevwa vant yo: sove chwa a epi deplase vant ki deja kreye yo.
+  if (body.action === "set_business") {
+    if (!(await userOwnsBusiness(auth.session.email, body.businessId))) {
+      return NextResponse.json({ error: "Aksè refize." }, { status: 403 });
+    }
+    await redis.hset(`user:${auth.session.email.toLowerCase()}`, { billingBusinessId: body.businessId });
+    const moved = await moveBillingSales(body.businessId);
+    return NextResponse.json({ ok: true, moved });
+  }
+
   const email = body.email.trim().toLowerCase();
   if (email === SUPER_ADMIN_EMAIL) {
     return NextResponse.json({ error: "Kont prensipal la pa gen abònman." }, { status: 400 });
