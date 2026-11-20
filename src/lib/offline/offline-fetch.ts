@@ -101,19 +101,32 @@ async function handleGet(url: URL, input: RequestInfo | URL, init?: RequestInit)
     if (off) return off;
     return json({ error: "Pa gen koneksyon, e done sa a poko sove sou telefòn nan." }, 503);
   }
-  // Si nou gen done sove (oswa rezo a te fèk echwe), tann sèlman 3 s anvan nou itilize yo
+  // Si nou gen done sove, nou tann yon ti moman (8 s) anvan nou montre yo. Men rekèt la PA anile:
+  // li kontinye nan background epi li mete kach la ajou (pwochen louvèti a ap gen done fre).
   const saved = await cachedResponse(key);
-  const to = withTimeout(saved || recentlyFailed() ? 3000 : 12000);
-  try {
-    const res = await realFetch(input, { ...init, signal: to.signal });
-    to.done();
+  const waitMs = saved || recentlyFailed() ? 8000 : 20000;
+  const ctrl = new AbortController();
+  const hardStop = setTimeout(() => ctrl.abort(), 30000);
+  const request = realFetch(input, { ...init, signal: ctrl.signal }).then((res) => {
+    clearTimeout(hardStop);
     setOnline(true);
     if (res.ok && (res.headers.get("content-type") || "").includes("application/json")) {
       res.clone().text().then((body) => idbPut("cache", { key, body, savedAt: Date.now() })).catch(() => {});
     }
     return res;
+  });
+  request.catch(() => clearTimeout(hardStop)); // evite "unhandled rejection" si nou te deja montre kach la
+  const TIMEOUT = Symbol("timeout");
+  try {
+    const winner = await Promise.race([
+      request,
+      new Promise<typeof TIMEOUT>((resolve) => setTimeout(() => resolve(TIMEOUT), waitMs)),
+    ]);
+    if (winner !== TIMEOUT) return winner;
+    // Tan fini: si nou gen kopi sove, montre l (rekèt la ap fini nan background). Sinon kontinye tann.
+    if (saved) return saved;
+    return await request;
   } catch {
-    to.done();
     lastNetFail = Date.now();
     setOnline(navigator.onLine);
     const off = saved ?? (await cachedResponse(key));

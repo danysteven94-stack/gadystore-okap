@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { userOwnsBusiness } from "@/lib/shop";
-import { redis } from "@/lib/upstash";
+import { redis, hgetallMany } from "@/lib/upstash";
 import { verifySession } from "@/lib/auth";
 import { recordOrderSaleIfReady } from "@/lib/order-sale";
 import type { Expense, Product, Sale } from "@/types";
@@ -38,13 +38,9 @@ export async function GET(req: NextRequest) {
 
   // Kòmand boutik + rattrapage: yon kòmand ki livre e peye men ki poko nan vant yo antre kounye a
   const orderIds = await redis.lrange(`business:${businessId}:orders`, 0, -1);
-  const orderRows = orderIds.length
-    ? await Promise.all(
-        orderIds.map((id) =>
-          redis.hgetall<{ status?: string; source?: string; fulfillment?: string; saleId?: string }>(`order:${id}`)
-        )
-      )
-    : [];
+  const orderRows = await hgetallMany<{ status?: string; source?: string; fulfillment?: string; saleId?: string }>(
+    orderIds.map((id) => `order:${id}`)
+  );
   await Promise.all(
     orderIds.map(async (id, i) => {
       const o = orderRows[i];
@@ -62,31 +58,31 @@ export async function GET(req: NextRequest) {
   const currentMonth = today.slice(0, 7); // YYYY-MM
   const allDates = daysFromJan1ToToday();
 
-  // Chaje tout jou an paralèl (pi rapid pase yonn apre lòt) pou n ka kalkile
-  // total jodi a, mwa a, AK ane a nan menm pasaj la.
-  const dayResults = await Promise.all(
-    allDates.map(async (date) => {
-      const saleIds = await redis.lrange(`business:${businessId}:sales:${date}`, 0, -1);
-      const sales = saleIds.length
-        ? await Promise.all(saleIds.map((id) => redis.hgetall<Sale>(`sale:${id}`)))
-        : [];
-      const validSales = sales.filter((s): s is Sale => !!s);
+  // Chaje tout jou yo nan KÈLKE demann pipeline (pa 650+ apèl youn pa youn) — sinon dashboard la
+  // twò dousman sou LTE epi aplikasyon an abandone l pou li montre vye kopi.
+  const listPipe = redis.pipeline();
+  for (const date of allDates) listPipe.lrange(`business:${businessId}:sales:${date}`, 0, -1);
+  for (const date of allDates) listPipe.lrange(`business:${businessId}:expenses:${date}`, 0, -1);
+  const lists = (await listPipe.exec()) as string[][];
+  const saleLists = lists.slice(0, allDates.length);
+  const expenseLists = lists.slice(allDates.length);
 
-      const expenseIds = await redis.lrange(`business:${businessId}:expenses:${date}`, 0, -1);
-      const expenses = expenseIds.length
-        ? await Promise.all(expenseIds.map((id) => redis.hgetall<Expense>(`expense:${id}`)))
-        : [];
-      const validExpenses = expenses.filter((e): e is Expense => !!e);
+  const saleRecords = await hgetallMany<Sale>(saleLists.flat().map((id) => `sale:${id}`));
+  const expenseRecords = await hgetallMany<Expense>(expenseLists.flat().map((id) => `expense:${id}`));
+  let si = 0;
+  let ei = 0;
 
-      return {
-        date,
-        revenue: validSales.reduce((sum, s) => sum + s.total, 0),
-        salesCount: validSales.length,
-        expenses: validExpenses.reduce((sum, e) => sum + e.amount, 0),
-        sales: validSales,
-      };
-    })
-  );
+  const dayResults = allDates.map((date, i) => {
+    const validSales = saleRecords.slice(si, (si += saleLists[i].length)).filter((x): x is Sale => !!x);
+    const validExpenses = expenseRecords.slice(ei, (ei += expenseLists[i].length)).filter((x): x is Expense => !!x);
+    return {
+      date,
+      revenue: validSales.reduce((sum, x) => sum + Number(x.total), 0),
+      salesCount: validSales.length,
+      expenses: validExpenses.reduce((sum, x) => sum + Number(x.amount), 0),
+      sales: validSales,
+    };
+  });
 
   const yearRevenue = dayResults.reduce((sum, d) => sum + d.revenue, 0);
 
@@ -134,9 +130,7 @@ export async function GET(req: NextRequest) {
   const newOrdersCount = activeOrders.filter((o) => o!.source === "shop" && (o!.fulfillment ?? "new") === "new").length;
 
   const productIds = await redis.smembers(`business:${businessId}:products`);
-  const products = productIds.length
-    ? await Promise.all(productIds.map((id) => redis.hgetall<Product>(`product:${id}`)))
-    : [];
+  const products = await hgetallMany<Product>(productIds.map((id) => `product:${id}`));
   // Pwodwi online pa konte nan stok (valè, stok ba, fini)
   const validProducts = products.filter((p): p is Product => !!p && !["digital", "dish"].includes(String(p.productType)) && !(p.comingSoon === true));
 
