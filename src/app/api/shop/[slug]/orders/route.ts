@@ -8,6 +8,7 @@ import { sendOrderMessages } from "@/lib/order-messages";
 import { getShopCustomer } from "@/lib/shop-customer";
 import type { Order } from "@/app/api/orders/route";
 import type { Product } from "@/types";
+import { isShopOpen } from "@/lib/shop-hours";
 
 const schema = z.object({
   customerName: z.string().trim().min(2).max(80),
@@ -51,7 +52,14 @@ export async function POST(
 
   const business = await getBusinessBySlug(slug);
   if (!business) return NextResponse.json({ error: "Boutik pa jwenn." }, { status: 404 });
-  if (business.shopType === "restaurant" && String(business.shopAcceptingOrders) === "false") {
+  if (
+    business.shopType === "restaurant" &&
+    !isShopOpen(
+      String(business.shopAcceptingOrders) !== "false",
+      String(business.shopHours ?? ""),
+      business.shopManualAt ? String(business.shopManualAt) : null
+    )
+  ) {
     return NextResponse.json({ error: "Restoran an fèmen kounye a. Eseye ankò pita." }, { status: 403 });
   }
 

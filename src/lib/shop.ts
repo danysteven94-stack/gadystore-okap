@@ -200,6 +200,7 @@ export interface PublicShop {
   type: "store" | "restaurant";
   prepTime: string | null;
   acceptingOrders: boolean;
+  manualAt: string | null;
   products: PublicProduct[];
 }
 
@@ -305,6 +306,7 @@ export async function getPublicShop(slug: string): Promise<PublicShop | null> {
     type: business.shopType === "restaurant" ? "restaurant" : "store",
     prepTime: str(business.shopPrepTime),
     acceptingOrders: flag(business.shopAcceptingOrders, true),
+    manualAt: str(business.shopManualAt),
     products,
   };
 }

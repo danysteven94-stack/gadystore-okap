@@ -7,6 +7,7 @@ import { BusinessSwitcher } from "@/components/dashboard/business-switcher";
 import { CouponsManager } from "@/components/shop/coupons-manager";
 import { useLanguage } from "@/lib/i18n/language-provider";
 import type { Product } from "@/types";
+import { isShopOpen } from "@/lib/shop-hours";
 
 interface ShopSettings {
   id: string;
@@ -39,6 +40,7 @@ interface ShopSettings {
   shopType?: "store" | "restaurant";
   shopPrepTime?: string;
   shopAcceptingOrders?: boolean;
+  shopManualAt?: string;
   shopPolicies: string;
   shopFacebook: string;
   shopInstagram: string;
@@ -113,7 +115,7 @@ export default function ShopPage() {
       shopHours: active.shopHours ?? "",
       shopType: active.shopType === "restaurant" ? "restaurant" : "store",
       shopPrepTime: active.shopPrepTime ?? "",
-      shopAcceptingOrders: active.shopAcceptingOrders !== false,
+      shopAcceptingOrders: isShopOpen(active.shopAcceptingOrders !== false, active.shopHours, active.shopManualAt),
       shopPolicies: active.shopPolicies ?? "",
       shopFacebook: active.shopFacebook ?? "",
       shopInstagram: active.shopInstagram ?? "",
@@ -481,7 +483,10 @@ export default function ShopPage() {
                   <input className={inputClass} maxLength={40} value={form.shopPrepTime} onChange={(e) => setForm({ ...form, shopPrepTime: e.target.value })} placeholder="20-30 min" />
                 </label>
                 <label className="flex items-center justify-between gap-3 rounded-xl border border-ink/15 dark:border-dark-border px-3 py-2.5 cursor-pointer">
-                  <span className="text-sm">Restoran an ouvè (ap pran kòmand kounye a)</span>
+                  <span className="text-sm">
+                    Restoran an ouvè kounye a
+                    <span className="block text-[11px] text-ink/50 dark:text-paper/50">Otomatik selon orè a. Chanje l sèlman pou fèmen oswa ouvri tanporèman: orè a pran men ankò nan pwochen ouvèti/fèmti.</span>
+                  </span>
                   <input type="checkbox" checked={form.shopAcceptingOrders} onChange={(e) => setForm({ ...form, shopAcceptingOrders: e.target.checked })} className="w-5 h-5 accent-red-600" />
                 </label>
               </>
@@ -541,7 +546,8 @@ export default function ShopPage() {
                 </label>
                 <label className="block">
                   <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">Orè</span>
-                  <input className={inputClass} maxLength={120} value={form.shopHours} onChange={(e) => setForm({ ...form, shopHours: e.target.value })} placeholder="Ekz: Lendi–Samdi 8h–18h" />
+                  <input className={inputClass} maxLength={120} value={form.shopHours} onChange={(e) => setForm({ ...form, shopHours: e.target.value })} placeholder="Ekz: Lendi–Vandredi 8h–17h" />
+                  <p className="mt-1 text-[11px] text-ink/50 dark:text-paper/50">Restoran an ouvè/fèmen otomatikman selon orè sa a (lè Ayiti). Ekri jou ak lè a: Lendi–Vandredi 8h–17h.</p>
                 </label>
                 <label className="block">
                   <span className="block text-xs font-medium text-ink/70 dark:text-white/70 mb-1">Politik retou / garanti</span>

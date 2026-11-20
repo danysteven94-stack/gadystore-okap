@@ -20,6 +20,7 @@ export interface Business {
   shopHeroSize?: "sm" | "md" | "lg";
   shopSlideSeconds?: number;
   shopPrepTime?: string; // restoran: ekz "20-30 min"
+  shopManualAt?: string; // dènye fwa bouton ouvè/fèmen manyèl la te chanje (ISO)
   shopAcceptingOrders?: boolean; // restoran: ap pran kòmand kounye a (default: wi)
   whatsapp?: string; // nimewo WhatsApp (chif sèlman, ak kòd peyi: 50912345678)
   shopName?: string; // non ki parèt sou boutik la (si vid: non biznis la)

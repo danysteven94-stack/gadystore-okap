@@ -7,7 +7,7 @@ import {
   Bell, Check, Facebook, Heart, Home, Instagram, Loader2, MapPin, MessageCircle,
   Minus, Package, Plus, Search, ShoppingBag, Trash2, Truck, User, X,
 } from "lucide-react";
-import { useShop, useT } from "./shop-context";
+import { useShop, useShopOpen, useT } from "./shop-context";
 import { C, FoodImage, Sheet, SheetHeader, clamp2, fieldClass, fieldStyle } from "./ui";
 import { InstallBanner } from "./install-app";
 import { shopEta } from "@/lib/delivery-eta";
@@ -25,6 +25,7 @@ function accentVars(hex: string | null): React.CSSProperties | undefined {
 export function ShopShell({ children }: { children: React.ReactNode }) {
   const t = useT();
   const { shop, base, money, itemCount, subtotal, wish, cartOpen, setCartOpen, notifyFor, setNotifyFor, toast, account } = useShop();
+  const shopOpen = useShopOpen();
   const pathname = usePathname();
   const headerRef = useRef<HTMLElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -72,7 +73,7 @@ export function ShopShell({ children }: { children: React.ReactNode }) {
         </div>
       )}
 
-      {shop.type === "restaurant" && !shop.acceptingOrders && (
+      {shop.type === "restaurant" && !shopOpen && (
         <div className="text-white text-center text-xs sm:text-sm font-semibold px-4 py-2" style={{ background: C.ink }}>
           {t("Restoran an fèmen kounye a — ou pa ka komande pou kounye a.")}
         </div>

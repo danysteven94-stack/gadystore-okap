@@ -64,6 +64,7 @@ export async function GET(req: NextRequest) {
           shopType: b.shopType === "restaurant" ? "restaurant" : "store",
           shopPrepTime: String(b.shopPrepTime ?? ""),
           shopAcceptingOrders: flag(b.shopAcceptingOrders, true),
+          shopManualAt: b.shopManualAt ? String(b.shopManualAt) : "",
           shopPolicies: String(b.shopPolicies ?? ""),
           shopFacebook: String(b.shopFacebook ?? ""),
           shopInstagram: String(b.shopInstagram ?? ""),
@@ -155,7 +156,11 @@ export async function PATCH(req: NextRequest) {
   if (rest.shopHours !== undefined) updates.shopHours = rest.shopHours.trim();
   if (rest.shopType !== undefined) updates.shopType = rest.shopType;
   if (rest.shopPrepTime !== undefined) updates.shopPrepTime = rest.shopPrepTime.trim();
-  if (rest.shopAcceptingOrders !== undefined) updates.shopAcceptingOrders = rest.shopAcceptingOrders;
+  if (rest.shopAcceptingOrders !== undefined) {
+    updates.shopAcceptingOrders = rest.shopAcceptingOrders;
+    // Chanjman manyèl: nou sonje kilè, pou orè a pran men ankò nan pwochen ouvèti/fèmti.
+    if (rest.shopAcceptingOrders !== flag(business.shopAcceptingOrders, true)) updates.shopManualAt = new Date().toISOString();
+  }
   if (rest.shopPolicies !== undefined) updates.shopPolicies = rest.shopPolicies.trim();
   if (rest.shopFacebook !== undefined) updates.shopFacebook = rest.shopFacebook.trim();
   if (rest.shopInstagram !== undefined) updates.shopInstagram = rest.shopInstagram.trim();

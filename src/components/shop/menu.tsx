@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Clock, Flame, MapPin, Plus, ShoppingBag, Store, Timer, Truck } from "lucide-react";
 import type { PublicProduct } from "@/lib/shop";
-import { useShop, useT } from "./shop-context";
+import { useShop, useShopOpen, useT } from "./shop-context";
 import { Catalog } from "./catalog";
 import { HeroSlides } from "./hero-slides";
 import { C, FoodImage } from "./ui";
@@ -86,7 +86,8 @@ function Menu() {
   }
 
   const searching = q.length > 0;
-  const closed = !shop.acceptingOrders;
+  const isOpen = useShopOpen();
+  const closed = !isOpen;
 
   return (
     <main className="pb-32 md:pb-16">
@@ -188,6 +189,7 @@ function Menu() {
 function RestaurantHero() {
   const t = useT();
   const { shop, money } = useShop();
+  const isOpen = useShopOpen();
   const covers = shop.covers.length ? shop.covers : shop.products.map((p) => p.imageUrl).filter((u): u is string => !!u).slice(0, 4);
   const initial = shop.name.trim().charAt(0).toUpperCase() || "R";
 
@@ -223,10 +225,10 @@ function RestaurantHero() {
                 <h1 className="text-xl sm:text-3xl font-extrabold tracking-tight leading-tight">{shop.name}</h1>
                 <span
                   className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold text-white"
-                  style={{ background: shop.acceptingOrders ? "#15803D" : C.ink }}
+                  style={{ background: isOpen ? "#15803D" : C.ink }}
                 >
                   <span className="w-1.5 h-1.5 rounded-full bg-white" />
-                  {shop.acceptingOrders ? t("OUVÈ") : t("FÈMEN")}
+                  {isOpen ? t("OUVÈ") : t("FÈMEN")}
                 </span>
               </div>
               {shop.tagline && <p className="mt-1 text-sm line-clamp-2" style={{ color: C.muted }}>{shop.tagline}</p>}
@@ -271,7 +273,7 @@ function AddControl({ p, size = "md" }: { p: PublicProduct; size?: "md" | "sm" }
   const t = useT();
   const { shop, base, addToCart, inCartOf } = useShop();
   const out = p.stock <= 0;
-  const closed = !shop.acceptingOrders;
+  const closed = !useShopOpen();
   const hasOptions = p.sizes.length > 0 || p.colors.length > 0;
   const qty = inCartOf(p.id);
   if (out || closed) return null;

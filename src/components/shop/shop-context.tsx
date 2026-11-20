@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { PublicProduct, PublicShop } from "@/lib/shop";
 import { SHOP_LANG_KEY, translateShop, type ShopLang } from "@/lib/shop-i18n";
+import { isShopOpen } from "@/lib/shop-hours";
 
 export interface CartLine {
   key: string; // pwodwi oswa pwodwi|gwosè|koulè
@@ -96,6 +97,23 @@ const ShopCtx = createContext<Ctx | null>(null);
 /** Tradiksyon boutik la: t("Tèks kreyòl", { valè }) → tèks nan lang kliyan an chwazi. */
 export function useT() {
   return useShop().t;
+}
+
+/**
+ * Eske restoran an ouvè kounye a? = bouton manyèl "ap pran kòmand" AK lè ouvèti a (orè a, lè Ayiti).
+ * Li mete ajou chak 30 segonn: lè lè fèmti a rive, boutik la pase sou FÈMEN pou kont li, san rafrechi paj la.
+ */
+export function useShopOpen(): boolean {
+  const { shop } = useShop();
+  const compute = () => isShopOpen(shop.acceptingOrders, shop.hours, shop.manualAt);
+  const [open, setOpen] = useState(compute);
+  useEffect(() => {
+    setOpen(compute());
+    const id = window.setInterval(() => setOpen(compute()), 30_000);
+    return () => window.clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shop.acceptingOrders, shop.hours, shop.manualAt]);
+  return open;
 }
 
 export function useShop() {
