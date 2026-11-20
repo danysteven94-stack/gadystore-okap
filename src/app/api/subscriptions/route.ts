@@ -89,7 +89,8 @@ export async function GET(req: NextRequest) {
     .filter((s) => s.status === "active" && (s.paymentsCount ?? 0) > 0)
     .reduce((sum, s) => sum + s.monthlyPrice, 0);
 
-  return NextResponse.json({ subscriptions: validSubs, monthlyRevenue });
+  const salesBusinessId = businessId || (await salesBusinessFor(session.email, { businessId: "" }));
+  return NextResponse.json({ subscriptions: validSubs, monthlyRevenue, salesBusinessId });
 }
 
 export async function POST(req: NextRequest) {

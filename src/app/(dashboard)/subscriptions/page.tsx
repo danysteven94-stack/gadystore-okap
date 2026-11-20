@@ -79,6 +79,7 @@ export default function SubscriptionsPage() {
   const [businessId, setBusinessId] = useState<string>("");
   const [subs, setSubs] = useState<Sub[]>([]);
   const [monthlyRevenue, setMonthlyRevenue] = useState(0);
+  const [salesBizId, setSalesBizId] = useState("");
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [working, setWorking] = useState<string | null>(null);
@@ -120,6 +121,7 @@ export default function SubscriptionsPage() {
       const data = await res.json();
       setSubs((data.subscriptions ?? []).filter(Boolean));
       setMonthlyRevenue(data.monthlyRevenue ?? 0);
+      setSalesBizId(data.salesBusinessId ?? "");
     } catch {
       setSubs([]);
     }
@@ -129,6 +131,16 @@ export default function SubscriptionsPage() {
   useEffect(() => {
     load();
   }, [load]);
+
+  async function changeSalesBiz(id: string) {
+    setSalesBizId(id);
+    await fetch("/api/subscriptions/target", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ businessId: id }),
+    }).catch(() => null);
+    load();
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -306,7 +318,20 @@ export default function SubscriptionsPage() {
       </div>
 
       {businessId === "" && (
-        <p className="text-xs text-ink/50 dark:text-white/50 mt-2">{t("subscriptions_personal_note")}</p>
+        <>
+          <p className="text-xs text-ink/50 dark:text-white/50 mt-2">{t("subscriptions_personal_note")}</p>
+          {businesses.length > 0 && (
+            <label className="flex items-center gap-2 mt-2 text-xs font-medium text-ink/70 dark:text-white/70">
+              <span className="shrink-0">{t("subscriptions_count_in")}</span>
+              <select value={salesBizId} onChange={(e) => changeSalesBiz(e.target.value)} className={`${inputClass} !py-1.5 max-w-[14rem]`}>
+                {!salesBizId && <option value="">—</option>}
+                {businesses.map((b) => (
+                  <option key={b.id} value={b.id}>{b.name}</option>
+                ))}
+              </select>
+            </label>
+          )}
+        </>
       )}
 
       <div className="rounded-card p-5 my-5 bg-ink text-white border-l-4 border-brick">

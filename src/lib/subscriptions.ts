@@ -60,12 +60,36 @@ export async function salesBusinessFor(email: string, sub: Pick<Subscription, "b
   if (sub.businessId) return String(sub.businessId);
   const ids = await getUserBusinessIds(email);
   if (!ids.length) return "";
+  // Chwa eksplisit itilizatè a (si l fè youn nan paj abònman yo)
+  const pref = await redis.hget<string>(`user:${email}`, "subsBusinessId");
+  if (pref && ids.includes(String(pref))) return String(pref);
   const rows = (await Promise.all(ids.map((id) => redis.hgetall<Business>(`business:${id}`)))).filter((b): b is Business => !!b && !!b.id);
   const pick =
-    rows.find((b) => b.icon === "streaming") ??
     rows.find((b) => /stream|iptv|netflix/i.test(String(b.name))) ??
+    rows.find((b) => b.icon === "streaming") ??
     rows[0];
   return pick ? String(pick.id) : "";
+}
+
+/** Deplase vant abònman pèsonèl yo nan yon lòt antrepriz (lè itilizatè a chanje chwa a). */
+export async function moveSubscriptionSales(email: string, targetId: string): Promise<number> {
+  const subIds = await redis.smembers(scopeKey("", email));
+  let moved = 0;
+  for (const subId of subIds) {
+    const sub = await redis.hgetall<Subscription>(`subscription:${subId}`);
+    if (!sub) continue;
+    for (const saleId of parseIds(sub.saleIds)) {
+      if (!saleId) continue;
+      const sale = await redis.hgetall<{ businessId?: string; createdAt?: string }>(`sale:${saleId}`);
+      if (!sale || String(sale.businessId) === targetId) continue;
+      const day = String(sale.createdAt).slice(0, 10);
+      await redis.lrem(`business:${sale.businessId}:sales:${day}`, 0, saleId);
+      await redis.lpush(`business:${targetId}:sales:${day}`, saleId);
+      await redis.hset(`sale:${saleId}`, { businessId: targetId });
+      moved++;
+    }
+  }
+  return moved;
 }
 
 /**

@@ -271,6 +271,7 @@ export const dictionary = {
   subscriptions_status_cancelled: { ht: "Anile", fr: "Annulé", en: "Cancelled" },
   subscriptions_cancel: { ht: "Anile", fr: "Annuler", en: "Cancel" },
   subscriptions_personal: { ht: "Pèsonèl", fr: "Personnel", en: "Personal" },
+  subscriptions_count_in: { ht: "Konte peman yo nan antrepriz:", fr: "Compter les paiements dans l'entreprise :", en: "Count payments in business:" },
   subscriptions_personal_note: { ht: "Abònman pèsonèl: peman yo konte nan antrepriz streaming ou an (oswa premye antrepriz ou a) epi yo parèt nan dashboard la.", fr: "Abonnements personnels : les paiements sont comptés dans votre entreprise streaming (ou la première) et apparaissent dans le tableau de bord.", en: "Personal subscriptions: payments are counted in your streaming business (or your first one) and show up on the dashboard." },
   subscriptions_paid_question: { ht: "Eske moun nan peye deja?", fr: "Le client a-t-il déjà payé ?", en: "Has the customer already paid?" },
   subscriptions_paid_yes: { ht: "Wi, peye deja", fr: "Oui, déjà payé", en: "Yes, already paid" },
