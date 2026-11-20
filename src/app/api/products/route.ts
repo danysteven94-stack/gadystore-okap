@@ -3,9 +3,10 @@ import { z } from "zod";
 import { randomUUID } from "crypto";
 import { redis, hsetClean, hgetallMany } from "@/lib/upstash";
 import { pageMeta, parsePage } from "@/lib/pagination";
-import { verifySession } from "@/lib/auth";
+import { verifySession, can } from "@/lib/auth";
 import { userOwnsBusiness } from "@/lib/shop";
 import type { Product } from "@/types";
+import { audit } from "@/lib/audit";
 
 const productSchema = z.object({
   businessId: z.string(),
@@ -72,6 +73,9 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const session = await requireSession(req);
   if (!session) return NextResponse.json({ error: "Pa otorize." }, { status: 401 });
+  if (!can(session.role, "products:write")) {
+    return NextResponse.json({ error: "Wòl ou pa otorize pou modifye pwodwi yo." }, { status: 403 });
+  }
 
   const body = await req.json();
   const parsed = productSchema.safeParse(body);
@@ -87,6 +91,12 @@ export async function POST(req: NextRequest) {
 
   await hsetClean(`product:${product.id}`, product as unknown as Record<string, unknown>);
   await redis.sadd(`business:${product.businessId}:products`, product.id);
+  await audit(req, { email: session.email, role: session.role }, {
+    action: "product.create",
+    businessId: product.businessId,
+    target: { type: "product", id: product.id, label: product.name },
+    meta: { buyPrice: product.buyPrice, sellPrice: product.sellPrice, stock: product.stock },
+  });
 
   return NextResponse.json({ product }, { status: 201 });
 }

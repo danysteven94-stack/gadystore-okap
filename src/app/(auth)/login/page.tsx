@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/i18n/language-provider";
 import { tr } from "@/lib/i18n/tr";
+import { resetRole } from "@/lib/use-role";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -44,6 +45,7 @@ export default function LoginPage() {
           setLoading(false);
           return;
         }
+        resetRole();
         router.push("/dashboard");
         router.refresh();
         return;
@@ -66,7 +68,8 @@ export default function LoginPage() {
         setCode("");
         return;
       }
-      router.push("/dashboard");
+      resetRole();
+        router.push("/dashboard");
     } catch {
       setLoading(false);
       setError("Erè rezo — verifye koneksyon entènèt ou epi eseye ankò.");

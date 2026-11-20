@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { redis } from "@/lib/upstash";
-import { verifySession, hashPassword, can, SUPER_ADMIN_EMAIL, isSuperAdmin } from "@/lib/auth";
+import { verifySession, hashPassword, can, SUPER_ADMIN_EMAIL, isSuperAdmin, revokeSessions } from "@/lib/auth";
 import { generateTempPassword } from "@/lib/password";
 import { userOwnsBusiness } from "@/lib/shop";
 import { isPlanId } from "@/lib/plans";
+import { audit } from "@/lib/audit";
 
 async function getSession(req: NextRequest) {
   const token = req.cookies.get("session")?.value;
@@ -42,6 +43,7 @@ export async function DELETE(
   await redis.del(`user:${email}`);
   await redis.srem("users:all", email);
   await redis.srem("users:disabled", email);
+  await audit(req, { email: session.email, role: session.role }, { action: "user.delete", target: { type: "user", label: email } });
 
   return NextResponse.json({ ok: true });
 }
@@ -89,6 +91,7 @@ export async function PATCH(
       }
     }
     await redis.hset(`user:${email}`, { businessIds: JSON.stringify(unique) });
+    await audit(req, { email: session.email, role: session.role }, { action: "user.set_businesses", target: { type: "user", label: email }, meta: { businessIds: unique } });
     return NextResponse.json({ ok: true, businessIds: unique });
   }
 
@@ -107,6 +110,7 @@ export async function PATCH(
       return NextResponse.json({ error: "Plan an fikse sou kont pwopriyetè a (admin). Anplwaye yo swiv li." }, { status: 400 });
     }
     await redis.hset(`user:${email}`, { plan: body.plan });
+    await audit(req, { email: session.email, role: session.role }, { action: "user.set_plan", target: { type: "user", label: email }, meta: { plan: body.plan } });
     return NextResponse.json({ ok: true, plan: body.plan });
   }
 
@@ -129,6 +133,7 @@ export async function PATCH(
       await redis.srem("users:disabled", email);
       await redis.hset(`user:${email}`, { disabled: false });
     }
+    await audit(req, { email: session.email, role: session.role }, { action: action === "deactivate" ? "user.deactivate" : "user.activate", target: { type: "user", label: email } });
     return NextResponse.json({ ok: true, disabled: action === "deactivate" });
   }
 
@@ -157,6 +162,9 @@ export async function PATCH(
     passwordHash: await hashPassword(temporaryPassword),
     mustChangePassword: true,
   });
+  // Sesyon ki egziste yo (ex. si kont lan te konpwomèt) invalid imedyatman.
+  await revokeSessions(email);
+  await audit(req, { email: session.email, role: session.role }, { action: "user.reset_password", target: { type: "user", label: email } });
 
   return NextResponse.json({ ok: true, temporaryPassword });
 }

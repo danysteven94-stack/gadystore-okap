@@ -23,6 +23,11 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  // Lang paj la swiv lang itilizatè a (lektè ekran, tradiksyon navigatè, kòrèksyon òtograf).
+  useEffect(() => {
+    document.documentElement.lang = lang;
+  }, [lang]);
+
   function setLang(next: Lang) {
     setLangState(next);
     window.localStorage.setItem(STORAGE_KEY, next);

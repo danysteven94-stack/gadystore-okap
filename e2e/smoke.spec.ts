@@ -27,6 +27,18 @@ test.describe("paj piblik", () => {
     await expect(page.locator('a[href="/forgot-password"]')).toBeVisible();
   });
 
+  test("zoom pa bloke (aksesibilite WCAG 1.4.4)", async ({ page }) => {
+    await page.goto("/login");
+    const content = await page.locator('meta[name="viewport"]').getAttribute("content");
+    expect(content).not.toMatch(/user-scalable\s*=\s*(no|0)/i);
+    expect(content).not.toMatch(/maximum-scale\s*=\s*1(\.0)?\b/i);
+  });
+
+  test("lang HTML swiv lang itilizatè a (ht)", async ({ page }) => {
+    await page.goto("/login");
+    await expect(page.locator("html")).toHaveAttribute("lang", "ht");
+  });
+
   test("paj ki pa egziste bay 404", async ({ page }) => {
     const res = await page.goto("/sa-pa-egziste-xyz");
     expect(res?.status()).toBe(404);
@@ -34,7 +46,7 @@ test.describe("paj piblik", () => {
 });
 
 test.describe("sekirite", () => {
-  for (const path of ["/dashboard", "/security", "/users", "/backup", "/pos"]) {
+  for (const path of ["/dashboard", "/security", "/audit", "/users", "/backup", "/pos"]) {
     test(`${path} san sesyon voye sou /login`, async ({ page }) => {
       await page.goto(path);
       await expect(page).toHaveURL(/\/login$/);
@@ -54,6 +66,10 @@ test.describe("sekirite", () => {
   test("kookie 2FA a pa bay aksè: /api/auth/2fa san sesyon = 401", async ({ request }) => {
     expect((await request.get("/api/auth/2fa")).status()).toBe(401);
     expect((await request.post("/api/auth/2fa", { data: { action: "setup" } })).status()).toBe(401);
+  });
+
+  test("jounal odit pa aksesib san sesyon: /api/audit = 401", async ({ request }) => {
+    expect((await request.get("/api/audit")).status()).toBe(401);
   });
 
   test("2FA verify san token MFA = 401 (pa gen sesyon san modpas)", async ({ request }) => {

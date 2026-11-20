@@ -6,6 +6,7 @@ import { verifySession, hashPassword, can, isSuperAdmin, type UserRole } from "@
 import { generateTempPassword, isTrue } from "@/lib/password";
 import { getUserPlan } from "@/lib/plan-access";
 import { isPlanId, type PlanId } from "@/lib/plans";
+import { audit } from "@/lib/audit";
 
 async function getSession(req: NextRequest) {
   const token = req.cookies.get("session")?.value;
@@ -132,6 +133,7 @@ export async function POST(req: NextRequest) {
 
   await redis.hset(`user:${email}`, user);
   await redis.sadd("users:all", email);
+  await audit(req, { email: session.email, role: session.role }, { action: "user.create", target: { type: "user", label: email }, meta: { role, plan: plan ?? null } });
 
   return NextResponse.json(
     { user: { id: user.id, email: user.email, fullName, role: user.role, plan }, temporaryPassword },

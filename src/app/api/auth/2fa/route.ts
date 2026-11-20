@@ -15,6 +15,7 @@ import {
   verifyTotp,
 } from "@/lib/totp";
 import { toStringArray } from "@/lib/two-factor";
+import { audit } from "@/lib/audit";
 
 const body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("setup") }),
@@ -73,6 +74,7 @@ export async function POST(req: NextRequest) {
       totpEnabledAt: new Date().toISOString(),
     });
     await redis.hdel(key, "totpPendingEnc");
+    await audit(req, { email, role: session.role }, { action: "auth.2fa_enabled", target: { type: "user", label: email } });
     // Kòd rekiperasyon yo parèt yon SÈL FWA isit la.
     return NextResponse.json({ ok: true, recoveryCodes: codes });
   }
@@ -92,5 +94,6 @@ export async function POST(req: NextRequest) {
   }
   if (!ok) return NextResponse.json({ error: "Kòd la pa kòrèk." }, { status: 401 });
   await redis.hdel(key, "totpEnabled", "totpSecretEnc", "totpPendingEnc", "recoveryHashes", "totpEnabledAt");
+  await audit(req, { email, role: session.role }, { action: "auth.2fa_disabled", target: { type: "user", label: email } });
   return NextResponse.json({ ok: true });
 }

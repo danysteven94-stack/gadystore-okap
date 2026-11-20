@@ -6,6 +6,7 @@ import { isTrue } from "@/lib/password";
 import { rateLimit } from "@/lib/shop";
 import { decryptSecret, hashRecovery, verifyTotp } from "@/lib/totp";
 import { toStringArray } from "@/lib/two-factor";
+import { audit } from "@/lib/audit";
 
 const schema = z.object({ code: z.string().trim().min(6).max(16) });
 
@@ -48,7 +49,10 @@ export async function POST(req: NextRequest) {
       ok = true;
     }
   }
-  if (!ok) return NextResponse.json({ error: "Kòd la pa kòrèk." }, { status: 401 });
+  if (!ok) {
+    await audit(req, { email }, { action: "auth.login_failed", target: { type: "user", label: email }, meta: { reason: "bad_2fa" } });
+    return NextResponse.json({ error: "Kòd la pa kòrèk." }, { status: 401 });
+  }
 
   await redis.del(k);
   const rawIds = user.businessIds as string | string[] | undefined;
@@ -61,6 +65,7 @@ export async function POST(req: NextRequest) {
   await redis.sadd("users:all", email);
   await redis.hset(`user:${email}`, { lastLoginAt: new Date().toISOString() });
 
+  await audit(req, { email, role: String(session.role) }, { action: "auth.login", target: { type: "user", label: email }, meta: { mfa: true } });
   const res = NextResponse.json({ ok: true });
   res.cookies.set("session", await signSession(session), {
     httpOnly: true,

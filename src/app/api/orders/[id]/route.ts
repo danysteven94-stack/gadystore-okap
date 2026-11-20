@@ -4,6 +4,7 @@ import { getSessionFromReq, userOwnsBusiness } from "@/lib/shop";
 import type { Order } from "@/app/api/orders/route";
 import { recordOrderSaleIfReady } from "@/lib/order-sale";
 import { sendOrderMessages } from "@/lib/order-messages";
+import { audit } from "@/lib/audit";
 
 const FULFILLMENT = ["new", "confirmed", "preparing", "shipped", "delivered"] as const;
 
@@ -33,6 +34,12 @@ export async function PATCH(
     }
     const note = typeof body.note === "string" ? body.note.trim().slice(0, 200) : "";
     await redis.hset(`order:${id}`, { fulfillment: body.fulfillment, fulfillmentNote: note });
+    await audit(req, { email: session.email, role: session.role }, {
+      action: "order.fulfillment",
+      businessId: String(order.businessId),
+      target: { type: "order", id },
+      meta: { from: (order as unknown as Record<string, unknown>).fulfillment ?? null, to: body.fulfillment },
+    });
     // Livre + peye = vant (revni)
     if (body.fulfillment === "delivered") {
       await recordOrderSaleIfReady(id, session.userId, session.email);
@@ -59,5 +66,11 @@ export async function PATCH(
     }
   }
   await redis.hset(`order:${id}`, { status: "cancelled", fulfillment: "cancelled" });
+  await audit(req, { email: session.email, role: session.role }, {
+    action: "order.cancel",
+    businessId: String(order.businessId),
+    target: { type: "order", id },
+    meta: { totalAmount: (order as unknown as Record<string, unknown>).totalAmount ?? null },
+  });
   return NextResponse.json({ order: { ...order, status: "cancelled", fulfillment: "cancelled" } });
 }

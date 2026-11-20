@@ -5,6 +5,7 @@ import { z } from "zod";
 import { randomUUID } from "crypto";
 import { redis, hsetClean, hgetallMany } from "@/lib/upstash";
 import { releaseStock, reserveStock, type StockLine } from "@/lib/stock";
+import { pricesMatch } from "@/lib/permissions";
 import { verifySession, can } from "@/lib/auth";
 import { notifyLowStock, notifyNewSale } from "@/lib/notifications";
 import type { Product, Sale } from "@/types";
@@ -69,6 +70,20 @@ async function postHandler(req: NextRequest) {
         return NextResponse.json({ error: `Pwodwi ${name} pa jwenn.` }, { status: 404 });
       }
       productById.set(productIds[k], p);
+    }
+
+    // Pri ak non soti nan baz la, pa nan kliyan an (yon kesye pa ka voye yon pri 0 oswa yon lòt non).
+    // Si pri a chanje depi POS la te chaje, nou refize pou kliyan an pa peye yon lòt pri ke sa l te wè.
+    for (const it of items) {
+      const p = productById.get(it.productId)!;
+      if (!pricesMatch(it.unitPrice, Number(p.sellPrice))) {
+        return NextResponse.json(
+          { error: `Pri ${p.name} chanje (kounye a ${p.sellPrice}). Rafrechi lis pwodwi yo epi eseye ankò.` },
+          { status: 409 }
+        );
+      }
+      it.unitPrice = Number(p.sellPrice);
+      it.name = p.name;
     }
 
     const subtotal = items.reduce((sum, i) => sum + i.qty * i.unitPrice, 0);

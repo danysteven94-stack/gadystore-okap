@@ -26,8 +26,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+  // Zoom pèmèt (WCAG 1.4.4): itilizatè ki gen pwoblèm vizyon bezwen l.
   viewportFit: "cover",
   themeColor: "#111111",
 };

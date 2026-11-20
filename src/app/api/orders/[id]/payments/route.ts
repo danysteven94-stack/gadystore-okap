@@ -5,6 +5,7 @@ import { redis } from "@/lib/upstash";
 import { verifySession } from "@/lib/auth";
 import type { Order } from "@/app/api/orders/route";
 import { recordOrderSaleIfReady } from "@/lib/order-sale";
+import { audit } from "@/lib/audit";
 
 const paymentSchema = z.object({
   amount: z.number().positive(),
@@ -54,6 +55,12 @@ export async function POST(
   };
 
   await redis.hset(`order:${id}`, updates);
+  await audit(req, { email: session.email, role: session.role }, {
+    action: "order.payment",
+    businessId: String(order.businessId),
+    target: { type: "order", id },
+    meta: { amount: parsed.data.amount, depositAfter: newDeposit },
+  });
   // Si kòmand lan deja livre, kounye a ki peye nèt li antre nan vant yo
   if (updates.status === "paid") await recordOrderSaleIfReady(id, session.userId, session.email);
 

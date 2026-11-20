@@ -12,6 +12,7 @@ import {
 } from "@/lib/auth";
 import { isTrue } from "@/lib/password";
 import { rateLimit } from "@/lib/shop";
+import { audit } from "@/lib/audit";
 
 const schema = z.object({
   newPassword: z
@@ -67,6 +68,7 @@ export async function POST(req: NextRequest) {
   });
 
   await revokeSessions(email);
+  await audit(req, { email, role: String(user.role ?? "") }, { action: "auth.password_changed", target: { type: "user", label: email }, meta: { forced: true } });
 
   // Si 2FA aktif, modpas la chanje men sesyon an pa bay anvan kòd la verifye.
   if (isTrue(user.totpEnabled)) {

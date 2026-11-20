@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { storeImage } from "@/lib/image-store";
 import { getSessionFromReq } from "@/lib/shop";
+import { can } from "@/lib/auth";
 
 // Foto a konprese sou telefòn/navigatè a anvan (~800px JPEG). Li ale sou Vercel Blob
 // (si BLOB_READ_WRITE_TOKEN defini), sinon nan Upstash. Limit sekirite: 600 KB pou chak foto.
@@ -10,6 +11,9 @@ const DATA_URL = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/;
 export async function POST(req: NextRequest) {
   const session = await getSessionFromReq(req);
   if (!session) return NextResponse.json({ error: "Pa otorize." }, { status: 401 });
+  if (!can(session.role, "products:write")) {
+    return NextResponse.json({ error: "Wòl ou pa otorize pou modifye pwodwi yo." }, { status: 403 });
+  }
 
   const body = await req.json().catch(() => null);
   const dataUrl: unknown = body?.dataUrl;

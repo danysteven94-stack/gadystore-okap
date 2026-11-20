@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { redis } from "@/lib/upstash";
-import { verifySession } from "@/lib/auth";
+import { verifySession, can } from "@/lib/auth";
 import { notifyLowStock } from "@/lib/notifications";
 import { userOwnsBusiness } from "@/lib/shop";
 import type { Product } from "@/types";
+import { audit, diffFields } from "@/lib/audit";
 
 const updateSchema = z.object({
   name: z.string().min(1).optional(),
@@ -57,6 +58,9 @@ export async function PATCH(
 ) {
   const session = await requireSession(req);
   if (!session) return NextResponse.json({ error: "Pa otorize." }, { status: 401 });
+  if (!can(session.role, "products:write")) {
+    return NextResponse.json({ error: "Wòl ou pa otorize pou modifye pwodwi yo." }, { status: 403 });
+  }
 
   const { id } = await params;
   const existing = await redis.hgetall<Product>(`product:${id}`);
@@ -73,6 +77,19 @@ export async function PATCH(
 
   await redis.hset(`product:${id}`, parsed.data as Record<string, unknown>);
 
+  // Jounal odit: sèlman chan sansib yo (pri, stok, piblikasyon...) ak ansyen/nouvo valè yo.
+  const changes = diffFields(existing as unknown as Record<string, unknown>, parsed.data as Record<string, unknown>, [
+    "name", "buyPrice", "sellPrice", "comparePrice", "stock", "minStock", "published", "productType", "unavailable",
+  ]);
+  if (Object.keys(changes).length > 0) {
+    await audit(req, { email: session.email, role: session.role }, {
+      action: "product.update",
+      businessId: existing.businessId,
+      target: { type: "product", id, label: existing.name },
+      meta: { changes },
+    });
+  }
+
   const updated = { ...existing, ...parsed.data };
   const digital = (updated as Product).productType === "digital" || (updated as Product).productType === "dish";
   if (!digital && updated.stock <= updated.minStock) {
@@ -88,6 +105,9 @@ export async function DELETE(
 ) {
   const session = await requireSession(req);
   if (!session) return NextResponse.json({ error: "Pa otorize." }, { status: 401 });
+  if (!can(session.role, "products:write")) {
+    return NextResponse.json({ error: "Wòl ou pa otorize pou modifye pwodwi yo." }, { status: 403 });
+  }
 
   const { id } = await params;
   const existing = await redis.hgetall<Product>(`product:${id}`);
@@ -98,6 +118,12 @@ export async function DELETE(
 
   await redis.del(`product:${id}`);
   await redis.srem(`business:${existing.businessId}:products`, id);
+  await audit(req, { email: session.email, role: session.role }, {
+    action: "product.delete",
+    businessId: existing.businessId,
+    target: { type: "product", id, label: existing.name },
+    meta: { sellPrice: existing.sellPrice, stock: existing.stock },
+  });
 
   return NextResponse.json({ ok: true });
 }

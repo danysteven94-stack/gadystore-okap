@@ -6,6 +6,8 @@ import { BusinessSwitcher } from "@/components/dashboard/business-switcher";
 import { StockBar } from "@/components/products/stock-bar";
 import { ProductForm, type ProductFormValues } from "@/components/products/product-form";
 import { useLanguage } from "@/lib/i18n/language-provider";
+import { useRole } from "@/lib/use-role";
+import { can } from "@/lib/permissions";
 import type { Business, Product } from "@/types";
 
 function fmt(n: number) {
@@ -21,6 +23,9 @@ export default function ProductsPage() {
   const [query, setQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
   const [formTarget, setFormTarget] = useState<"new" | Product | null>(null);
+  const role = useRole();
+  // Caissier pa ka modifye pwodwi (sèvè a refize tou): pa montre bouton yo.
+  const canWrite = role !== null && can(role, "products:write");
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -178,13 +183,15 @@ export default function ProductsPage() {
             className="w-full border border-ink/15 dark:border-dark-border bg-white dark:bg-dark-surface rounded-md pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brick/30"
           />
         </div>
-        <button
-          onClick={() => setFormTarget("new")}
-          className="w-10 h-10 rounded-full bg-ink text-paper flex items-center justify-center shrink-0"
-          aria-label={t("products_add")}
-        >
-          <Plus size={18} />
-        </button>
+        {canWrite && (
+          <button
+            onClick={() => setFormTarget("new")}
+            className="w-10 h-10 rounded-full bg-ink text-paper flex items-center justify-center shrink-0"
+            aria-label={t("products_add")}
+          >
+            <Plus size={18} />
+          </button>
+        )}
       </div>
 
       {categories.length > 1 && (
@@ -228,10 +235,12 @@ export default function ProductsPage() {
         </div>
       ) : (
         <div className="space-y-2">
-          {filtered.map((p) => (
-            <button
+          {filtered.map((p) => {
+            const Card: React.ElementType = canWrite ? "button" : "div";
+            return (
+            <Card
               key={p.id}
-              onClick={() => setFormTarget(p)}
+              onClick={canWrite ? () => setFormTarget(p) : undefined}
               className="w-full text-left rounded-card border border-ink/10 dark:border-dark-border bg-white dark:bg-dark-surface p-4"
             >
               <div className="flex items-start justify-between mb-2 gap-3">
@@ -264,8 +273,9 @@ export default function ProductsPage() {
               ) : (
                 <StockBar stock={p.stock} minStock={p.minStock} />
               )}
-            </button>
-          ))}
+            </Card>
+            );
+          })}
         </div>
       )}
 

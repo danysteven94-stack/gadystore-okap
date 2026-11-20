@@ -25,7 +25,9 @@ export function isSuperAdmin(email: string | undefined | null): boolean {
   return (email ?? "").trim().toLowerCase() === SUPER_ADMIN_EMAIL;
 }
 
-export type UserRole = "admin" | "gestionnaire" | "caissier";
+import type { UserRole } from "@/lib/permissions";
+export type { UserRole };
+export { permissions, can, pricesMatch } from "@/lib/permissions";
 
 export interface SessionPayload {
   userId: string;
@@ -63,18 +65,6 @@ export async function verifySession(
   } catch {
     return null;
   }
-}
-
-/** Contrôle d'accès basé sur les rôles (RBAC) */
-export const permissions: Record<UserRole, string[]> = {
-  admin: ["*"],
-  gestionnaire: ["sales:write", "stock:read", "invoices:write", "reports:read"],
-  caissier: ["sales:write", "invoices:print"],
-};
-
-export function can(role: UserRole, action: string): boolean {
-  const allowed = permissions[role];
-  return allowed.includes("*") || allowed.includes(action);
 }
 
 /**

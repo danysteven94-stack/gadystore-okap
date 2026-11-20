@@ -4,6 +4,7 @@ import { createHash } from "crypto";
 import { redis } from "@/lib/upstash";
 import { hashPassword, revokeSessions } from "@/lib/auth";
 import { rateLimit } from "@/lib/shop";
+import { audit } from "@/lib/audit";
 
 const schema = z.object({
   token: z.string().min(20).max(100),
@@ -47,6 +48,7 @@ export async function POST(req: NextRequest) {
     passwordChangedAt: new Date().toISOString(),
   });
   await revokeSessions(email);
+  await audit(req, { email, role: String(user.role ?? "") }, { action: "auth.password_reset", target: { type: "user", label: email }, meta: { via: "email_link" } });
   await redis.del(`rl:login-email:${email}`);
   // 2FA (si aktif) RETE aktif: reyinisyalizasyon modpas pa dezaktive dezyèm faktè a.
   return NextResponse.json({ ok: true });

@@ -8,7 +8,7 @@ export default function robots(): MetadataRoute.Robots {
         userAgent: "*",
         allow: ["/boutik/", "/privacy", "/terms"],
         disallow: [
-          "/api/", "/dashboard", "/pos", "/products", "/orders", "/stock", "/users", "/security",
+          "/api/", "/dashboard", "/pos", "/products", "/orders", "/stock", "/users", "/security", "/audit",
           "/backup", "/reports", "/returns", "/subscriptions", "/user-billing", "/verify/",
           "/login", "/forgot-password", "/reset-password", "/change-password",
         ],

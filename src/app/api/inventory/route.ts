@@ -3,9 +3,10 @@ import { userOwnsBusiness } from "@/lib/shop";
 import { z } from "zod";
 import { randomUUID } from "crypto";
 import { redis, hsetClean } from "@/lib/upstash";
-import { verifySession } from "@/lib/auth";
+import { verifySession, can } from "@/lib/auth";
 import { pushNotification } from "@/lib/notifications";
 import type { Product } from "@/types";
+import { audit } from "@/lib/audit";
 
 export interface InventoryDiscrepancy {
   productId: string;
@@ -65,6 +66,9 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const session = await getSession(req);
   if (!session) return NextResponse.json({ error: "Pa otorize." }, { status: 401 });
+  if (!can(session.role, "products:write")) {
+    return NextResponse.json({ error: "Wòl ou pa otorize pou modifye pwodwi yo." }, { status: 403 });
+  }
 
   const body = await req.json();
   const parsed = inventorySchema.safeParse(body);
@@ -97,6 +101,18 @@ export async function POST(req: NextRequest) {
     // Ajiste stok la pou matche kantite konte a (kontwòl fizik la se sous
     // verite a apre yon envantè).
     await hsetClean(`product:${productId}`, { stock: countedQty });
+  }
+
+  if (discrepancies.length > 0) {
+    await audit(req, { email: session.email, role: session.role }, {
+      action: "inventory.adjust",
+      businessId,
+      meta: {
+        itemsCounted: counts.length,
+        discrepancyCount: discrepancies.length,
+        items: discrepancies.slice(0, 15).map((d) => ({ name: d.name, from: d.systemQty, to: d.countedQty })),
+      },
+    });
   }
 
   const inventorySession: InventorySession = {

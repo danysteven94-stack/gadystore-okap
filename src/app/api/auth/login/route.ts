@@ -4,6 +4,7 @@ import { redis } from "@/lib/upstash";
 import { verifyPassword, signSession, signPwChangeToken, signMfaToken, type SessionPayload } from "@/lib/auth";
 import { isTrue } from "@/lib/password";
 import { rateLimit } from "@/lib/shop";
+import { audit } from "@/lib/audit";
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -37,6 +38,7 @@ export async function POST(req: NextRequest) {
     const user = await redis.hgetall<Record<string, string>>(`user:${email}`);
 
     if (!user || !user.passwordHash) {
+      await audit(req, { email }, { action: "auth.login_failed", target: { type: "user", label: email }, meta: { reason: "unknown_user" } });
       return NextResponse.json(
         { error: "Imèl oswa mo de pas pa kòrèk." },
         { status: 401 }
@@ -45,6 +47,7 @@ export async function POST(req: NextRequest) {
 
     const valid = await verifyPassword(password, user.passwordHash);
     if (!valid) {
+      await audit(req, { email }, { action: "auth.login_failed", target: { type: "user", label: email }, meta: { reason: "bad_password" } });
       return NextResponse.json(
         { error: "Imèl oswa mo de pas pa kòrèk." },
         { status: 401 }
@@ -53,6 +56,7 @@ export async function POST(req: NextRequest) {
 
     await redis.del(emailKey);
     if (await redis.sismember("users:disabled", email)) {
+      await audit(req, { email }, { action: "auth.login_failed", target: { type: "user", label: email }, meta: { reason: "disabled" } });
       return NextResponse.json(
         { error: "Kont sa a dezaktive. Kontakte administratè prensipal la." },
         { status: 403 }
@@ -109,6 +113,7 @@ export async function POST(req: NextRequest) {
       maxAge: 60 * 60 * 24 * 7,
       path: "/",
     });
+    await audit(req, { email, role: session.role }, { action: "auth.login", target: { type: "user", label: email } });
     return res;
   } catch (err) {
     console.error("login error", err);

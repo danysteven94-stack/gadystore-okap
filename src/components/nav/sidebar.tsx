@@ -12,6 +12,8 @@ import { InstallButton } from "@/components/nav/install-button";
 import { NAV_ITEMS, isNavActive } from "@/lib/nav-items";
 import { useUnreadNotifications } from "@/lib/use-unread-notifications";
 import { useSuperInfo } from "@/lib/use-super-info";
+import { useRole } from "@/lib/use-role";
+import { can } from "@/lib/permissions";
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -20,6 +22,7 @@ export function Sidebar() {
   const { theme, toggleTheme } = useTheme();
   const { lang, setLang, t } = useLanguage();
   const { isSuper, alertCount, shopAllowed } = useSuperInfo();
+  const role = useRole();
 
   return (
     <aside className="hidden lg:flex lg:flex-col w-64 shrink-0 h-screen sticky top-0 bg-night text-paper border-r border-white/10">
@@ -36,7 +39,7 @@ export function Sidebar() {
       </div>
 
       <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-        {NAV_ITEMS.filter((i) => (!i.superOnly || isSuper) && (!i.needsShop || shopAllowed)).map(({ href, icon: Icon, key }) => {
+        {NAV_ITEMS.filter((i) => (!i.superOnly || isSuper) && (!i.needsShop || shopAllowed) && (!i.needs || (role !== null && can(role, i.needs)))).map(({ href, icon: Icon, key }) => {
           const active = isNavActive(href, pathname, kind);
           return (
             <Link

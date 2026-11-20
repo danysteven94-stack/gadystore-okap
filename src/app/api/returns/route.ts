@@ -6,6 +6,7 @@ import { redis, hsetClean } from "@/lib/upstash";
 import { verifySession } from "@/lib/auth";
 import { pushNotification } from "@/lib/notifications";
 import type { Product } from "@/types";
+import { audit } from "@/lib/audit";
 
 const returnSchema = z.object({
   businessId: z.string(),
@@ -92,6 +93,12 @@ export async function POST(req: NextRequest) {
   await hsetClean(`return:${record.id}`, record as unknown as Record<string, unknown>);
   await redis.lpush(`business:${businessId}:returns`, record.id);
   await redis.ltrim(`business:${businessId}:returns`, 0, 199);
+  await audit(req, { email: session.email, role: session.role }, {
+    action: "return.create",
+    businessId,
+    target: { type: "product", id: productId, label: product.name },
+    meta: { qty, refundAmount, reason, saleId: saleId ?? null },
+  });
 
   await pushNotification(
     businessId,
