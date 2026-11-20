@@ -33,6 +33,9 @@ const LABELS: Record<AuditAction, L> = {
   "order.fulfillment": { ht: "Etap kòmand chanje", fr: "Étape de commande modifiée", en: "Order stage changed" },
   "order.payment": { ht: "Peman kòmand", fr: "Paiement de commande", en: "Order payment" },
   "backup.restore": { ht: "Backup restore", fr: "Restauration de sauvegarde", en: "Backup restored" },
+  "billing.pay": { ht: "Peman abònman itilizatè", fr: "Paiement d'abonnement utilisateur", en: "User subscription payment" },
+  "billing.undo": { ht: "Peman abònman anile", fr: "Paiement d'abonnement annulé", en: "User subscription payment undone" },
+  "billing.set_price": { ht: "Pri abònman chanje", fr: "Prix d'abonnement modifié", en: "Subscription price changed" },
 };
 
 const GROUPS: { value: string; label: L }[] = [
@@ -43,10 +46,11 @@ const GROUPS: { value: string; label: L }[] = [
   { value: "order.", label: { ht: "Kòmand", fr: "Commandes", en: "Orders" } },
   { value: "inventory.", label: { ht: "Envantè", fr: "Inventaire", en: "Inventory" } },
   { value: "return.", label: { ht: "Retou", fr: "Retours", en: "Returns" } },
+  { value: "billing.", label: { ht: "Abònman itilizatè", fr: "Abonnements utilisateurs", en: "User subscriptions" } },
   { value: "backup.", label: { ht: "Backup", fr: "Sauvegardes", en: "Backups" } },
 ];
 
-const DANGER = new Set<string>(["auth.login_failed", "user.delete", "user.deactivate", "product.delete", "order.cancel", "backup.restore", "auth.2fa_disabled", "user.reset_password"]);
+const DANGER = new Set<string>(["auth.login_failed", "user.delete", "user.deactivate", "product.delete", "order.cancel", "backup.restore", "auth.2fa_disabled", "user.reset_password", "billing.undo"]);
 
 function fmtVal(v: unknown): string {
   if (v === null || v === undefined) return "—";
@@ -69,7 +73,7 @@ function summarize(meta: Record<string, unknown> | undefined): string[] {
 
 export default function AuditPage() {
   const { lang } = useLanguage();
-  const { isSuper } = useSuperInfo();
+  const { isSuper, ready } = useSuperInfo();
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [scope, setScope] = useState<string>("__init__"); // "" = global (kont prensipal la)
   const [action, setAction] = useState("");
@@ -89,10 +93,10 @@ export default function AuditPage() {
 
   // Chwa pa defo: kont prensipal → global; lòt → premye biznis la.
   useEffect(() => {
-    if (scope !== "__init__") return;
+    if (scope !== "__init__" || !ready) return; // tann nou konnen si se kont prensipal la
     if (isSuper) setScope("");
     else if (businesses.length) setScope(businesses[0].id);
-  }, [scope, isSuper, businesses]);
+  }, [scope, isSuper, ready, businesses]);
 
   const buildUrl = useCallback(
     (offset: number) => {

@@ -8,6 +8,7 @@ import { notifyPaymentReceived } from "@/lib/billing-notify";
 import { userOwnsBusiness } from "@/lib/shop";
 import { recordSubscriptionSale, undoSubscriptionSale } from "@/lib/subscription-sale";
 import { getUserBusinessIds } from "@/lib/shop";
+import { audit } from "@/lib/audit";
 import { paymentsKey, parsePayment, syncUserBillingSales, moveBillingSales } from "@/lib/user-billing-sales";
 
 async function getSuperSession(req: NextRequest) {
@@ -144,6 +145,11 @@ export async function PATCH(req: NextRequest) {
 
   if (body.action === "set_price") {
     await redis.hset(`user:${email}`, { monthlyPrice: Math.round(body.price) });
+    await audit(req, { email: auth.session.email, role: auth.session.role }, {
+      action: "billing.set_price",
+      target: { type: "user", label: email },
+      meta: { changes: { monthlyPrice: { from: Number(user.monthlyPrice) || 0, to: Math.round(body.price) } } },
+    });
   } else if (body.action === "pay") {
     const session = auth.session;
     const price = Number(user.monthlyPrice) || 0;
@@ -173,6 +179,12 @@ export async function PATCH(req: NextRequest) {
     if (businessId) await redis.hset(`user:${session.email.toLowerCase()}`, { billingBusinessId: businessId });
     await redis.lpush(paymentsKey(email), JSON.stringify({ amount, paidAt: paidAtIso, months: body.months, saleId }));
 
+    await audit(req, { email: session.email, role: session.role }, {
+      action: "billing.pay",
+      businessId: businessId || undefined,
+      target: { type: "user", label: email },
+      meta: { months: body.months, amount, paidAt: paidAtIso, saleId: saleId || null },
+    });
     await redis.hset(`user:${email}`, {
       paidMonths: paidMonths + body.months,
       lastPaymentAt: paidAtIso,
@@ -190,6 +202,11 @@ export async function PATCH(req: NextRequest) {
     const undoMonths = last ? last.months : 1;
     if (last?.saleId) await undoSubscriptionSale(last.saleId);
     await redis.hset(`user:${email}`, { paidMonths: Math.max(0, paidMonths - undoMonths) });
+    await audit(req, { email: auth.session.email, role: auth.session.role }, {
+      action: "billing.undo",
+      target: { type: "user", label: email },
+      meta: { months: undoMonths, amount: last?.amount ?? null },
+    });
     if (!last && user.lastPaymentAt) await redis.hset(`user:${email}`, { lastPaymentAt: "", lastPaymentMonths: 0 });
   }
   return NextResponse.json({ ok: true });

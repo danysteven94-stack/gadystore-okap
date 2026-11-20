@@ -7,6 +7,7 @@ export function useSuperInfo() {
   const [isSuper, setIsSuper] = useState(false);
   const [alertCount, setAlertCount] = useState(0);
   const [monthlyRevenue, setMonthlyRevenue] = useState(0); // revni abònman itilizatè yo (kont prensipal la sèlman)
+  const [ready, setReady] = useState(false); // vre lè nou konnen si itilizatè a se kont prensipal la
   const [shopAllowed, setShopAllowed] = useState(true); // montre pandan l ap chaje; kache si plan an pa gen boutik
 
   useEffect(() => {
@@ -18,6 +19,7 @@ export function useSuperInfo() {
         const info = await me.json();
         if (!cancelled) setShopAllowed(info.shopAllowed !== false);
         const { isSuper } = info;
+        if (!cancelled) setReady(true);
         if (cancelled || !isSuper) return;
         setIsSuper(true);
         const res = await fetch("/api/user-billing?summary=1");
@@ -29,6 +31,8 @@ export function useSuperInfo() {
         setMonthlyRevenue(summary?.monthlyRevenue ?? 0);
       } catch {
         /* silans */
+      } finally {
+        if (!cancelled) setReady(true);
       }
     })();
     return () => {
@@ -36,5 +40,5 @@ export function useSuperInfo() {
     };
   }, []);
 
-  return { isSuper, alertCount, shopAllowed, monthlyRevenue };
+  return { isSuper, ready, alertCount, shopAllowed, monthlyRevenue };
 }

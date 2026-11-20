@@ -8,7 +8,8 @@ export type AuditAction =
   | "product.create" | "product.update" | "product.delete"
   | "inventory.adjust" | "return.create"
   | "order.cancel" | "order.fulfillment" | "order.payment"
-  | "backup.restore";
+  | "backup.restore"
+  | "billing.pay" | "billing.undo" | "billing.set_price";
 
 export interface AuditEntry {
   id: string;
