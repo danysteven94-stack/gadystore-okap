@@ -24,7 +24,8 @@ export function useUnreadNotifications() {
     const onVisible = () => document.visibilityState === "visible" && load();
     document.addEventListener("visibilitychange", onVisible);
     window.addEventListener(NOTIFICATIONS_CHANGED, load);
-    const iv = setInterval(load, 60000);
+    // 5 minit (olye de 1 minit) epi sèlman lè paj la vizib — ekonomize kòmand Redis.
+    const iv = setInterval(() => { if (document.visibilityState === "visible") load(); }, 300000);
     return () => {
       cancelled = true;
       clearInterval(iv);

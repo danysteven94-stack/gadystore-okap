@@ -44,6 +44,8 @@ export async function signSession(payload: SessionPayload): Promise<string> {
     .sign(getSecret());
 }
 
+const authStateCache = new Map<string, { disabled: boolean; after: number; exp: number }>();
+
 export async function verifySession(
   token: string
 ): Promise<SessionPayload | null> {
@@ -54,13 +56,22 @@ export async function verifySession(
     // Kont dezaktive: sesyon an invalid imedyatman (pa bezwen tann 7 jou JWT la fini).
     const email = String((payload as { email?: string }).email ?? "").toLowerCase();
     if (!email) return null;
-    const [disabled, after] = await Promise.all([
-      redis.sismember("users:disabled", email),
-      redis.get<number | string>(`sess:after:${email}`),
-    ]);
-    if (disabled) return null;
+    // Cache kout (60 s) nan memwa: evite 2 kòmand Redis sou CHAK demann/paj.
+    // Konsekans: yon kont dezaktive/revoke pèdi aksè nan maksimòm ~60 s.
+    const now = Date.now();
+    let st = authStateCache.get(email);
+    if (!st || st.exp < now) {
+      const [disabled, after] = await Promise.all([
+        redis.sismember("users:disabled", email),
+        redis.get<number | string>(`sess:after:${email}`),
+      ]);
+      st = { disabled: !!disabled, after: after ? Number(after) : 0, exp: now + 60_000 };
+      if (authStateCache.size > 500) authStateCache.clear();
+      authStateCache.set(email, st);
+    }
+    if (st.disabled) return null;
     // Apre yon reyinisyalizasyon modpas, tout sesyon ki te kreye anvan an revoke.
-    if (after && (payload.iat ?? 0) < Number(after)) return null;
+    if (st.after && (payload.iat ?? 0) < st.after) return null;
     return payload as unknown as SessionPayload;
   } catch {
     return null;
@@ -111,6 +122,7 @@ export async function verifyMfaToken(token: string): Promise<string | null> {
 /** Revoke tout sesyon ki egziste deja pou yon itilizatè (apre chanjman/reyinisyalizasyon modpas). */
 export async function revokeSessions(email: string): Promise<void> {
   await redis.set(`sess:after:${email.toLowerCase()}`, Math.floor(Date.now() / 1000), { ex: 8 * 24 * 3600 });
+  authStateCache.delete(email.toLowerCase());
 }
 
 /** Li `businessIds` an sekirite: tablo, JSON valab, oswa valè koripti (retounen [] olye de lanse erè). */

@@ -14,12 +14,15 @@ async function getSession(req: NextRequest) {
 }
 
 /** Tout notifikasyon itilizatè a: yo nan antrepriz li yo + notifikasyon pèsonèl li yo (abònman). Pi resan an premye. */
-async function collectAll(email: string) {
+async function collectAll(email: string, withNames = true) {
   const businessIds = await getUserBusinessIds(email);
   const [businessLists, userIds, businesses] = await Promise.all([
     Promise.all(businessIds.map((id) => redis.lrange(`business:${id}:notifications`, 0, 49))),
     redis.lrange(`user:${email.toLowerCase()}:notifications`, 0, 49),
-    Promise.all(businessIds.map((id) => redis.hgetall<Business>(`business:${id}`))),
+    // Non antrepriz yo sèlman nesesè pou lis konplè a (pa pou senp konte a) — ekonomize kòmand.
+    withNames
+      ? Promise.all(businessIds.map((id) => redis.hgetall<Business>(`business:${id}`)))
+      : Promise.resolve([] as (Business | null)[]),
   ]);
   const names = new Map<string, string>();
   businesses.forEach((b, i) => b && names.set(businessIds[i], String(b.name ?? "")));
@@ -38,6 +41,20 @@ export async function GET(req: NextRequest) {
   if (!session) return NextResponse.json({ error: "Pa otorize." }, { status: 401 });
 
   const businessId = req.nextUrl.searchParams.get("businessId");
+
+  // Konte rapid (badj la): 1 sèl kòmand Redis lè valè a nan cache (90 s) olye
+  // de li chak notifikasyon youn pa youn (dè santèn kòmand chak minit).
+  if (!businessId && req.nextUrl.searchParams.get("count")) {
+    const cacheKey = `unread:cache:${session.email.toLowerCase()}`;
+    const cached = await redis.get<number | string>(cacheKey);
+    if (cached !== null && cached !== undefined) {
+      return NextResponse.json({ unreadCount: Number(cached) || 0 });
+    }
+    const all = await collectAll(session.email, false);
+    const unreadCount = all.filter((n) => !n.read).length;
+    await redis.set(cacheKey, unreadCount, { ex: 90 });
+    return NextResponse.json({ unreadCount });
+  }
 
   // Mòd ansyen: notifikasyon yon sèl antrepriz.
   if (businessId) {
@@ -77,6 +94,7 @@ export async function PATCH(req: NextRequest) {
   if ("all" in parsed.data) {
     const unread = (await collectAll(session.email)).filter((n) => !n.read);
     await Promise.all(unread.map((n) => redis.hset(`notification:${n.id}`, { read: true })));
+    await redis.del(`unread:cache:${session.email.toLowerCase()}`);
     return NextResponse.json({ ok: true, marked: unread.length });
   }
 
@@ -87,5 +105,6 @@ export async function PATCH(req: NextRequest) {
     : !!notif?.businessId && (await userOwnsBusiness(session.email, String(notif.businessId)));
   if (!mine) return NextResponse.json({ error: "Aksè refize." }, { status: 403 });
   await redis.hset(`notification:${id}`, { read: true });
+  await redis.del(`unread:cache:${session.email.toLowerCase()}`);
   return NextResponse.json({ ok: true });
 }
