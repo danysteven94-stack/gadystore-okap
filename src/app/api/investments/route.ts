@@ -4,7 +4,7 @@ import { randomUUID } from "crypto";
 import { redis, hsetClean } from "@/lib/upstash";
 import { audit } from "@/lib/audit";
 import { requireCapitalAccess } from "@/lib/capital-auth";
-import { listInvestments } from "@/lib/capital";
+import { listInvestments, invalidateCapital } from "@/lib/capital";
 import type { Investment } from "@/types";
 
 const investmentSchema = z.object({
@@ -42,6 +42,7 @@ export async function POST(req: NextRequest) {
   };
   await hsetClean(`investment:${investment.id}`, investment);
   await redis.lpush(`business:${investment.businessId}:investments`, investment.id);
+  await invalidateCapital(investment.businessId);
 
   await audit(req, { email: auth.session.email, role: auth.session.role }, {
     action: "investment.create",

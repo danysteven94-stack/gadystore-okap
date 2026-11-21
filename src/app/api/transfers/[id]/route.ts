@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { redis } from "@/lib/upstash";
 import { audit } from "@/lib/audit";
 import { requireCapitalAccess } from "@/lib/capital-auth";
+import { invalidateCapital } from "@/lib/capital";
 import type { Transfer } from "@/types";
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -13,6 +14,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
   await redis.lrem(`business:${tr.businessId}:transfers`, 0, id);
   await redis.del(`transfer:${id}`);
+  await invalidateCapital(tr.businessId);
   await audit(req, { email: auth.session.email, role: auth.session.role }, {
     action: "transfer.delete",
     businessId: tr.businessId,

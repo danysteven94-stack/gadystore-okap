@@ -4,7 +4,7 @@ import { randomUUID } from "crypto";
 import { redis, hsetClean } from "@/lib/upstash";
 import { audit } from "@/lib/audit";
 import { requireCapitalAccess } from "@/lib/capital-auth";
-import { listTransfers } from "@/lib/capital";
+import { listTransfers, invalidateCapital } from "@/lib/capital";
 import type { Transfer } from "@/types";
 
 const transferSchema = z.object({
@@ -39,6 +39,7 @@ export async function POST(req: NextRequest) {
   };
   await hsetClean(`transfer:${transfer.id}`, transfer);
   await redis.lpush(`business:${transfer.businessId}:transfers`, transfer.id);
+  await invalidateCapital(transfer.businessId);
 
   await audit(req, { email: auth.session.email, role: auth.session.role }, {
     action: "transfer.create",

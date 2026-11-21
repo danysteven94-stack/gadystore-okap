@@ -74,7 +74,7 @@ export async function listTransfers(businessId: string): Promise<Transfer[]> {
     .sort((a, b) => (a.date === b.date ? (a.createdAt < b.createdAt ? 1 : -1) : a.date < b.date ? 1 : -1));
 }
 
-export async function computeCapital(businessId: string, name?: string): Promise<CapitalSummary> {
+async function computeCapitalFresh(businessId: string, name?: string): Promise<CapitalSummary> {
   const today = new Date().toISOString().slice(0, 10);
   const [investments, transfers, business] = await Promise.all([
     listInvestments(businessId),
@@ -175,6 +175,30 @@ export async function computeCapital(businessId: string, name?: string): Promise
     flows,
     ...(truncated ? { truncated } : {}),
   };
+}
+
+const CACHE_TTL = 90; // segonn — evite re-eskane tout istorik la a chak ouvèti paj
+
+export function invalidateCapital(businessId: string) {
+  return redis.del(`capitalcache:${businessId}`).catch(() => 0);
+}
+
+/** Kapital yon antrepriz (ak ti cache 90s pou pa gaspiye kòmand Redis). */
+export async function computeCapital(businessId: string, name?: string): Promise<CapitalSummary> {
+  const key = `capitalcache:${businessId}`;
+  try {
+    const hit = await redis.get<CapitalSummary>(key);
+    if (hit && typeof hit === "object" && "capital" in hit) return { ...hit, name: name ?? hit.name };
+  } catch {
+    /* cache pa disponib → kalkile dirèkteman */
+  }
+  const fresh = await computeCapitalFresh(businessId, name);
+  try {
+    await redis.set(key, fresh, { ex: CACHE_TTL });
+  } catch {
+    /* sa pa grav */
+  }
+  return fresh;
 }
 
 export async function computeCapitalForBusinesses(

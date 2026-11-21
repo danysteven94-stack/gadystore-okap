@@ -3,6 +3,7 @@ import { z } from "zod";
 import { redis } from "@/lib/upstash";
 import { audit } from "@/lib/audit";
 import { requireCapitalAccess } from "@/lib/capital-auth";
+import { invalidateCapital } from "@/lib/capital";
 import type { Investment } from "@/types";
 
 const patchSchema = z.object({
@@ -43,6 +44,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   }
 
   const updated = await redis.hgetall<Investment>(`investment:${id}`);
+  await invalidateCapital(inv.businessId);
   await audit(req, { email: session.email, role: session.role }, {
     action: "investment.update",
     businessId: inv.businessId,
@@ -60,6 +62,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
   await redis.lrem(`business:${inv.businessId}:investments`, 0, id);
   await redis.del(`investment:${id}`);
+  await invalidateCapital(inv.businessId);
   await audit(req, { email: session.email, role: session.role }, {
     action: "investment.delete",
     businessId: inv.businessId,

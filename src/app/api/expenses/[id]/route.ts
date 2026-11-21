@@ -4,6 +4,7 @@ import { userOwnsBusiness } from "@/lib/shop";
 import { redis } from "@/lib/upstash";
 import { verifySession, can } from "@/lib/auth";
 import { audit } from "@/lib/audit";
+import { invalidateCapital } from "@/lib/capital";
 import type { Expense } from "@/types";
 
 // Modifye / efase yon depans (ka kote yon moun fè yon erè). Sèlman admin ak jestyonè
@@ -53,6 +54,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   }
 
   const updated = await redis.hgetall<Expense>(`expense:${id}`);
+  await invalidateCapital(expense.businessId);
   await audit(req, { email: session.email, role: session.role }, {
     action: "expense.update",
     businessId: expense.businessId,
@@ -71,6 +73,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   const day = String(expense.createdAt).slice(0, 10);
   await redis.lrem(`business:${expense.businessId}:expenses:${day}`, 0, id);
   await redis.del(`expense:${id}`);
+  await invalidateCapital(expense.businessId);
 
   await audit(req, { email: session.email, role: session.role }, {
     action: "expense.delete",
