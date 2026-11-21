@@ -19,6 +19,7 @@ import {
   Bell,
   ShieldCheck,
   ScrollText,
+  Landmark,
 } from "lucide-react";
 import type { TranslationKey } from "@/lib/i18n/dictionary";
 
@@ -48,6 +49,7 @@ export const NAV_ITEMS: { href: string; icon: React.ElementType; key: Translatio
   { href: "/subscriptions", icon: MonitorPlay, key: "nav_subscriptions" },
   { href: "/returns", icon: Undo2, key: "nav_returns" },
   { href: "/expenses", icon: Receipt, key: "nav_expenses" },
+  { href: "/investments", icon: Landmark, key: "nav_investments", needs: "*" },
   { href: "/reports", icon: BarChart3, key: "nav_reports" },
   { href: "/backup", icon: DatabaseBackup, key: "nav_backup" },
   { href: "/users", icon: UserCog, key: "nav_users", needs: "*" },

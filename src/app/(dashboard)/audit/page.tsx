@@ -29,6 +29,13 @@ const LABELS: Record<AuditAction, L> = {
   "product.delete": { ht: "Pwodwi efase", fr: "Produit supprimé", en: "Product deleted" },
   "inventory.adjust": { ht: "Stok ajiste (envantè)", fr: "Stock ajusté (inventaire)", en: "Stock adjusted (count)" },
   "return.create": { ht: "Retou", fr: "Retour", en: "Return" },
+  "expense.update": { ht: "Depans modifye", fr: "Dépense modifiée", en: "Expense updated" },
+  "expense.delete": { ht: "Depans efase", fr: "Dépense supprimée", en: "Expense deleted" },
+  "investment.create": { ht: "Envestisman ajoute", fr: "Investissement ajouté", en: "Investment added" },
+  "investment.update": { ht: "Envestisman modifye", fr: "Investissement modifié", en: "Investment updated" },
+  "investment.delete": { ht: "Envestisman efase", fr: "Investissement supprimé", en: "Investment deleted" },
+  "transfer.create": { ht: "Transfè kes/labank", fr: "Transfert caisse/banque", en: "Cash/bank transfer" },
+  "transfer.delete": { ht: "Transfè efase", fr: "Transfert supprimé", en: "Transfer deleted" },
   "order.cancel": { ht: "Kòmand anile", fr: "Commande annulée", en: "Order cancelled" },
   "order.fulfillment": { ht: "Etap kòmand chanje", fr: "Étape de commande modifiée", en: "Order stage changed" },
   "order.payment": { ht: "Peman kòmand", fr: "Paiement de commande", en: "Order payment" },
@@ -46,11 +53,14 @@ const GROUPS: { value: string; label: L }[] = [
   { value: "order.", label: { ht: "Kòmand", fr: "Commandes", en: "Orders" } },
   { value: "inventory.", label: { ht: "Envantè", fr: "Inventaire", en: "Inventory" } },
   { value: "return.", label: { ht: "Retou", fr: "Retours", en: "Returns" } },
+  { value: "expense.", label: { ht: "Depans", fr: "Dépenses", en: "Expenses" } },
+  { value: "investment.", label: { ht: "Envestisman", fr: "Investissements", en: "Investments" } },
+  { value: "transfer.", label: { ht: "Transfè kes/labank", fr: "Transferts caisse/banque", en: "Cash/bank transfers" } },
   { value: "billing.", label: { ht: "Abònman itilizatè", fr: "Abonnements utilisateurs", en: "User subscriptions" } },
   { value: "backup.", label: { ht: "Backup", fr: "Sauvegardes", en: "Backups" } },
 ];
 
-const DANGER = new Set<string>(["auth.login_failed", "user.delete", "user.deactivate", "product.delete", "order.cancel", "backup.restore", "auth.2fa_disabled", "user.reset_password", "billing.undo"]);
+const DANGER = new Set<string>(["auth.login_failed", "user.delete", "user.deactivate", "product.delete", "expense.delete", "investment.delete", "transfer.delete", "order.cancel", "backup.restore", "auth.2fa_disabled", "user.reset_password", "billing.undo"]);
 
 function fmtVal(v: unknown): string {
   if (v === null || v === undefined) return "—";

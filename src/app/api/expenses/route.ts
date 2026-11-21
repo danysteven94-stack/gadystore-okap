@@ -3,7 +3,7 @@ import { userOwnsBusiness } from "@/lib/shop";
 import { withIdempotency } from "@/lib/idempotency";
 import { z } from "zod";
 import { randomUUID } from "crypto";
-import { redis } from "@/lib/upstash";
+import { redis, hsetClean } from "@/lib/upstash";
 import { verifySession } from "@/lib/auth";
 import { notifyLargeExpense } from "@/lib/notifications";
 import type { Expense } from "@/types";
@@ -17,10 +17,12 @@ const expenseSchema = z.object({
     "loyer",
     "electricite",
     "internet",
+    "achat", // achat de produits
     "divers",
   ]),
   amount: z.number().positive(),
   note: z.string().optional(),
+  source: z.enum(["cash", "bank"]).default("cash"), // kote kòb la soti
 });
 
 async function requireSession(req: NextRequest) {
@@ -46,7 +48,7 @@ export async function GET(req: NextRequest) {
     ? await Promise.all(ids.map((id) => redis.hgetall<Expense>(`expense:${id}`)))
     : [];
 
-  const total = expenses.reduce((sum, e) => sum + (e?.amount ?? 0), 0);
+  const total = expenses.reduce((sum, e) => sum + Number(e?.amount ?? 0), 0);
 
   return NextResponse.json({ expenses, total });
 }
@@ -70,7 +72,7 @@ async function postHandler(req: NextRequest) {
     ...parsed.data,
   };
 
-  await redis.hset(`expense:${expense.id}`, expense as unknown as Record<string, unknown>);
+  await hsetClean(`expense:${expense.id}`, expense as unknown as Record<string, unknown>);
   const day = expense.createdAt.slice(0, 10);
   await redis.lpush(`business:${expense.businessId}:expenses:${day}`, expense.id);
   await notifyLargeExpense(expense.businessId, expense.amount);

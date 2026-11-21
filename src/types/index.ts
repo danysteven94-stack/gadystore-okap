@@ -119,10 +119,67 @@ export interface Expense {
   [key: string]: unknown;
   id: string;
   businessId: string;
-  category: "salaires" | "transport" | "loyer" | "electricite" | "internet" | "divers";
+  category: "salaires" | "transport" | "loyer" | "electricite" | "internet" | "achat" | "divers";
   amount: number;
   note?: string;
+  /** Kote kòb la soti: kes (default, pou ansyen depans yo) oswa labank. */
+  source?: "cash" | "bank";
   createdAt: string;
+}
+
+/** Sous kòb envestisman an: pwòp lajan, prè, asosye, lòt. */
+export type InvestmentSource = "personal" | "loan" | "partner" | "other";
+/** Kote kòb la ale lè l antre nan antrepriz la. */
+export type MoneyAccount = "cash" | "bank";
+
+export interface Investment {
+  [key: string]: unknown;
+  id: string;
+  businessId: string;
+  amount: number;
+  source: InvestmentSource;
+  sourceLabel?: string; // ekz: "Pwòp pòch mwen", "Prè Sogebank", "Jean (asosye)"
+  destination: MoneyAccount; // kòb la antre nan kes oswa labank
+  date: string; // YYYY-MM-DD
+  note?: string;
+  createdAt: string;
+}
+
+/** Transfè ant kes ak labank (depo / retrè). */
+export interface Transfer {
+  [key: string]: unknown;
+  id: string;
+  businessId: string;
+  direction: "cash_to_bank" | "bank_to_cash";
+  amount: number;
+  date: string; // YYYY-MM-DD
+  note?: string;
+  createdAt: string;
+}
+
+export interface CapitalSummary {
+  businessId: string;
+  name?: string;
+  /** Dat premye envestisman an (kote swivi kes/labank kòmanse). null = poko gen envestisman. */
+  trackingStart: string | null;
+  invested: number;
+  investedBySource: Record<InvestmentSource, number>;
+  cash: number;
+  bank: number;
+  stockValue: number;
+  /** kes + labank + valè stok (a pri acha). */
+  capital: number;
+  /** capital − invested: sa antrepriz la te fè (oswa pèdi) depi l kòmanse. */
+  gain: number;
+  flows: {
+    salesCash: number;
+    salesBank: number;
+    expensesCash: number;
+    expensesBank: number;
+    refunds: number;
+  };
+  /** true si istorik la te twò long e nou te limite l (vant ki twò ansyen pa konte). */
+  truncated?: boolean;
 }
 
 export interface DashboardStats {

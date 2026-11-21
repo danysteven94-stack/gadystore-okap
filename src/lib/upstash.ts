@@ -16,6 +16,9 @@ export const redis = Redis.fromEnv();
  *   customer:{customerId}                -> hash
  *   business:{businessId}:suppliers      -> set d'IDs fournisseurs
  *   business:{businessId}:expenses:{date}-> list de dépenses
+ *   expense:{id}                         -> hash (category, amount, source cash|bank, note)
+ *   business:{businessId}:investments    -> list d'IDs d'investissements (investment:{id} -> hash)
+ *   business:{businessId}:transfers      -> list d'IDs de transferts caisse/banque (transfer:{id} -> hash)
  *   user:{userId}                        -> hash (email, passwordHash, role, businessIds[])
  *   session:{token}                      -> hash (userId, expiresAt)
  */

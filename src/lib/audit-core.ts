@@ -7,6 +7,9 @@ export type AuditAction =
   | "user.reset_password" | "user.set_businesses" | "user.set_plan"
   | "product.create" | "product.update" | "product.delete"
   | "inventory.adjust" | "return.create"
+  | "expense.update" | "expense.delete"
+  | "investment.create" | "investment.update" | "investment.delete"
+  | "transfer.create" | "transfer.delete"
   | "order.cancel" | "order.fulfillment" | "order.payment"
   | "backup.restore"
   | "billing.pay" | "billing.undo" | "billing.set_price";
