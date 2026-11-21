@@ -112,3 +112,15 @@ export async function verifyMfaToken(token: string): Promise<string | null> {
 export async function revokeSessions(email: string): Promise<void> {
   await redis.set(`sess:after:${email.toLowerCase()}`, Math.floor(Date.now() / 1000), { ex: 8 * 24 * 3600 });
 }
+
+/** Li `businessIds` an sekirite: tablo, JSON valab, oswa valè koripti (retounen [] olye de lanse erè). */
+export function parseBusinessIds(raw: unknown): string[] {
+  if (Array.isArray(raw)) return raw.map(String);
+  if (typeof raw !== "string" || !raw.trim()) return [];
+  try {
+    const v = JSON.parse(raw);
+    return Array.isArray(v) ? v.map(String) : [];
+  } catch {
+    return raw.split(",").map((x) => x.trim()).filter(Boolean);
+  }
+}

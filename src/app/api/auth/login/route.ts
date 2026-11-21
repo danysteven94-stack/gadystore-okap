@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { redis } from "@/lib/upstash";
-import { verifyPassword, signSession, signPwChangeToken, signMfaToken, type SessionPayload } from "@/lib/auth";
+import { parseBusinessIds, verifyPassword, signSession, signPwChangeToken, signMfaToken, type SessionPayload } from "@/lib/auth";
 import { isTrue } from "@/lib/password";
 import { rateLimit } from "@/lib/shop";
 import { audit } from "@/lib/audit";
@@ -94,9 +94,7 @@ export async function POST(req: NextRequest) {
       userId: user.id,
       email: user.email,
       role: user.role as SessionPayload["role"],
-      businessIds: Array.isArray(user.businessIds)
-        ? (user.businessIds as unknown as string[])
-        : JSON.parse(user.businessIds || "[]"),
+      businessIds: parseBusinessIds(user.businessIds),
     };
 
     // Backfill: si kont sa a te kreye anvan seksyon "Itilizatè" a, ajoute l

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { redis } from "@/lib/upstash";
-import { signSession, verifyMfaToken, type SessionPayload } from "@/lib/auth";
+import { parseBusinessIds, signSession, verifyMfaToken, type SessionPayload } from "@/lib/auth";
 import { isTrue } from "@/lib/password";
 import { rateLimit } from "@/lib/shop";
 import { decryptSecret, hashRecovery, verifyTotp } from "@/lib/totp";
@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
     userId: String(user.id),
     email: String(user.email),
     role: user.role as SessionPayload["role"],
-    businessIds: Array.isArray(rawIds) ? rawIds : JSON.parse((rawIds as string) || "[]"),
+    businessIds: parseBusinessIds(rawIds),
   };
   await redis.sadd("users:all", email);
   await redis.hset(`user:${email}`, { lastLoginAt: new Date().toISOString() });

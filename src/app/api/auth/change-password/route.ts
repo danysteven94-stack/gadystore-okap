@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { redis } from "@/lib/upstash";
 import {
+  parseBusinessIds,
   hashPassword,
   verifyPassword,
   signSession,
@@ -83,7 +84,7 @@ export async function POST(req: NextRequest) {
     userId: String(user.id),
     email: String(user.email),
     role: user.role as SessionPayload["role"],
-    businessIds: Array.isArray(rawIds) ? rawIds : JSON.parse((rawIds as string) || "[]"),
+    businessIds: parseBusinessIds(rawIds),
   };
 
   const res = NextResponse.json({ ok: true });
