@@ -5,6 +5,7 @@ import { verifySession } from "@/lib/auth";
 import type { Business } from "@/types";
 import { getUserPlan } from "@/lib/plan-access";
 import { businessLimitMessage } from "@/lib/plans";
+import { getUserBusinessIds } from "@/lib/shop";
 
 async function getSession(req: NextRequest) {
   const token = req.cookies.get("session")?.value;
@@ -15,21 +16,35 @@ export async function GET(req: NextRequest) {
   const session = await getSession(req);
   if (!session) return NextResponse.json({ error: "Pa otorize." }, { status: 401 });
 
-  // Li businessIds fre dirèkteman sou itilizatè a (sous verite), paske JWT la
-  // ka pa mete ajou si yon antrepriz te kreye apre dènye koneksyon an.
-  const userRecord = await redis.hgetall<{ businessIds?: string | string[] }>(
-    `user:${session.email}`
-  );
-  const rawIds = userRecord?.businessIds;
-  const businessIds: string[] = Array.isArray(rawIds)
-    ? rawIds
-    : JSON.parse(rawIds || "[]");
+  try {
+    const email = session.email.trim().toLowerCase();
 
-  const businesses = businessIds.length
-    ? await Promise.all(businessIds.map((id) => redis.hgetall<Business>(`business:${id}`)))
-    : [];
+    // Sous verite: dosye itilizatè a nan Redis (JWT la ka pa ajou).
+    // Lekti sekirize: yon valè koripti pa dwe fè tout wout la tonbe (500).
+    const ids = new Set<string>(await getUserBusinessIds(email));
 
-  return NextResponse.json({ businesses: businesses.filter(Boolean) });
+    // Filé sekirite: si lis la vid, eseye tou ansanm ki kreye pa kreyasyon an
+    // (user:{userId}:businesses) pou pa pèdi done ki egziste deja.
+    if (ids.size === 0 && session.userId) {
+      const extra = await redis.smembers(`user:${session.userId}:businesses`);
+      for (const id of extra ?? []) ids.add(String(id));
+    }
+
+    const list = [...ids];
+    const businesses = list.length
+      ? await Promise.all(list.map((id) => redis.hgetall<Business>(`business:${id}`)))
+      : [];
+
+    return NextResponse.json({
+      businesses: businesses.filter((b) => b && (b as Business).id),
+    });
+  } catch (e) {
+    console.error("GET /api/businesses", e);
+    return NextResponse.json(
+      { error: "Pa ka li antrepriz yo.", detail: e instanceof Error ? e.message : String(e) },
+      { status: 500 }
+    );
+  }
 }
 
 export async function POST(req: NextRequest) {
