@@ -9,8 +9,9 @@ import type { Business, CapitalSummary, Investment, InvestmentSource, Product, T
  *   kapital = kes + labank + valè stok (a pri acha)
  *   gen/pèt = kapital − total envesti
  *
- * Swivi a kòmanse nan dat PREMYE envestisman an: vant, depans ak retou anvan dat sa a pa konte
- * (yo pa gen kòb depa ki matche yo). Sa evite gwosi kes la ak ansyen done.
+ * Swivi a kòmanse nan dat ki pi ansyen ant kreyasyon antrepriz la ak premye envestisman an,
+ * konsa vant yo (ansanm ak peman abònman yo) konte nan kes la menm si pa gen envestisman ankò.
+ * Kòb ou te gen deja nan kes/labank anvan sa, ajoute l kòm yon envestisman (kòb depa).
  *
  * Chanje kote yon metòd peman ale isit la si w vle:
  */
@@ -75,7 +76,11 @@ export async function listTransfers(businessId: string): Promise<Transfer[]> {
 
 export async function computeCapital(businessId: string, name?: string): Promise<CapitalSummary> {
   const today = new Date().toISOString().slice(0, 10);
-  const [investments, transfers] = await Promise.all([listInvestments(businessId), listTransfers(businessId)]);
+  const [investments, transfers, business] = await Promise.all([
+    listInvestments(businessId),
+    listTransfers(businessId),
+    redis.hgetall<Business>(`business:${businessId}`),
+  ]);
 
   // Valè stok (a pri acha) — menm règ ak tablo debò a.
   const productIds = await redis.smembers(`business:${businessId}:products`);
@@ -108,8 +113,11 @@ export async function computeCapital(businessId: string, name?: string): Promise
   let trackingStart: string | null = null;
   let truncated = false;
 
-  if (investments.length > 0) {
-    trackingStart = investments.reduce((min, i) => (i.date < min ? i.date : min), investments[0].date);
+  {
+    const createdDay = business?.createdAt ? String(business.createdAt).slice(0, 10) : "";
+    const candidates = [...investments.map((i) => i.date), ...(/^\d{4}-\d{2}-\d{2}$/.test(createdDay) ? [createdDay] : [])];
+    const earliest0 = new Date(Date.now() - MAX_DAYS * 86_400_000).toISOString().slice(0, 10);
+    trackingStart = candidates.length ? candidates.reduce((min, d) => (d < min ? d : min)) : earliest0;
     let from = trackingStart;
     const earliest = new Date(Date.now() - MAX_DAYS * 86_400_000).toISOString().slice(0, 10);
     if (from < earliest) {

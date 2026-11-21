@@ -52,7 +52,7 @@ const T = {
   confirmDel: { ht: "Efase sa a? Kapital la ap rekalkile.", fr: "Supprimer ceci ? Le capital sera recalculé.", en: "Delete this? Capital will be recalculated." },
   tracking: { ht: "Swivi kes/labank kòmanse", fr: "Suivi caisse/banque depuis le", en: "Cash/bank tracked since" },
   trackingHint: { ht: "Vant, depans ak retou anvan dat sa a pa konte.", fr: "Les ventes, dépenses et retours avant cette date ne comptent pas.", en: "Sales, expenses and returns before this date are not counted." },
-  noTracking: { ht: "Ajoute premye envestisman an (kòb ou te mete nan kes/labank pou kòmanse) pou kapital la kòmanse kalkile.", fr: "Ajoutez le premier investissement (l'argent de départ en caisse/banque) pour démarrer le calcul du capital.", en: "Add the first investment (your starting money in cash/bank) to start the capital calculation." },
+  noTracking: { ht: "Si ou te gen kòb nan kes/labank anvan, ajoute l kòm yon envestisman (kòb depa) pou balans lan kòrèk.", fr: "Si vous aviez déjà de l'argent en caisse/banque, ajoutez-le comme investissement (argent de départ) pour que les soldes soient justes.", en: "If you already had money in cash/bank, add it as an investment (starting money) so balances are correct." },
   truncated: { ht: "Istorik la twò long: sèlman dènye 3 an yo konte.", fr: "Historique trop long : seuls les 3 derniers ans sont comptés.", en: "History too long: only the last 3 years are counted." },
   forbidden: { ht: "Sèlman admin ka wè paj sa a.", fr: "Seul l'administrateur peut voir cette page.", en: "Only admins can view this page." },
   loadError: { ht: "Pa ka chaje done yo. Eseye ankò.", fr: "Impossible de charger les données. Réessayez.", en: "Could not load data. Try again." },
@@ -344,13 +344,12 @@ export default function InvestmentsPage() {
             <Summary c={capital} lang={lang} />
 
             <p className="text-xs text-ink/55 dark:text-white/55 mb-5">
-              {capital.trackingStart ? (
+              {capital.trackingStart && (
                 <>
                   {tr(lang, T.tracking)} <b>{capital.trackingStart}</b>. {tr(lang, T.trackingHint)}
                 </>
-              ) : (
-                tr(lang, T.noTracking)
               )}
+              {capital.invested === 0 && <span className="block mt-1">{tr(lang, T.noTracking)}</span>}
               {capital.truncated && <span className="block text-brick mt-1">{tr(lang, T.truncated)}</span>}
             </p>
 

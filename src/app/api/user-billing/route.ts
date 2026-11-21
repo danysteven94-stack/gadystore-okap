@@ -160,7 +160,9 @@ export async function PATCH(req: NextRequest) {
 
     // Antrepriz ki resevwa vant la: chwa fòm lan, sinon dènye chwa a. Peman an antre kòm yon vant
     // (revni/rapò/dashboard) nan jou li te peye a, tankou abònman streaming yo.
-    const businessId = body.businessId || (await billingBusinessOf(session.email));
+    // Si pa gen chwa ditou, peman an ale nan premye antrepriz itilizatè a — konsa li toujou antre nan kes/kapital.
+    const businessId =
+      body.businessId || (await billingBusinessOf(session.email)) || (await getUserBusinessIds(session.email))[0] || "";
     if (businessId && !(await userOwnsBusiness(session.email, businessId))) {
       return NextResponse.json({ error: "Aksè refize." }, { status: 403 });
     }
